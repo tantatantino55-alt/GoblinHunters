@@ -1,6 +1,6 @@
 package goblinhunter.view;
 
-public class View implements iView{
+public class View implements IView{
 
     //---------------------------------------------------------------
     // STATIC FIELDS

@@ -1,4 +1,4 @@
 package goblinhunter.controller;
 
-public class ControllerForView implements iControllerForView {
+public class ControllerForView implements IControllerForView{
 }

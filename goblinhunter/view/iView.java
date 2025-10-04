@@ -1,4 +1,4 @@
-package View;
+package goblinhunter.view;
 
 public interface iView {
 }

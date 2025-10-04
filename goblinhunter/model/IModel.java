@@ -1,4 +1,4 @@
 package goblinhunter.model;
 
-public interface iModel {
+public interface IModel {
 }

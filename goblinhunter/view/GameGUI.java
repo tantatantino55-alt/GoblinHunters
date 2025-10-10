@@ -3,7 +3,7 @@ package goblinhunter.view;
 import javax.swing.*;
 import java.awt.*;
 
-public class MainGUI extends JFrame{
+public class GameGUI extends JFrame{
 
     //---------------------------------------------------------------
     // STATIC CONSTANTS
@@ -15,9 +15,10 @@ public class MainGUI extends JFrame{
     // INSTANCE ATTRIBUTES
     //---------------------------------------------------------------
     private GamePanel gamePanel;
+    private AbstractDrawer drawer;
 
 
-    public MainGUI(){
+    public GameGUI(AbstractDrawer drawer){
         super("Goblin Hunter");
 
 
@@ -25,6 +26,7 @@ public class MainGUI extends JFrame{
 
     private void createGUI(){
         this.setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        this.setPreferredSize(new Dimension(WINDOW_PREFERRED_WIDTH, WINDOW_PREFERRED_HEIGHT));
         this.setResizable(false);
         this.gamePanel = new GamePanel();
         Container contPane = this.getContentPane();

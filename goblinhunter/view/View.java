@@ -10,10 +10,31 @@ public class View implements IView{
     //---------------------------------------------------------------
     // INSTANCE ATTRIBUTES
     //---------------------------------------------------------------
-    protected MainGUI mainGUI = null;
+    protected GameGUI gameGUI = null;
 
     private View() {
     //TO-DO
+    }
+    public void openGameGUI() {
+
+        final AbstractDrawer drawer = new ConcreteDrawer();
+
+        javax.swing.SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                if (gameGUI == null)
+                    gameGUI = new GameGUI(drawer);
+                gameGUI.setVisible(true);
+            }
+        });
+    }
+
+    public void closeGameGUI() {
+        javax.swing.SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                if (gameGUI != null)
+                    gameGUI.setVisible(false);
+            }
+        });
     }
 
     public static IView getInstance() {

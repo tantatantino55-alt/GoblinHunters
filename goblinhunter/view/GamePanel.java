@@ -1,17 +1,15 @@
 package goblinhunter.view;
 
+import goblinhunter.controller.ControllerForView;
+
 import javax.swing.*;
 import java.awt.*;
 
 public class GamePanel extends JPanel {
 
     //SCREEN SETTING
-    final int originalTileSize = 48 ;
-    final int GRID_WIDTH = 13; //
-    final int GRID_HEIGHT = 11; // DEVO FARE IN MODO CHE VENGONO OTTENUTE DAL MODEL PER RISPETTARE L ARCHIETETTURA MODEL VIEW CONTROLLER
-    //SFRUTTERO IVIEW CONTROLLER CHE INVOCA UN METODO SU IVIEW CHE HA
-    final int GAMEPANEL_ = originalTileSize * GRID_WIDTH;
-    final int screenHeigth = originalTileSize * GRID_HEIGHT;
+    private final static int CELL_SIZE = 48 ;// number of pixels
+    private final static Dimension PREFERRED_SIZE = new Dimension(CELL_SIZE * ControllerForView.getInstance().getNumRows(),CELL_SIZE * ControllerForView.getInstance().getNumColumns());
 
     public GamePanel(){
      this.setPreferredSize(new Dimension(GAMEPANEL_,screenHeigth));

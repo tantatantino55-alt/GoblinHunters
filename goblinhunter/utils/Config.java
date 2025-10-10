@@ -24,5 +24,10 @@ public class Config {
     */
 
     // Altri parametri
-    public static final int INITIAL_SCORE = 0;
-}
+    /*public static final int INITIAL_SCORE = 0;
+    public static Config getInstance() {
+        if (instance == null)
+            instance = new Config();
+        return instance;
+        */
+    }

@@ -17,8 +17,11 @@ public class Model implements IModel{
     // INSTANCE ATTRIBUTES
     //---------------------------------------------------------------
     private final int[][] gameAreaArray;
+    private Player player;
     private Model() {
-        this.gameAreaArray = new int[DEFAULT_NUM_ROWS][DEFAULT_NUM_COLUMNS];
+        this.gameAreaArray = new int[Config.GRID_HEIGHT][Config.GRID_WIDTH];
+        this.player = new Player(Config.x, Config.y);
+
     }
 
 
@@ -30,7 +33,42 @@ public class Model implements IModel{
     public int getNumColumns() {
         return this.gameAreaArray[0].length;
     }
+    public Player getPlayer(){
+        return this.player;
+    }
+    public int XCoordinatePlayer() {
+        return this.player.getXCoordinate();
+    }
+    public int yCoordinatePlayer() {
+        return this.player.getYCoordinate();
+    }
+    public int setXCoordinatePlayer(){
+        //this.player.setXCoordinate(this.getXCoorPlayer())
+        return 0;
+    }
 
+
+    public void MoveUp() {
+
+    }
+
+
+    public void MoveDown() {
+
+    }
+
+    public void MoveLeft() {
+
+    }
+
+    public void MoveRight() {
+
+    }
+
+    @Override
+    public void PlaceBomb() {
+
+    }
 
 
     public static IModel getInstance() {

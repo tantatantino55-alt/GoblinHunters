@@ -1,5 +1,8 @@
 package goblinhunter.view;
 
+import goblinhunter.controller.ControllerForView;
+import goblinhunter.utils.Config;
+
 import java.awt.*;
 import java.awt.geom.Rectangle2D;
 
@@ -8,7 +11,7 @@ public class ConcreteDrawer extends AbstractDrawer{
 
 
     public ConcreteDrawer() {
-        this.rect = new Rectangle2D.Double(130.45, 100.56, 624, 528);
+        this.rect = new Rectangle2D.Double(Config.x, Config.y, 624,528 );
     }
 
     public void draw(Graphics g){
@@ -18,6 +21,12 @@ public class ConcreteDrawer extends AbstractDrawer{
         g2d.fill(rect);
         g2d.setColor(Color.black);
         g2d.draw(rect);
+
+        //Disegno il giocatore
+
+
+        g2d.setColor(Color.BLUE);
+        g2d.fillRect(ControllerForView.getInstance().XCoordinatePlayer(), ControllerForView.getInstance().yCoordinatePlayer(), Config.TILE_SIZE,Config.TILE_SIZE);
     }
 
     @Override

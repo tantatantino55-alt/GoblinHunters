@@ -1,6 +1,7 @@
 package goblinhunter.controller;
 
 import goblinhunter.model.Model;
+import goblinhunter.model.Player;
 import goblinhunter.view.View;
 
 public class ControllerForView implements IControllerForView{
@@ -27,9 +28,45 @@ public class ControllerForView implements IControllerForView{
     }
 
 
+    public Player getPlayer() {
+        return Model.getInstance().getPlayer();
+    }
 
 
+    public int XCoordinatePlayer() {
+        return Model.getInstance().XCoordinatePlayer();
+    }
 
+
+    public int yCoordinatePlayer() {
+        return Model.getInstance().yCoordinatePlayer();
+    }
+
+
+    public void MoveUp() {
+
+
+    }
+
+    public void MoveDown() {
+
+    }
+
+
+    public void MoveLeft() {
+
+    }
+
+
+    public void MoveRight() {
+
+    }
+
+
+    @Override
+    public void PlaceBomb() {
+
+    }
 
 
 

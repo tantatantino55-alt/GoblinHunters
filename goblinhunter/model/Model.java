@@ -1,5 +1,7 @@
 package goblinhunter.model;
 
+import goblinhunter.utils.Config;
+
 public class Model implements IModel{
     //---------------------------------------------------------------
     // STATIC CONSTANTS

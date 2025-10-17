@@ -69,7 +69,11 @@ public class ControllerForView implements IControllerForView{
     }
 
 
-
+    //  Nuovo metodo per richiedere il repaint
+    @Override
+    public void requestRepaint() {
+        View.getInstance().requestRepaint();
+    }
     //---------------------------------------------------------------
     // STATIC METHODS
     //---------------------------------------------------------------

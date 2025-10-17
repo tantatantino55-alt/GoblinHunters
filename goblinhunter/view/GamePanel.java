@@ -12,13 +12,16 @@ public class GamePanel extends JPanel implements KeyListener {
     private AbstractDrawer drawer = null;
 
     //SCREEN SETTING
-    private final static int CELL_SIZE = 48 ;// number of pixels
-    private final static Dimension PREFERRED_SIZE = new Dimension(CELL_SIZE * ControllerForView.getInstance().getNumRows(),CELL_SIZE * ControllerForView.getInstance().getNumColumns());
+    private final static Dimension PREFERRED_SIZE = new Dimension(
+            Config.GAME_PANEL_WIDTH,  // 624 px
+            Config.GAME_PANEL_HEIGHT  // 528 px
+    );
+    private final static int CELL_SIZE = Config.TILE_SIZE;
 
     public GamePanel(AbstractDrawer drawer) {
         super();
         this.drawer = drawer;
-        this.setPreferredSize(new Dimension(PREFERRED_SIZE));
+        this.setPreferredSize(PREFERRED_SIZE);
         this.setBackground(Color.black);
         this.setDoubleBuffered(true); // better rendering perfoormancehttps://code-with-me.global.jetbrains.com/AVoRUZpss0eu6vg2xWpIXA
         this.setFocusable(true); // Fondamentale per ricevere l'input da tastiera!

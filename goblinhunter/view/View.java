@@ -1,5 +1,7 @@
 package goblinhunter.view;
 
+import javax.swing.*;
+
 public class View implements IView{
 
     //---------------------------------------------------------------
@@ -35,6 +37,16 @@ public class View implements IView{
                     gameGUI.setVisible(false);
             }
         });
+    }
+
+
+    @Override
+    public void requestRepaint() {
+        //  La richiesta di repaint deve avvenire sul thread di Event Dispatch di Swing.
+        // GameGUI contiene il riferimento a GamePanel.
+        if (gameGUI != null) {
+            SwingUtilities.invokeLater(() -> gameGUI.getGamePanel().repaint());
+        }
     }
 
     public static IView getInstance() {

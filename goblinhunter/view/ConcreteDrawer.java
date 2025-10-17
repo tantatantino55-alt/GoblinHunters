@@ -8,8 +8,7 @@ import java.awt.geom.Rectangle2D;
 
 public class ConcreteDrawer extends AbstractDrawer{
     private Rectangle2D.Double rect;
-
-
+    
     public ConcreteDrawer() {
         this.rect = new Rectangle2D.Double(Config.x, Config.y, 624,528 );
     }

@@ -37,8 +37,8 @@ public class Config {
     // 5. PARAMETRI DI GIOCO (Model Logic)
     // ====================================================================
     // Player (Mago)
-    public static final int x = 168;
-    public static final int y = 136;
+    //public static final int x = 168;
+    //public static final int y = 136;
     public static final int PLAYER_INITIAL_LIVES = 5;
     public static final int SPELL_RANGE = 3;
     public static final int SPELL_RANGE_POWERUP = 6;
@@ -54,4 +54,22 @@ public class Config {
     /* Percorsi delle risorse (sprite, sfondo....)
        ... (Aggiungerai qui i percorsi ai tuoi file)
     */
+
+
+    // ====================================================================
+    // 6. CELL TYPE
+    // ====================================================================
+    public static final int CELL_EMPTY = 0;             // Spazio vuoto, camminabile
+    public static final int CELL_INDESTRUCTIBLE_BLOCK = 1; // blocco indistruttibile
+    public static final int CELL_DESTRUCTIBLE_BLOCK = 2;   // Blocco distruttibile
+    public static final int CELL_PLAYER_START = 3;      // Posizione iniziale del giocatore
+    public static final int CELL_ENEMY_START = 4;       // Posizione iniziale dei nemici
+
+
+    // ====================================================================
+    // 7. COORDINATE
+    // ====================================================================
+    public static final int GRID_OFFSET_X = 168;
+    public static final int GRID_OFFSET_Y = 136;
+
 }

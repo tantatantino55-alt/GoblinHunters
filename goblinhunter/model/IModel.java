@@ -8,7 +8,7 @@ public interface IModel {
 
     Player getPlayer();
 
-    public int XCoordinatePlayer();
+    public int xCoordinatePlayer();
 
     public int yCoordinatePlayer();
     public void MoveUp();
@@ -21,4 +21,7 @@ public interface IModel {
 
 
     public void PlaceBomb();
+
+
+    boolean isMovable(int x, int y);
 }

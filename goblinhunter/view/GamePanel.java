@@ -40,18 +40,15 @@ public class GamePanel extends JPanel implements KeyListener {
     public void keyPressed(KeyEvent e) {
         switch (e.getKeyCode()) {
             case KeyEvent.VK_LEFT:
-                ControllerForView.getInstance().MoveLeft();
-                this.repaint();
+                ControllerForView.getInstance().setPlayerMovement(-delta, 0);
                 System.out.println("Pressed key: VK_LEFT");
                 break;
             case KeyEvent.VK_RIGHT:
-                ControllerForView.getInstance().MoveRight();
-                this.repaint();
+                ControllerForView.getInstance().setPlayerMovement(delta, 0);
                 System.out.println("Pressed key: VK_RIGHT");
                 break;
             case KeyEvent.VK_DOWN:
-                ControllerForView.getInstance().MoveDown();
-                this.repaint();
+                ControllerForView.getInstance().setPlayerMovement(0, delta);
                 System.out.println("Pressed key: VK_DOWN");
                 break;
             case KeyEvent.VK_UP:

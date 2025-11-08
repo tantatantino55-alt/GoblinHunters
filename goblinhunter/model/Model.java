@@ -23,24 +23,25 @@ public class Model implements IModel{
 
     //TEST MAP
     private static final int[][] TEST_MAP = {
-                                            {1,1,1,1,1,1,1,1,1,1,1,1,1},
-                                            {1,0,2,0,2,0,0,0,2,0,2,0,1},
-                                            {1,2,1,0,1,0,1,0,1,0,1,2,1},
-                                            {1,0,0,0,2,0,0,0,2,0,0,0,1},
-                                            {1,2,1,2,1,2,1,2,1,2,1,2,1},
-                                            {1,0,0,0,0,0,0,0,0,0,0,0,1},
-                                            {1,1,1,2,1,2,1,2,1,2,1,0,1},
-                                            {1,0,0,0,0,0,0,0,0,0,0,0,1},
-                                            {1,2,1,2,1,2,1,2,1,2,1,2,1},
-                                            {1,0,0,0,0,0,0,0,0,0,0,0,1},
-                                            {1,1,1,1,1,1,1,1,1,1,1,1,1}
+            {0,1,0,0,0,0,0,0,0,0,0,0,0},
+            {0,1,0,0,0,0,0,0,0,0,0,0,0},
+            {0,1,1,1,1,0,0,0,0,0,0,0,0},
+            {0,0,0,0,1,0,0,0,0,0,0,0,0},
+            {1,1,1,0,1,0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0,0,0,0,0,0}
     };
 
 
     private Model() {
         this.gameAreaArray = new int[Config.GRID_HEIGHT][Config.GRID_WIDTH];
-        int startX = Config.GRID_OFFSET_X + 1 * Config.TILE_SIZE;
-        int startY = Config.GRID_OFFSET_Y + 1 * Config.TILE_SIZE;
+        int startX = Config.GRID_OFFSET_X + 0 * Config.TILE_SIZE;
+        int startY = Config.GRID_OFFSET_Y + 0 * Config.TILE_SIZE;
+        this.loadMap(TEST_MAP);
         this.player = new Player(startX, startY);
 
     }
@@ -101,6 +102,7 @@ public class Model implements IModel{
         int gridRow = (nextY - Config.GRID_OFFSET_Y + Config.TILE_SIZE / 2) / Config.TILE_SIZE;
 
 
+
         // Controlli sui limiti di griglia
         if (gridCol < 0 || gridCol >= Config.GRID_WIDTH || gridRow < 0 || gridRow >= Config.GRID_HEIGHT) {
             return false;
@@ -148,9 +150,6 @@ public class Model implements IModel{
             player.setDelta(player.getDeltaX(), 0);
         }
     }
-
-
-
 
     @Override
     public void PlaceBomb() {

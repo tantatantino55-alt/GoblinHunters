@@ -43,31 +43,9 @@ public class ControllerForView implements IControllerForView{
         return Model.getInstance().yCoordinatePlayer();
     }
 
-
-
-
-
-    public void MoveUp() {
-        if (Model.getInstance().isMovable(0,-1))
-            Model.getInstance().MoveUp();
+    public void setPlayerMovement(int dx, int dy){
+        Model.getInstance().getPlayer().setDelta(dx, dy);
     }
-
-    public void MoveDown() {
-        if (Model.getInstance().isMovable(0,1))
-                Model.getInstance().MoveDown();
-        }
-
-    public void MoveLeft() {
-        if(Model.getInstance().isMovable(-1,0))
-            Model.getInstance().MoveLeft();
-    }
-
-    public void MoveRight() {
-        if(Model.getInstance().isMovable(1,0))
-            Model.getInstance().MoveRight();
-    }
-
-
 
     @Override
     public void PlaceBomb() {

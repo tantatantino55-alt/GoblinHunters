@@ -25,5 +25,5 @@ public interface IModel {
 
     public void updatePlayerMovement();
 
-    boolean isMovable(int x, int y);
+    //boolean isMovable(int x, int y);
 }

@@ -23,38 +23,25 @@ public class Model implements IModel{
 
     //TEST MAP
     private static final int[][] TEST_MAP = {
-            {1,1,1,1,1,1,1,1,1,1,1,1,1},
-            {1,0,2,0,2,0,0,0,2,0,2,0,1},
-            {1,2,1,0,1,0,1,0,1,0,1,2,1},
-            {1,0,0,0,2,0,0,0,2,0,0,0,1},
-            {1,2,1,2,1,2,1,2,1,2,1,2,1},
-            {1,0,0,0,0,0,0,0,0,0,0,0,1},
-            {1,1,1,2,1,2,1,2,1,2,1,0,1},
-            {1,0,0,0,0,0,0,0,0,0,0,0,1},
-            {1,2,1,2,1,2,1,2,1,2,1,2,1},
-            {1,0,0,0,0,0,0,0,0,0,0,0,1},
-            {1,1,1,1,1,1,1,1,1,1,1,1,1}
+                                            {1,1,1,1,1,1,1,1,1,1,1,1,1},
+                                            {1,0,2,0,2,0,0,0,2,0,2,0,1},
+                                            {1,2,1,0,1,0,1,0,1,0,1,2,1},
+                                            {1,0,0,0,2,0,0,0,2,0,0,0,1},
+                                            {1,2,1,2,1,2,1,2,1,2,1,2,1},
+                                            {1,0,0,0,0,0,0,0,0,0,0,0,1},
+                                            {1,1,1,2,1,2,1,2,1,2,1,0,1},
+                                            {1,0,0,0,0,0,0,0,0,0,0,0,1},
+                                            {1,2,1,2,1,2,1,2,1,2,1,2,1},
+                                            {1,0,0,0,0,0,0,0,0,0,0,0,1},
+                                            {1,1,1,1,1,1,1,1,1,1,1,1,1}
     };
 
 
     private Model() {
         this.gameAreaArray = new int[Config.GRID_HEIGHT][Config.GRID_WIDTH];
-        this.loadMap(TEST_MAP);
-        int playerGridCol = 1; //parte dalla (1,1) in quanto il resto sono muri
-        int playerGridRow = 1;
-
-        // Converti in coordinate pixel
-        int startX = Config.GRID_OFFSET_X + (playerGridCol * Config.TILE_SIZE);
-        int startY = Config.GRID_OFFSET_Y + (playerGridRow * Config.TILE_SIZE);
-
+        int startX = Config.GRID_OFFSET_X + 1 * Config.TILE_SIZE;
+        int startY = Config.GRID_OFFSET_Y + 1 * Config.TILE_SIZE;
         this.player = new Player(startX, startY);
-        System.out.println("=== PLAYER SPAWN DEBUG ===");
-        System.out.println("Grid Position: [" + playerGridCol + ", " + playerGridRow + "]");
-        System.out.println("Pixel Position: [" + startX + ", " + startY + "]");
-        System.out.println("Grid Offset: [" + Config.GRID_OFFSET_X + ", " + Config.GRID_OFFSET_Y + "]");
-        System.out.println("Tile Size: " + Config.TILE_SIZE);
-        System.out.println("Cell Type at spawn: " + gameAreaArray[playerGridRow][playerGridCol]);
-        System.out.println("========================");
 
     }
 
@@ -81,9 +68,9 @@ public class Model implements IModel{
     }
     public int yCoordinatePlayer() {
         return this.player.getYCoordinate();
-
     }
 
+    /*
     @Override
     public void MoveUp() {
         this.player.updateYcoordinate(-1);
@@ -105,23 +92,62 @@ public class Model implements IModel{
         this.player.updateXcoordinate(+1);
 
     }
+*/
 
-    public boolean isMovable (int x, int y) {
-        int nextX = this.xCoordinatePlayer() + x;
-        int nextY = this.yCoordinatePlayer() + y;
+    public boolean isWalkable (int nextX, int nextY) {
+        // 1. Converte coordinate pixel assolute (incluse offset) in coordinate di griglia logica
+        // Usiamo il centro del Player per una collisione più precisa (AABB)
+        int gridCol = (nextX - Config.GRID_OFFSET_X + Config.TILE_SIZE / 2) / Config.TILE_SIZE;
+        int gridRow = (nextY - Config.GRID_OFFSET_Y + Config.TILE_SIZE / 2) / Config.TILE_SIZE;
 
-        //verifico bordo
-        if (nextY < 0 || nextY >= Model.getInstance().getNumRows() ||
-                nextX < 0 || nextX >= Model.getInstance().getNumColumns())
+
+        // Controlli sui limiti di griglia
+        if (gridCol < 0 || gridCol >= Config.GRID_WIDTH || gridRow < 0 || gridRow >= Config.GRID_HEIGHT) {
             return false;
-        //verifico cella
-        // if()
-        //   return false;
-        //else
-         return true;
+        }
+
+        // Verifica del contenuto della cella
+        int targetCellType = gameAreaArray[gridRow][gridCol];
+
+        // Se la cella è un blocco indistruttibile o distruttibile, non è camminabile.
+        if (targetCellType == Config.CELL_INDESTRUCTIBLE_BLOCK || targetCellType == Config.CELL_DESTRUCTIBLE_BLOCK) {
+            return false;
+        }
+
+        return true;
     }
 
+    // Questo metodo controlla la collisione e aggiorna la posizione se possibile.
+    @Override
+    public void updatePlayerMovement() {
+        int currentX = player.getXCoordinate();
+        int currentY = player.getYCoordinate();
+        int deltaX = player.getDeltaX();
+        int deltaY = player.getDeltaY();
 
+        if (deltaX == 0 && deltaY == 0) {
+            return; // Nessun movimento richiesto
+        }
+
+        // --- Tentativo di movimento sull'asse X ---
+        int nextX = currentX + deltaX;
+        if (isWalkable(nextX, currentY)) {
+            player.setXCoordinate(nextX);
+        } else {
+            // Collisione X: ferma il movimento su X
+            player.setDelta(0, deltaY);
+        }
+
+        // tentativo di movimento sull'asse Y
+        // Ricontrolla con la X che potrebbe essere stata aggiornata (nextX) o bloccata (currentX)
+        int nextY = currentY + deltaY;
+        if (isWalkable(player.getXCoordinate(), nextY)) {
+            player.setYCoordinate(nextY);
+        } else {
+            // Collisione Y: ferma il movimento su Y
+            player.setDelta(player.getDeltaX(), 0);
+        }
+    }
 
 
 

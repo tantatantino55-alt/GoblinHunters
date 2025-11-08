@@ -1,5 +1,6 @@
 package goblinhunter.controller;
 
+import goblinhunter.model.Model;
 import goblinhunter.utils.Config;
 
 import javax.swing.*;
@@ -36,6 +37,7 @@ public class ControllerForModel implements IControllerForModel {
     // Implementazione di IControllerForModel.updateGame()
     @Override
     public void updateGame() {
+        Model.getInstance().updatePlayerMovement();
         // Qui avverrà la chiamata al Model per avanzare la simulazione
         // Esempio:
         // IModel.getInstance().updateEntities();

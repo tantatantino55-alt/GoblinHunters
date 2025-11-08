@@ -22,6 +22,7 @@ public interface IControllerForView {
 
     public void PlaceBomb();
 
+    public void setPlayerMovement(int dx, int dy);
 
 
 }

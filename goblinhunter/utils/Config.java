@@ -37,6 +37,7 @@ public class Config {
     // 5. PARAMETRI DI GIOCO (Model Logic)
     // ====================================================================
     // Player (Mago)
+    public static final int PLAYER_SPEED = 4;
     //public static final int x = 168;
     //public static final int y = 136;
     public static final int PLAYER_INITIAL_LIVES = 5;
@@ -71,5 +72,10 @@ public class Config {
     // ====================================================================
     public static final int GRID_OFFSET_X = 168;
     public static final int GRID_OFFSET_Y = 136;
+
+    public static final int MIN_X = GRID_OFFSET_X;
+    public static final int MAX_X = GRID_OFFSET_X + GAME_PANEL_WIDTH - TILE_SIZE;
+    public static final int MIN_Y = GRID_OFFSET_Y;
+    public static final int MAX_Y = GRID_OFFSET_Y + GAME_PANEL_HEIGHT - TILE_SIZE;
 
 }

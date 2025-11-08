@@ -71,30 +71,6 @@ public class Model implements IModel{
         return this.player.getYCoordinate();
     }
 
-    /*
-    @Override
-    public void MoveUp() {
-        this.player.updateYcoordinate(-1);
-
-    }
-
-    @Override
-    public void MoveDown() {
-        this.player.updateYcoordinate(1);
-    }
-
-    @Override
-    public void MoveLeft() {
-        this.player.updateXcoordinate(-1);
-    }
-
-    @Override
-    public void MoveRight() {
-        this.player.updateXcoordinate(+1);
-
-    }
-*/
-
     public boolean isWalkable (int nextX, int nextY) {
         // 1. Converte coordinate pixel assolute (incluse offset) in coordinate di griglia logica
         // Usiamo il centro del Player per una collisione più precisa (AABB)
@@ -104,7 +80,7 @@ public class Model implements IModel{
 
 
         // Controlli sui limiti di griglia
-        if (gridCol < 0 || gridCol >= Config.GRID_WIDTH || gridRow < 0 || gridRow >= Config.GRID_HEIGHT) {
+        if (gridCol < 0 || gridCol >= Config.GRID_WIDTH  || gridRow < 0 || gridRow >= Config.GRID_HEIGHT) {
             return false;
         }
 
@@ -119,6 +95,10 @@ public class Model implements IModel{
         return true;
     }
 
+    private int checkBounds(int next, int min, int max) {
+        return Math.max(min, Math.min(max, next));
+    }
+
     // Questo metodo controlla la collisione e aggiorna la posizione se possibile.
     @Override
     public void updatePlayerMovement() {
@@ -127,6 +107,11 @@ public class Model implements IModel{
         int deltaX = player.getDeltaX();
         int deltaY = player.getDeltaY();
 
+        int minX = Config.MIN_X;
+        int maxX = Config.MAX_X;
+        int minY = Config.MIN_Y;
+        int maxY = Config.MAX_Y;
+
         if (deltaX == 0 && deltaY == 0) {
             return; // Nessun movimento richiesto
         }
@@ -134,6 +119,7 @@ public class Model implements IModel{
         // --- Tentativo di movimento sull'asse X ---
         int nextX = currentX + deltaX;
         if (isWalkable(nextX, currentY)) {
+            nextX = checkBounds(nextX, minX, maxX);
             player.setXCoordinate(nextX);
         } else {
             // Collisione X: ferma il movimento su X
@@ -144,6 +130,8 @@ public class Model implements IModel{
         // Ricontrolla con la X che potrebbe essere stata aggiornata (nextX) o bloccata (currentX)
         int nextY = currentY + deltaY;
         if (isWalkable(player.getXCoordinate(), nextY)) {
+            nextY = checkBounds(nextY, minY, maxY);
+
             player.setYCoordinate(nextY);
         } else {
             // Collisione Y: ferma il movimento su Y

@@ -38,6 +38,7 @@ public class GamePanel extends JPanel implements KeyListener {
 
     @Override
     public void keyPressed(KeyEvent e) {
+        int delta = Config.PLAYER_SPEED;
         switch (e.getKeyCode()) {
             case KeyEvent.VK_LEFT:
                 ControllerForView.getInstance().setPlayerMovement(-delta, 0);
@@ -52,13 +53,11 @@ public class GamePanel extends JPanel implements KeyListener {
                 System.out.println("Pressed key: VK_DOWN");
                 break;
             case KeyEvent.VK_UP:
-                ControllerForView.getInstance().MoveUp();
-                this.repaint();
+                ControllerForView.getInstance().setPlayerMovement(0, -delta);
                 System.out.println("Pressed key: VK_UP");
                 break;
             case KeyEvent.VK_SPACE:
                 ControllerForView.getInstance().PlaceBomb();
-                this.repaint();
                 System.out.println("Pressed key: VK_SPACE");
                 break;
             //default: System.out.println("Use only the following keys: VK_LEFT, VK_RIGHT, VK_DOWN, VK_UP");

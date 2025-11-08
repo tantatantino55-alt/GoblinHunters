@@ -11,6 +11,7 @@ public interface IModel {
     public int xCoordinatePlayer();
 
     public int yCoordinatePlayer();
+/*
     public void MoveUp();
 
     public void MoveDown();
@@ -18,10 +19,11 @@ public interface IModel {
     public void MoveLeft();
 
     public void MoveRight();
-
+*/
 
     public void PlaceBomb();
 
+    public void updatePlayerMovement();
 
     boolean isMovable(int x, int y);
 }

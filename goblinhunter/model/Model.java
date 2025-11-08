@@ -39,9 +39,22 @@ public class Model implements IModel{
 
     private Model() {
         this.gameAreaArray = new int[Config.GRID_HEIGHT][Config.GRID_WIDTH];
-        int startX = Config.GRID_OFFSET_X + 1 * Config.TILE_SIZE;
+        this.loadMap(TEST_MAP);
+        int playerGridCol = 1; //parte dalla (1,1) in quanto il resto sono muri
+        int playerGridRow = 1;
 
-        this.player = new Player(startX, Config.y);
+        // Converti in coordinate pixel
+        int startX = Config.GRID_OFFSET_X + (playerGridCol * Config.TILE_SIZE);
+        int startY = Config.GRID_OFFSET_Y + (playerGridRow * Config.TILE_SIZE);
+
+        this.player = new Player(startX, startY);
+        System.out.println("=== PLAYER SPAWN DEBUG ===");
+        System.out.println("Grid Position: [" + playerGridCol + ", " + playerGridRow + "]");
+        System.out.println("Pixel Position: [" + startX + ", " + startY + "]");
+        System.out.println("Grid Offset: [" + Config.GRID_OFFSET_X + ", " + Config.GRID_OFFSET_Y + "]");
+        System.out.println("Tile Size: " + Config.TILE_SIZE);
+        System.out.println("Cell Type at spawn: " + gameAreaArray[playerGridRow][playerGridCol]);
+        System.out.println("========================");
 
     }
 

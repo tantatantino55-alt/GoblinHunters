@@ -10,7 +10,7 @@ public class ConcreteDrawer extends AbstractDrawer{
     private Rectangle2D.Double rect;
 
     public ConcreteDrawer() {
-        this.rect = new Rectangle2D.Double(Config.x, Config.y, 624,528 );
+        this.rect = new Rectangle2D.Double(Config.GRID_OFFSET_X, Config.GRID_OFFSET_Y, 624,528 );
     }
 
     public void draw(Graphics g){
@@ -21,7 +21,7 @@ public class ConcreteDrawer extends AbstractDrawer{
         g2d.setColor(Color.black);
         g2d.draw(rect);
 
-        //Disegno il giocatore
+        for(int
 
 
         g2d.setColor(Color.BLUE);

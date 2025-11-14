@@ -71,6 +71,8 @@ public class Model implements IModel{
         return this.player.getYCoordinate();
     }
 
+
+    /* verifica con il central point
     public boolean isWalkable (int nextX, int nextY) {
         // 1. Converte coordinate pixel assolute (incluse offset) in coordinate di griglia logica
         // Usiamo il centro del Player per una collisione più precisa (AABB)
@@ -94,9 +96,52 @@ public class Model implements IModel{
 
         return true;
     }
+    */
 
     private int checkBounds(int next, int min, int max) {
         return Math.max(min, Math.min(max, next));
+    }
+
+
+    // Verifica la collisione AABB (Bounding Box) con il grid
+    public boolean isWalkable (int nextX, int nextY) {
+
+        // 1. Definisce l'area in pixel che il Player occuperà nella prossima posizione
+
+        // Angolo Superiore Sinistro (in indice di griglia)
+        int startCol = (nextX - Config.GRID_OFFSET_X) / Config.TILE_SIZE;
+        int startRow = (nextY - Config.GRID_OFFSET_Y) / Config.TILE_SIZE;
+
+        // Angolo Inferiore Destro (in indice di griglia)
+        // Usiamo TILE_SIZE - 1 per assicurarci di controllare l'ultimo pixel del Player
+        int endCol = (nextX - Config.GRID_OFFSET_X + Config.TILE_SIZE - 1) / Config.TILE_SIZE;
+        int endRow = (nextY - Config.GRID_OFFSET_Y + Config.TILE_SIZE - 1) / Config.TILE_SIZE;
+
+        // 2. Controllo Sicurezza Limiti Array
+        if (startCol < 0 || endCol >= Config.GRID_WIDTH || startRow < 0 || endRow >= Config.GRID_HEIGHT) {
+            return false;
+        }
+
+        // 3. Iterazione sulla Bounding Box del Player
+        // Controlla ogni cella (max 4) occupata dalla prossima posizione del Player.
+        for (int r = startRow; r <= endRow; r++) {
+            for (int c = startCol; c <= endCol; c++) {
+
+                // Re-check di sicurezza (anche se la check iniziale dovrebbe bastare)
+                if (c < 0 || c >= Config.GRID_WIDTH || r < 0 || r >= Config.GRID_HEIGHT) {
+                    continue;
+                }
+
+                int targetCellType = gameAreaArray[r][c];
+
+                // Se la cella è un blocco indistruttibile (1) o distruttibile (2)
+                if (targetCellType == Config.CELL_INDESTRUCTIBLE_BLOCK || targetCellType == Config.CELL_DESTRUCTIBLE_BLOCK) {
+                    return false; // Collisione trovata!
+                }
+            }
+        }
+
+        return true;
     }
 
     // Questo metodo controlla la collisione e aggiorna la posizione se possibile.
@@ -142,6 +187,12 @@ public class Model implements IModel{
     @Override
     public void PlaceBomb() {
 
+    }
+
+    @Override
+    public void setPlayerDelta(int dx, int dy) {
+        // Il Model conosce e gestisce i suoi oggetti interni (Player)
+        this.player.setDelta(dx, dy);
     }
 
 

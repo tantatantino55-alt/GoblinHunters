@@ -25,5 +25,5 @@ public interface IModel {
 
     public void updatePlayerMovement();
 
-    //boolean isMovable(int x, int y);
+    public void setPlayerDelta(int dx, int dy);
 }

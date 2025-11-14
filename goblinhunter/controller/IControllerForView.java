@@ -24,5 +24,4 @@ public interface IControllerForView {
 
     public void setPlayerMovement(int dx, int dy);
 
-
 }

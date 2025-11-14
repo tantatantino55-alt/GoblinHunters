@@ -43,8 +43,16 @@ public class ControllerForView implements IControllerForView{
         return Model.getInstance().yCoordinatePlayer();
     }
 
+    /*
     public void setPlayerMovement(int dx, int dy){
         Model.getInstance().getPlayer().setDelta(dx, dy);
+    }
+     */
+
+    @Override
+    public void setPlayerMovement(int dx, int dy) {
+        // CORREZIONE: Chiama il Model tramite l'interfaccia/metodo che protegge l'incapsulamento del Player.
+        Model.getInstance().setPlayerDelta(dx, dy);
     }
 
     @Override

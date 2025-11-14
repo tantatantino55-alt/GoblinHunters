@@ -65,15 +65,31 @@ public class GamePanel extends JPanel implements KeyListener {
     }
 
 
-        @Override
-        public void keyTyped (KeyEvent e){
+    @Override
+    public void keyTyped (KeyEvent e){
 
+    }
+
+
+    @Override
+    public void keyReleased (KeyEvent e){
+        int currentDeltaX = ControllerForView.getInstance().getPlayer().getDeltaX();
+        int currentDeltaY = ControllerForView.getInstance().getPlayer().getDeltaY();
+
+        switch (e.getKeyCode()) {
+            case KeyEvent.VK_LEFT:
+            case KeyEvent.VK_RIGHT:
+                // Se la direzione non è più X, la azzeriamo mantenendo Y
+                if (currentDeltaX != 0)
+                    ControllerForView.getInstance().setPlayerMovement(0, currentDeltaY);
+                break;
+            case KeyEvent.VK_UP:
+            case KeyEvent.VK_DOWN:
+                // Se la direzione non è più Y, la azzeriamo mantenendo X
+                if (currentDeltaY != 0)
+                    ControllerForView.getInstance().setPlayerMovement(currentDeltaX, 0);
+                break;
         }
-
-
-        @Override
-        public void keyReleased (KeyEvent e){
-
-        }
+    }
     }
 

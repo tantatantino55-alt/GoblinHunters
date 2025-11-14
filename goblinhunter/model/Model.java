@@ -2,8 +2,7 @@ package goblinhunter.model;
 
 import goblinhunter.utils.Config;
 
-public class Model implements IModel{
-    //---------------------------------------------------------------
+public class Model implements IModel{  //---------------------------------------------------------------
     // STATIC CONSTANTS
     //---------------------------------------------------------------
     public static final int DEFAULT_NUM_ROWS  = 11;
@@ -72,7 +71,8 @@ public class Model implements IModel{
     }
 
 
-    /* verifica con il central point
+    // verifica con il central point
+    /*
     public boolean isWalkable (int nextX, int nextY) {
         // 1. Converte coordinate pixel assolute (incluse offset) in coordinate di griglia logica
         // Usiamo il centro del Player per una collisione più precisa (AABB)
@@ -96,14 +96,16 @@ public class Model implements IModel{
 
         return true;
     }
-    */
 
+    */
     private int checkBounds(int next, int min, int max) {
         return Math.max(min, Math.min(max, next));
     }
 
 
+
     // Verifica la collisione AABB (Bounding Box) con il grid
+
     public boolean isWalkable (int nextX, int nextY) {
 
         // 1. Definisce l'area in pixel che il Player occuperà nella prossima posizione
@@ -143,6 +145,8 @@ public class Model implements IModel{
 
         return true;
     }
+
+
 
     // Questo metodo controlla la collisione e aggiorna la posizione se possibile.
     @Override
@@ -193,6 +197,16 @@ public class Model implements IModel{
     public void setPlayerDelta(int dx, int dy) {
         // Il Model conosce e gestisce i suoi oggetti interni (Player)
         this.player.setDelta(dx, dy);
+    }
+
+    @Override
+    public int getPlayerDeltaX() {
+        return this.player.getDeltaX();
+    }
+
+    @Override
+    public int getPlayerDeltaaY() {
+        return this.player.getDeltaY();
     }
 
 

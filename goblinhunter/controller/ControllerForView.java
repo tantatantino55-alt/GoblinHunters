@@ -56,6 +56,16 @@ public class ControllerForView implements IControllerForView{
     }
 
     @Override
+    public int getDeltaX() {
+        return Model.getInstance().getPlayerDeltaX();
+    }
+
+    @Override
+    public int getDeltaY() {
+         return Model.getInstance().getPlayerDeltaaY();
+    }
+
+    @Override
     public void PlaceBomb() {
 
     }

@@ -26,4 +26,8 @@ public interface IModel {
     public void updatePlayerMovement();
 
     public void setPlayerDelta(int dx, int dy);
+
+    public int getPlayerDeltaX();
+
+    public int getPlayerDeltaaY();
 }

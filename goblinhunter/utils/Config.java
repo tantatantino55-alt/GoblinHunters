@@ -78,4 +78,11 @@ public class Config {
     public static final int MIN_Y = GRID_OFFSET_Y;
     public static final int MAX_Y = GRID_OFFSET_Y + GAME_PANEL_HEIGHT - TILE_SIZE;
 
+
+    // ====================================================================
+    // 8. SPRITESHEETS 
+    // ====================================================================
+
+
+
 }

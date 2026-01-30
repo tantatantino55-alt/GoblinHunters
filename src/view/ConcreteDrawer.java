@@ -1,8 +1,8 @@
-package goblinhunter.view;
+package view;
 
-import goblinhunter.controller.ControllerForView;
-import goblinhunter.utils.Config;
-import goblinhunter.utils.TileManager;
+import controller.ControllerForView;
+import utils.Config;
+import utils.TileManager;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;

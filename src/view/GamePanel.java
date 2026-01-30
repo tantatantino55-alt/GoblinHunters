@@ -1,7 +1,7 @@
-package goblinhunter.view;
+package view;
 
-import goblinhunter.controller.ControllerForView;
-import goblinhunter.utils.Config;
+import controller.ControllerForView;
+import utils.Config;
 
 import javax.swing.*;
 import java.awt.*;

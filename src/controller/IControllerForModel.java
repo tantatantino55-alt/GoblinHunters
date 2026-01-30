@@ -1,4 +1,4 @@
-package goblinhunter.controller;
+package controller;
 
 public interface IControllerForModel {
     public void updateGame();

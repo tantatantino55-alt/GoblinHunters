@@ -1,6 +1,6 @@
-package goblinhunter.controller;
+package controller;
 
-import goblinhunter.utils.ResourceManager;
+import utils.ResourceManager;
 
 public class Main {
 

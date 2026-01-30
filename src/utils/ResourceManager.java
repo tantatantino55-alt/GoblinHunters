@@ -1,4 +1,4 @@
-package goblinhunter.utils;
+package utils;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;

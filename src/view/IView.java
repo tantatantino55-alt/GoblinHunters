@@ -1,4 +1,4 @@
-package goblinhunter.view;
+package view;
 
 public interface IView {
     public void openGameGUI();

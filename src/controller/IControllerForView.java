@@ -1,6 +1,6 @@
-package goblinhunter.controller;
+package controller;
 
-import goblinhunter.model.Player;
+import model.Player;
 
 public interface IControllerForView {
 

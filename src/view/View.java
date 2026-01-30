@@ -1,4 +1,4 @@
-package goblinhunter.view;
+package view;
 
 import javax.swing.*;
 

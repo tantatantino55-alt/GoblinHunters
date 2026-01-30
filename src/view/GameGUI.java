@@ -1,6 +1,6 @@
-package goblinhunter.view;
+package view;
 
-import goblinhunter.utils.Config;
+import utils.Config;
 
 import javax.swing.*;
 import java.awt.*;

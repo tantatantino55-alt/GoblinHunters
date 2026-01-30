@@ -1,7 +1,7 @@
-package goblinhunter.controller;
+package controller;
 
-import goblinhunter.model.Model;
-import goblinhunter.utils.Config;
+import model.Model;
+import utils.Config;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;

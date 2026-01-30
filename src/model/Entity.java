@@ -1,4 +1,4 @@
-package goblinhunter.model;
+package model;
 
 public abstract class Entity {
 

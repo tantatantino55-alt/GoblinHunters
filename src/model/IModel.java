@@ -1,4 +1,4 @@
-package goblinhunter.model;
+package model;
 
 public interface IModel {
 
@@ -29,7 +29,7 @@ public interface IModel {
 
     public int getPlayerDeltaX();
 
-    public int getPlayerDeltaaY();
+    public int getPlayerDeltaY();
 
     int[][] getGameAreaArray();
 }

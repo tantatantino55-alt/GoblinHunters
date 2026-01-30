@@ -1,4 +1,4 @@
-package goblinhunter.utils;
+package utils;
 
 public class Config {
     // ====================================================================
@@ -21,8 +21,11 @@ public class Config {
     // 3. DIMENSIONI FINESTRA (JFrame)
     // ====================================================================
     // Usate in GameGUI.java
-    public static final int WINDOW_PREFERRED_WIDTH = 960;  // Precedentemente in GameGUI
-    public static final int WINDOW_PREFERRED_HEIGHT = 800; // Precedentemente in GameGUI
+   // public static final int WINDOW_PREFERRED_WIDTH = 960;  // Precedentemente in GameGUI
+    //public static final int WINDOW_PREFERRED_HEIGHT = 800; // Precedentemente in GameGUI
+
+    public static final int WINDOW_PREFERRED_WIDTH = 1152;  // Precedentemente in GameGUI
+    public static final int WINDOW_PREFERRED_HEIGHT = 896; // Precedentemente in GameGUI
 
     // ====================================================================
     // 4. GAME LOOP
@@ -70,8 +73,8 @@ public class Config {
     // ====================================================================
     // 7. COORDINATE
     // ====================================================================
-    public static final int GRID_OFFSET_X = 0;
-    public static final int GRID_OFFSET_Y = 0;
+    public static final int GRID_OFFSET_X = 160;
+    public static final int GRID_OFFSET_Y = 46;
 
     public static final int MIN_X = GRID_OFFSET_X;
     public static final int MAX_X = GRID_OFFSET_X + GAME_PANEL_WIDTH - TILE_SIZE;
@@ -82,11 +85,23 @@ public class Config {
     // ====================================================================
     // 8. SPRITESHEETS 
     // ====================================================================
+    public static final String PLAYER1_SHEET ="/wizardmale.png";
+    public static final int PLAYER_SHEET_SIZE = 2048;
+    public static final int PLAYER_FRAME_SIZE = 128; // (2048 / 16)
+    public static final int PLAYER_COLS = 16;
+    public static final int PLAYER_ROWS = 16;
+    public static final int PLAYER_TOTAL_FRAMES = 202;
+
+    // Offset per il disegno (necessario perché il frame è 128 ma la tile logica è 64)
+    // (128 - 64) / 2 = 32 pixel. Questo centra il mago perfettamente.
+    public static final int WIZARD_DRAW_OFFSET = ( PLAYER_SHEET_SIZE- TILE_SIZE) / 2;
+
+
 
     // --- TILES ---
-    public static final String TILE_FLOOR = "/floor.png";
-    public static final String TILE_WALL_INDESTRUCTIBLE = "/sand.png";
-    //public static final String TILE_WALL_DESTRUCTIBLE = "/images/wall_destructible.png";
+    public static final String TILE_FLOOR = "/colonnasabbia.png";
+    public static final String TILE_WALL_INDESTRUCTIBLE = "/murosabbia.png";
+    public static final String TILE_WALL_DESTRUCTIBLE = "/castellosabbia.png";
 
     //stringhe con il path delle sprite sheet
 

@@ -58,7 +58,7 @@ public class GamePanel extends JPanel {
                     // Imposta la X a +speed, mantenendo l'attuale Y
                     ControllerForView.getInstance().setPlayerMovement(
                             speed,
-                            ControllerForView.getInstance().getPlayer().getDeltaY()
+                            ControllerForView.getInstance().getDeltaY()
                     );
                 }
             });
@@ -69,10 +69,10 @@ public class GamePanel extends JPanel {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     // Se il giocatore stava andando a destra (deltaX > 0), lo ferma su X.
-                    if (ControllerForView.getInstance().getPlayer().getDeltaX() > 0) {
+                    if (ControllerForView.getInstance().getDeltaX() > 0) {
                         ControllerForView.getInstance().setPlayerMovement(
                                 0,
-                                ControllerForView.getInstance().getPlayer().getDeltaY()
+                                ControllerForView.getInstance().getDeltaY()
                         );
                     }
                 }
@@ -97,10 +97,10 @@ public class GamePanel extends JPanel {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     // Se il giocatore stava andando a sinistra (deltaX < 0), lo ferma su X.
-                    if (ControllerForView.getInstance().getPlayer().getDeltaX() < 0) {
+                    if (ControllerForView.getInstance().getDeltaX() < 0) {
                         ControllerForView.getInstance().setPlayerMovement(
                                 0,
-                                ControllerForView.getInstance().getPlayer().getDeltaY()
+                                ControllerForView.getInstance().getDeltaY()
                         );
                     }
                 }
@@ -117,7 +117,7 @@ public class GamePanel extends JPanel {
             public void actionPerformed(ActionEvent e) {
                 // Imposta la Y a -speed, mantenendo l'attuale X
                 ControllerForView.getInstance().setPlayerMovement(
-                        ControllerForView.getInstance().getPlayer().getDeltaX(),
+                        ControllerForView.getInstance().getDeltaX(),
                         -speed
                 );
             }
@@ -129,7 +129,7 @@ public class GamePanel extends JPanel {
             @Override
             public void actionPerformed(ActionEvent e) {
                 // Se il giocatore stava andando in su (deltaY < 0), lo ferma su Y.
-                if (ControllerForView.getInstance().getPlayer().getDeltaY() < 0) {
+                if (ControllerForView.getInstance().getDeltaY() < 0) {
                     ControllerForView.getInstance().setPlayerMovement(
                             ControllerForView.getInstance().getDeltaX(),
                             0
@@ -157,7 +157,7 @@ public class GamePanel extends JPanel {
             @Override
             public void actionPerformed(ActionEvent e) {
                 // Se il giocatore stava andando in giù (deltaY > 0), lo ferma su Y.
-                if (ControllerForView.getInstance().getPlayer().getDeltaY() > 0) {
+                if (ControllerForView.getInstance().getDeltaY() > 0) {
                     ControllerForView.getInstance().setPlayerMovement(
                             ControllerForView.getInstance().getDeltaX(),
                             0

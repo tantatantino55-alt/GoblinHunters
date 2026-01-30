@@ -150,8 +150,56 @@ public class Model implements IModel{  //---------------------------------------
     }
 
 
+    //versione nuova:
+    public boolean isWalkable(int nextX, int nextY) {
+        // 1. DEFINIZIONE AREA DI COLLISIONE (PIEDI)
+        // Calcoliamo i margini della hitbox relativi alla posizione logica 64x64
+        // nextX e nextY rappresentano l'angolo Top-Left della tile logica del Player.
 
-    // Questo metodo controlla la collisione e aggiorna la posizione se possibile.
+        // Centriamo la hitbox orizzontalmente
+        int hitboxLeft = nextX + (Config.TILE_SIZE - Config.PLAYER_HITBOX_WIDTH) / 2;
+        int hitboxRight = hitboxLeft + Config.PLAYER_HITBOX_WIDTH - 1;
+
+        // Posizioniamo la hitbox alla base della tile (dove ci sono i piedi)
+        int hitboxTop = nextY + (Config.TILE_SIZE - Config.PLAYER_HITBOX_HEIGHT);
+        int hitboxBottom = nextY + Config.TILE_SIZE - 1;
+
+        // 2. TRADUZIONE IN COORDINATE DI GRIGLIA
+        // Troviamo quali celle della matrice sono coperte dalla hitbox dei piedi
+        int startCol = (hitboxLeft - Config.GRID_OFFSET_X) / Config.TILE_SIZE;
+        int endCol = (hitboxRight - Config.GRID_OFFSET_X) / Config.TILE_SIZE;
+        int startRow = (hitboxTop - Config.GRID_OFFSET_Y) / Config.TILE_SIZE;
+        int endRow = (hitboxBottom - Config.GRID_OFFSET_Y) / Config.TILE_SIZE;
+
+        // 3. CONTROLLO LIMITI MAPPA
+        if (startCol < 0 || endCol >= Config.GRID_WIDTH || startRow < 0 || endRow >= Config.GRID_HEIGHT) {
+            return false;
+        }
+
+        // 4. VERIFICA COLLISIONI
+        // Controlliamo solo le celle (solitamente 1 o 2) che i piedi stanno toccando
+        for (int r = startRow; r <= endRow; r++) {
+            for (int c = startCol; c <= endCol; c++) {
+                int cellType = gameAreaArray[r][c];
+
+                // Se la cella è un muro o un blocco indistruttibile
+                if (cellType == Config.CELL_INDESTRUCTIBLE_BLOCK || cellType == Config.CELL_DESTRUCTIBLE_BLOCK) {
+                    return false; // Collisione rilevata
+                }
+            }
+        }
+
+        return true; // Spazio libero per i piedi
+    }
+
+
+
+
+
+    /**
+     * Aggiorna la posizione e lo stato dell'animazione del Player.
+     * Gestisce le collisioni, i confini della mappa e il cambio dei frame.
+     */
     @Override
     public void updatePlayerMovement() {
         int currentX = player.getXCoordinate();
@@ -159,37 +207,65 @@ public class Model implements IModel{  //---------------------------------------
         int deltaX = player.getDeltaX();
         int deltaY = player.getDeltaY();
 
-        int minX = Config.MIN_X;
-        int maxX = Config.MAX_X;
-        int minY = Config.MIN_Y;
-        int maxY = Config.MAX_Y;
+        // 1. GESTIONE DELL'AZIONE (ANIMAZIONE)
+        // Determiniamo l'animazione corretta in base alla direzione del movimento
+        if (deltaX > 0) {
+            // Camminata a Destra (Frame count: 12 come da setupResources)
+            player.setAction("PLAYER_RIGHT_RUNNING", 12);
+        } else if (deltaX < 0) {
+            // Camminata a Sinistra (Frame count: 12)
+            player.setAction("PLAYER_LEFT_RUNNING", 12);
+        } else if (deltaY > 0) {
+            // Camminata in Avanti (Frame count: 12)
+            player.setAction("PLAYER_FRONT_RUNNING", 12);
+        } else if (deltaY < 0) {
+            // Camminata all'Indietro (Frame count: 12)
+            player.setAction("PLAYER_BACK_RUNNING", 12);
+        } else {
+            // LOGICA IDLE: Se i delta sono 0, il player è fermo.
+            // Recuperiamo l'ultima azione per capire in che direzione deve guardare da fermo.
+            String lastAction = player.getCurrentAction();
 
+            if (lastAction.contains("RIGHT")) {
+                player.setAction("PLAYER_RIGHT_IDLE", 16); // Frame count: 16
+            } else if (lastAction.contains("LEFT")) {
+                player.setAction("PLAYER_LEFT_IDLE", 16);
+            } else if (lastAction.contains("BACK")) {
+                player.setAction("PLAYER_BACK_IDLE", 16);
+            } else {
+                // Default: guarda in avanti
+                player.setAction("PLAYER_FRONT_IDLE", 16);
+            }
+        }
+
+        // 2. AVANZAMENTO DEL TEMPO DELL'ANIMAZIONE
+        // Chiamiamo updateAnimation() ad ogni tick per far scorrere i frame
+        player.updateAnimation();
+
+        // 3. LOGICA DI MOVIMENTO FISICO (Se c'è movimento)
         if (deltaX == 0 && deltaY == 0) {
-            return; // Nessun movimento richiesto
+            return; // Salta il calcolo delle collisioni se non c'è spostamento
         }
 
         // --- Tentativo di movimento sull'asse X ---
         int nextX = currentX + deltaX;
         if (isWalkable(nextX, currentY)) {
-            nextX = checkBounds(nextX, minX, maxX);
+            nextX = checkBounds(nextX, Config.MIN_X, Config.MAX_X);
             player.setXCoordinate(nextX);
         } else {
-            // Collisione X: ferma il movimento su X
-            player.setDelta(0, deltaY);
+            player.setDelta(0, deltaY); // Collisione X: blocca asse X
         }
 
-        // tentativo di movimento sull'asse Y
-        // Ricontrolla con la X che potrebbe essere stata aggiornata (nextX) o bloccata (currentX)
+        // --- Tentativo di movimento sull'asse Y ---
         int nextY = currentY + deltaY;
         if (isWalkable(player.getXCoordinate(), nextY)) {
-            nextY = checkBounds(nextY, minY, maxY);
-
+            nextY = checkBounds(nextY, Config.MIN_Y, Config.MAX_Y);
             player.setYCoordinate(nextY);
         } else {
-            // Collisione Y: ferma il movimento su Y
-            player.setDelta(player.getDeltaX(), 0);
+            player.setDelta(player.getDeltaX(), 0); // Collisione Y: blocca asse Y
         }
     }
+
 
     @Override
     public void PlaceBomb() {
@@ -212,11 +288,20 @@ public class Model implements IModel{  //---------------------------------------
         return this.player.getDeltaY();
     }
 
+    @Override
+    public String getPlayerAction() {
+        return this.player.getCurrentAction();
+    }
+
+    @Override
+    public int getPlayerFrameIndex() {
+        return this.player.getFrameIndex();
+    }
+
 
     public static IModel getInstance() {
         if (instance == null)
             instance = new Model();
         return instance;
     }
-
 }

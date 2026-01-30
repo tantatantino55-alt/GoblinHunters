@@ -91,11 +91,9 @@ public class Config {
     public static final int PLAYER_COLS = 16;
     public static final int PLAYER_ROWS = 16;
     public static final int PLAYER_TOTAL_FRAMES = 202;
-
-    // Offset per il disegno (necessario perché il frame è 128 ma la tile logica è 64)
-    // (128 - 64) / 2 = 32 pixel. Questo centra il mago perfettamente.
-    public static final int WIZARD_DRAW_OFFSET = ( PLAYER_SHEET_SIZE- TILE_SIZE) / 2;
-
+    public static final int PLAYER_PIVOT_Y = 102;
+    public static final int PLAYER_HITBOX_WIDTH = 32;  // Più stretta della tile (64)
+    public static final int PLAYER_HITBOX_HEIGHT = 16; // Molto bassa, solo l'area dei piedi
 
 
     // --- TILES ---

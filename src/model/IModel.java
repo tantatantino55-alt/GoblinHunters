@@ -31,5 +31,9 @@ public interface IModel {
 
     public int getPlayerDeltaY();
 
-    int[][] getGameAreaArray();
+    public int[][] getGameAreaArray();
+
+    public String getPlayerAction();
+
+    public int getPlayerFrameIndex();
 }

@@ -32,9 +32,7 @@ public class ControllerForView implements IControllerForView{
     }
 
 
-    public Player getPlayer() {
-        return Model.getInstance().getPlayer();
-    }
+
 
 
     public int XCoordinatePlayer() {
@@ -127,4 +125,13 @@ public class ControllerForView implements IControllerForView{
         return instance;
     }
 
+    @Override
+    public String getPlayerAction() {
+        return Model.getInstance().getPlayerAction();
+    }
+
+    @Override
+    public int getCurrentPlayerFrameIndex() {
+        return Model.getInstance().getPlayerFrameIndex();
+    }
 }

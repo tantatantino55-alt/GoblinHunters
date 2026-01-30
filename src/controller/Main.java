@@ -8,6 +8,7 @@ public class Main {
       ControllerForView.getInstance().openGameGUI();
       ControllerForModel.getInstance().startGameLoop();
       ResourceManager.printDebugInfo();
+      ControllerForView.getInstance().setupResources();
     }
 
 }// end class

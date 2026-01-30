@@ -1,7 +1,5 @@
 package controller;
 
-import model.Player;
-
 public interface IControllerForView {
 
     public void openGameGUI();
@@ -11,8 +9,6 @@ public interface IControllerForView {
     public int getNumColumns();
 
     public int getNumRows();
-
-    public Player getPlayer();
 
     public int XCoordinatePlayer();
 
@@ -28,5 +24,13 @@ public interface IControllerForView {
 
     public int  getDeltaY();
 
-    int[][] getGameAreaArray();
+    public int[][] getGameAreaArray();
+
+    public void setupResources();
+
+    public String getPlayerAction();
+
+    public int getCurrentPlayerFrameIndex();
+
+
 }

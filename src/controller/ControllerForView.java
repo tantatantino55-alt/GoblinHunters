@@ -1,7 +1,6 @@
 package controller;
 
 import model.Model;
-import model.Player;
 import utils.Config;
 import utils.SpriteManager;
 import view.View;
@@ -32,28 +31,17 @@ public class ControllerForView implements IControllerForView{
     }
 
 
-
-
-
     public int XCoordinatePlayer() {
         return Model.getInstance().xCoordinatePlayer();
     }
-
-
 
     public int yCoordinatePlayer() {
         return Model.getInstance().yCoordinatePlayer();
     }
 
-    /*
-    public void setPlayerMovement(int dx, int dy){
-        Model.getInstance().getPlayer().setDelta(dx, dy);
-    }
-     */
 
     @Override
     public void setPlayerMovement(int dx, int dy) {
-        // CORREZIONE: Chiama il Model tramite l'interfaccia/metodo che protegge l'incapsulamento del Player.
         Model.getInstance().setPlayerDelta(dx, dy);
     }
 
@@ -76,13 +64,11 @@ public class ControllerForView implements IControllerForView{
     public void PlaceBomb() {
 
     }
-    // In ControllerForView.java
 
     public void setupResources() {
         SpriteManager sm = SpriteManager.getInstance();
 
-        // --- SEZIONE PLAYER (MAGO) ---
-        // Parametri: Key Azione, Path, Indice Inizio, Numero Frame, Dimensione
+        // --- SEZIONE PLAYER ---
         sm.loadAnimation("PLAYER_BACK_ATTACKING", Config.PLAYER1_SHEET, 0, 10, Config.PLAYER_FRAME_SIZE);
         sm.loadAnimation("PLAYER_BACK_HURT", Config.PLAYER1_SHEET, 10, 10, Config.PLAYER_FRAME_SIZE);
         sm.loadAnimation("PLAYER_BACK_IDLE", Config.PLAYER1_SHEET, 20, 16, Config.PLAYER_FRAME_SIZE);
@@ -107,15 +93,15 @@ public class ControllerForView implements IControllerForView{
         sm.loadAnimation("PLAYER_RIGHT_RUNNING", Config.PLAYER1_SHEET, 190, 12, Config.PLAYER_FRAME_SIZE);
 
 
-        System.out.println("MVC LOG: Risorse di Player  correttamente.");
+        System.out.println("Risorse di Player inizializzata correttamente.");
     }
 
 
-    //  Nuovo metodo per richiedere il repaint
     @Override
     public void requestRepaint() {
         View.getInstance().requestRepaint();
     }
+
     //---------------------------------------------------------------
     // STATIC METHODS
     //---------------------------------------------------------------

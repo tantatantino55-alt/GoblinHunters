@@ -34,7 +34,7 @@ public class GameGUI extends JFrame{
         this.setVisible(true);
     }
 
-    // Metodo per esporre il pannello di gioco
+
     public GamePanel getGamePanel() {
         return gamePanel;
     }

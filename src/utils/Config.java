@@ -10,7 +10,7 @@ public class Config {
     // ====================================================================
     // 2. DIMENSIONI RENDERIZZAZIONE (FISICHE)
     // ====================================================================
-    // Dimensione di una singola cella/tile in pixel.
+    // Dimensione di una singola tile in pixel.
     public static final int TILE_SIZE = 64;
 
     // Dimensioni calcolate del GamePanel (Griglia 13x11)
@@ -20,44 +20,34 @@ public class Config {
     // ====================================================================
     // 3. DIMENSIONI FINESTRA (JFrame)
     // ====================================================================
-    // Usate in GameGUI.java
-   // public static final int WINDOW_PREFERRED_WIDTH = 960;  // Precedentemente in GameGUI
-    //public static final int WINDOW_PREFERRED_HEIGHT = 800; // Precedentemente in GameGUI
 
-    public static final int WINDOW_PREFERRED_WIDTH = 1152;  // Precedentemente in GameGUI
-    public static final int WINDOW_PREFERRED_HEIGHT = 896; // Precedentemente in GameGUI
+    public static final int WINDOW_PREFERRED_WIDTH = 1152;
+    public static final int WINDOW_PREFERRED_HEIGHT = 896;
 
     // ====================================================================
     // 4. GAME LOOP
     // ====================================================================
-    // Frequenza di aggiornamento del gioco (Frame per secondo)
     public static final int FPS = 60;
-    // Tempo di ritardo tra un aggiornamento e l'altro (in millisecondi)
     public static final int GAME_LOOP_DELAY_MS = 1000 / FPS;
 
 
     // ====================================================================
     // 5. PARAMETRI DI GIOCO (Model Logic)
     // ====================================================================
-    // Player (Mago)
-    public static final int PLAYER_SPEED = 4;
-    //public static final int x = 168;
-    //public static final int y = 136;
+    // Player
+    public static final int PLAYER_SPEED = 3;
     public static final int PLAYER_INITIAL_LIVES = 5;
     public static final int SPELL_RANGE = 3;
     public static final int SPELL_RANGE_POWERUP = 6;
     public static final int POWERUP_DURATION_SECONDS = 10;
 
     // Nemici
-    public static final int MAX_ENEMIES = 6; // Max nemici contemporaneamente
-    // Goblin Boss (potresti aggiungere qui i parametri specifici)
+    public static final int MAX_ENEMIES = 6;
 
     // Risorse e Power-up
     public static final int MAX_POWERUPS = 3;
 
-    /* Percorsi delle risorse (sprite, sfondo....)
-       ... (Aggiungerai qui i percorsi ai tuoi file)
-    */
+
 
 
     // ====================================================================
@@ -92,8 +82,8 @@ public class Config {
     public static final int PLAYER_ROWS = 16;
     public static final int PLAYER_TOTAL_FRAMES = 202;
     public static final int PLAYER_PIVOT_Y = 102;
-    public static final int PLAYER_HITBOX_WIDTH = 32;  // Più stretta della tile (64)
-    public static final int PLAYER_HITBOX_HEIGHT = 16; // Molto bassa, solo l'area dei piedi
+    public static final int PLAYER_HITBOX_WIDTH = 32;
+    public static final int PLAYER_HITBOX_HEIGHT = 16;
 
 
     // --- TILES ---
@@ -101,7 +91,6 @@ public class Config {
     public static final String TILE_WALL_INDESTRUCTIBLE = "/murosabbia.png";
     public static final String TILE_WALL_DESTRUCTIBLE = "/castellosabbia.png";
 
-    //stringhe con il path delle sprite sheet
 
 
 }

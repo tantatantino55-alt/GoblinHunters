@@ -30,7 +30,7 @@ public class ControllerForModel implements IControllerForModel {
                 ControllerForView.getInstance().requestRepaint();
             }
         });
-        // Il timer non si avvia finché non è chiamato startGameLoop()
+
     }
 
 
@@ -38,13 +38,7 @@ public class ControllerForModel implements IControllerForModel {
     @Override
     public void updateGame() {
         Model.getInstance().updatePlayerMovement();
-        // Qui avverrà la chiamata al Model per avanzare la simulazione
-        // Esempio:
-        // IModel.getInstance().updateEntities();
-        // IModel.getInstance().checkCollisions();
-        // IModel.getInstance().spawnEnemies();
 
-        // Per ora, possiamo solo chiamare il Model per avanzare il tempo, se necessario.
     }
 
     // Implementazione di IControllerForModel.startGameLoop()

@@ -31,6 +31,4 @@ public interface IControllerForView {
     public String getPlayerAction();
 
     public int getCurrentPlayerFrameIndex();
-
-
 }

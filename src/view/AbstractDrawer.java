@@ -9,5 +9,4 @@ public abstract class AbstractDrawer {
 
     public abstract int getDrawingHeight();
 
-    //public abstract void updateDrawing();
 }

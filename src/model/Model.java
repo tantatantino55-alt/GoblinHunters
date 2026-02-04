@@ -2,98 +2,60 @@ package model;
 
 import utils.Config;
 
-public class Model implements IModel{
-
-
-    //---------------------------------------------------------------
-    // STATIC FIELDS
-    //---------------------------------------------------------------
+public class Model implements IModel {
     private static Model instance = null;
-    //---------------------------------------------------------------
-    // INSTANCE ATTRIBUTES
-    //---------------------------------------------------------------
     private final int[][] gameAreaArray;
     private Player player;
 
-    //TEST MAP
     private static final int[][] testMap = {
-            {0,1,0,0,0,0,0,0,0,0,0,0,0},
-            {0,1,0,0,0,0,0,2,0,0,0,0,0},
-            {0,1,1,1,1,0,0,0,0,0,0,0,0},
-            {0,0,0,0,1,0,0,0,0,0,0,0,0},
-            {1,1,1,0,1,0,0,0,0,0,2,0,0},
-            {0,0,2,0,0,0,0,0,0,0,0,0,0},
-            {0,0,0,0,0,2,0,0,0,0,0,0,0},
-            {0,0,2,0,0,0,0,0,0,0,0,0,0},
-            {0,0,0,0,0,0,0,0,0,2,0,0,0},
-            {0,0,0,0,0,2,2,0,0,0,0,0,0},
+            {0,1,0,0,0,0,0,0,0,0,0,0,0}, {0,1,0,0,0,0,0,2,0,0,0,0,0},
+            {0,1,1,1,1,0,0,0,0,0,0,0,0}, {0,0,0,0,1,0,0,0,0,0,0,0,0},
+            {1,1,1,0,1,0,0,0,0,0,2,0,0}, {0,0,2,0,0,0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,2,0,0,0,0,0,0,0}, {0,0,2,0,0,0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0,0,2,0,0,0}, {0,0,0,0,0,2,2,0,0,0,0,0,0},
             {0,0,0,0,0,0,0,0,0,0,0,0,0}
     };
 
-
     private Model() {
         this.gameAreaArray = new int[Config.GRID_HEIGHT][Config.GRID_WIDTH];
-        int startX = Config.GRID_OFFSET_X + 0 * Config.TILE_SIZE;
-        int startY = Config.GRID_OFFSET_Y + 0 * Config.TILE_SIZE;
-        this.loadGameArea(testMap);
-        this.player = new Player(startX, startY);
-
-    }
-
-    private void loadGameArea(int[][] map){
         for (int i = 0; i < Config.GRID_HEIGHT; i++)
-           for (int j = 0; j < Config.GRID_WIDTH; j++)
-               this.gameAreaArray[i][j] = map[i][j];
+            System.arraycopy(testMap[i], 0, gameAreaArray[i], 0, Config.GRID_WIDTH);
+
+        // Il mondo logico inizia a 0.0
+        this.player = new Player(0.0, 0.0);
     }
 
+    public boolean isWalkable(double nextX, double nextY) {
+        // 1. Trasformiamo le dimensioni della Hitbox in proporzioni logiche (Unità Mondo)
+        // hbW = 32/64 = 0.5 unità; hbH = 16/64 = 0.25 unità
+        double hbW = (double) Config.PLAYER_HITBOX_WIDTH / Config.TILE_SIZE;
+        double hbH = (double) Config.PLAYER_HITBOX_HEIGHT / Config.TILE_SIZE;
 
+        // 2. Calcolo dei bordi della Hitbox logica
+        double left = nextX + (1.0 - hbW) / 2.0;
 
-    public int getNumRows(){
-        return this.gameAreaArray.length;
-    }
+        // Usiamo un Epsilon infinitesimale (0.0001) per la massima precisione.
+        // Questo previene collisioni "fantasma" dovute a errori di calcolo dei numeri double.
+        double right = left + hbW - 0.0001;
 
-    public int getNumColumns() {
-        return this.gameAreaArray[0].length;
-    }
-    public int xCoordinatePlayer() {
-        return this.player.getXCoordinate();
-    }
-    public int yCoordinatePlayer() {
-        return this.player.getYCoordinate();
-    }
-    public int[][] getGameAreaArray() {
-        return this.testMap;
-    }
+        double top = nextY + (1.0 - hbH);
+        double bottom = nextY + 1.0 - 0.0001;
 
+        // 3. Traduzione in indici di matrice (matrice discreta)
+        int startCol = (int) Math.floor(left);
+        int endCol = (int) Math.floor(right);
+        int startRow = (int) Math.floor(top);
+        int endRow = (int) Math.floor(bottom);
 
-
-    private int checkBounds(int next, int min, int max) {
-        return Math.max(min, Math.min(max, next));
-    }
-
-    public boolean isWalkable(int nextX, int nextY) {
-        int hitboxLeft = nextX + (Config.TILE_SIZE - Config.PLAYER_HITBOX_WIDTH) / 2;
-        int hitboxRight = hitboxLeft + Config.PLAYER_HITBOX_WIDTH - 1;
-
-
-        int hitboxTop = nextY + (Config.TILE_SIZE - Config.PLAYER_HITBOX_HEIGHT);
-        int hitboxBottom = nextY + Config.TILE_SIZE - 1;
-
-
-        int startCol = (hitboxLeft - Config.GRID_OFFSET_X) / Config.TILE_SIZE;
-        int endCol = (hitboxRight - Config.GRID_OFFSET_X) / Config.TILE_SIZE;
-        int startRow = (hitboxTop - Config.GRID_OFFSET_Y) / Config.TILE_SIZE;
-        int endRow = (hitboxBottom - Config.GRID_OFFSET_Y) / Config.TILE_SIZE;
-
+        // 4. Controllo bordi del mondo logico
         if (startCol < 0 || endCol >= Config.GRID_WIDTH || startRow < 0 || endRow >= Config.GRID_HEIGHT) {
             return false;
         }
 
-
+        // 5. Verifica ostacoli nella matrice discreta
         for (int r = startRow; r <= endRow; r++) {
             for (int c = startCol; c <= endCol; c++) {
                 int cellType = gameAreaArray[r][c];
-
                 if (cellType == Config.CELL_INDESTRUCTIBLE_BLOCK || cellType == Config.CELL_DESTRUCTIBLE_BLOCK) {
                     return false;
                 }
@@ -104,91 +66,59 @@ public class Model implements IModel{
 
     @Override
     public void updatePlayerMovement() {
-        int currentX = player.getXCoordinate();
-        int currentY = player.getYCoordinate();
-        int deltaX = player.getDeltaX();
-        int deltaY = player.getDeltaY();
+        double currentX = player.getXCoordinate();
+        double currentY = player.getYCoordinate();
+        double deltaX = player.getDeltaX();
+        double deltaY = player.getDeltaY();
 
-        if (deltaX > 0) {
-            player.setAction("PLAYER_RIGHT_RUNNING", 12);
-        } else if (deltaX < 0) {
-            player.setAction("PLAYER_LEFT_RUNNING", 12);
-        } else if (deltaY > 0) {
-            player.setAction("PLAYER_FRONT_RUNNING", 12);
-        } else if (deltaY < 0) {
-            player.setAction("PLAYER_BACK_RUNNING", 12);
-        } else {
-            String lastAction = player.getCurrentAction();
-
-            if (lastAction.contains("RIGHT")) {
-                player.setAction("PLAYER_RIGHT_IDLE", 16); // Frame count: 16
-            } else if (lastAction.contains("LEFT")) {
-                player.setAction("PLAYER_LEFT_IDLE", 16);
-            } else if (lastAction.contains("BACK")) {
-                player.setAction("PLAYER_BACK_IDLE", 16);
-            } else {
-                player.setAction("PLAYER_FRONT_IDLE", 16);
-            }
-        }
-
+        updatePlayerAction(deltaX, deltaY);
         player.updateAnimation();
 
-        if (deltaX == 0 && deltaY == 0) {
-            return;
-        }
+        if (deltaX == 0 && deltaY == 0) return;
 
-        int nextX = currentX + deltaX;
-        if (isWalkable(nextX, currentY)) {
-            nextX = checkBounds(nextX, Config.MIN_X, Config.MAX_X);
-            player.setXCoordinate(nextX);
-        } else {
-            player.setDelta(0, deltaY);
-        }
+        double nextX = currentX + deltaX;
+        if (isWalkable(nextX, currentY)) player.setXCoordinate(nextX);
 
-        int nextY = currentY + deltaY;
-        if (isWalkable(player.getXCoordinate(), nextY)) {
-            nextY = checkBounds(nextY, Config.MIN_Y, Config.MAX_Y);
-            player.setYCoordinate(nextY);
-        } else {
-            player.setDelta(player.getDeltaX(), 0);
+        double nextY = currentY + deltaY;
+        if (isWalkable(player.getXCoordinate(), nextY)) player.setYCoordinate(nextY);
+    }
+
+    private void updatePlayerAction(double dx, double dy) {
+        if (dx > 0) player.setAction("PLAYER_RIGHT_RUNNING", 12);
+        else if (dx < 0) player.setAction("PLAYER_LEFT_RUNNING", 12);
+        else if (dy > 0) player.setAction("PLAYER_FRONT_RUNNING", 12);
+        else if (dy < 0) player.setAction("PLAYER_BACK_RUNNING", 12);
+        else {
+            String last = player.getCurrentAction();
+            if (last.contains("RIGHT")) player.setAction("PLAYER_RIGHT_IDLE", 16);
+            else if (last.contains("LEFT")) player.setAction("PLAYER_LEFT_IDLE", 16);
+            else if (last.contains("BACK")) player.setAction("PLAYER_BACK_IDLE", 16);
+            else player.setAction("PLAYER_FRONT_IDLE", 16);
         }
     }
 
 
     @Override
-    public void PlaceBomb() {
-
-    }
-
-    @Override
-    public void setPlayerDelta(int dx, int dy) {
+    public void setPlayerDelta(double dx, double dy) {
+        // Non arrotondiamo più.
+        // Il Model accetta la precisione massima del processore (64 bit).
         this.player.setDelta(dx, dy);
     }
 
-    @Override
-    public int getPlayerDeltaX() {
-        return this.player.getDeltaX();
-    }
 
-    @Override
-    public int getPlayerDeltaY() {
-        return this.player.getDeltaY();
-    }
-
-    @Override
-    public String getPlayerAction() {
-        return this.player.getCurrentAction();
-    }
-
-    @Override
-    public int getPlayerFrameIndex() {
-        return this.player.getFrameIndex();
-    }
-
+    @Override public double xCoordinatePlayer() { return player.getXCoordinate(); }
+    @Override public double yCoordinatePlayer() { return player.getYCoordinate(); }
+    @Override public double getPlayerDeltaX() { return player.getDeltaX(); }
+    @Override public double getPlayerDeltaY() { return player.getDeltaY(); }
+    @Override public int getNumRows() { return gameAreaArray.length; }
+    @Override public int getNumColumns() { return gameAreaArray[0].length; }
+    @Override public int[][] getGameAreaArray() { return gameAreaArray; }
+    @Override public String getPlayerAction() { return player.getCurrentAction(); }
+    @Override public int getPlayerFrameIndex() { return player.getFrameIndex(); }
+    @Override public void PlaceBomb() {}
 
     public static IModel getInstance() {
-        if (instance == null)
-            instance = new Model();
+        if (instance == null) instance = new Model();
         return instance;
     }
 }

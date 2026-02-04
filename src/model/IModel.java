@@ -1,28 +1,16 @@
 package model;
 
 public interface IModel {
-
-    public int getNumColumns();
-
-    public int getNumRows();
-
-    public int xCoordinatePlayer();
-
-    public int yCoordinatePlayer();
-
-    public void PlaceBomb();
-
-    public void updatePlayerMovement();
-
-    public void setPlayerDelta(int dx, int dy);
-
-    public int getPlayerDeltaX();
-
-    public int getPlayerDeltaY();
-
-    public int[][] getGameAreaArray();
-
-    public String getPlayerAction();
-
-    public int getPlayerFrameIndex();
+    int getNumColumns();
+    int getNumRows();
+    double xCoordinatePlayer();
+    double yCoordinatePlayer();
+    void updatePlayerMovement();
+    void setPlayerDelta(double dx, double dy);
+    double getPlayerDeltaX();
+    double getPlayerDeltaY();
+    int[][] getGameAreaArray();
+    String getPlayerAction();
+    int getPlayerFrameIndex();
+    void PlaceBomb();
 }

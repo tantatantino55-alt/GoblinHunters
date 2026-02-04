@@ -1,19 +1,18 @@
 package model;
 
 public class Player extends Entity {
+    private double xCoordinate;
+    private double yCoordinate;
+    private double deltaX = 0;
+    private double deltaY = 0;
 
-    private int xCoordinate;
-    private int yCoordinate;
-    private int deltaX = 0;
-    private int deltaY = 0;
+    private String currentAction = "PLAYER_FRONT_IDLE";
+    private int frameIndex = 0;
+    private int totalFrames = 1;
+    private int animationTick = 0;
+    private int animationSpeed = 3;
 
-    private String currentAction = "PLAYER_FRONT_IDLE"; // Chiave identificativa
-    private int frameIndex = 0;      // Indice del fotogramma attuale
-    private int totalFrames = 1;     // Numero totale di fotogrammi per l'azione attuale
-    private int animationTick = 0;   // Contatore per la frequenza di aggiornamento
-    private int animationSpeed = 3; // Velocità dell'animazione (tick per frame)
-
-    public Player(int startX, int startY) {
+    public Player(double startX, double startY) {
         this.xCoordinate = startX;
         this.yCoordinate = startY;
     }
@@ -22,34 +21,26 @@ public class Player extends Entity {
         animationTick++;
         if (animationTick >= animationSpeed) {
             animationTick = 0;
-
             frameIndex = (frameIndex + 1) % totalFrames;
         }
     }
 
     public void setAction(String newAction, int framesCount) {
-        // Cambiamo azione solo se è effettivamente diversa per evitare reset inutili
         if (!this.currentAction.equals(newAction)) {
             this.currentAction = newAction;
             this.totalFrames = (framesCount > 0) ? framesCount : 1;
-            this.frameIndex = 0;    // Reset dell'animazione
-            this.animationTick = 0; // Reset del contatore tempo
+            this.frameIndex = 0;
+            this.animationTick = 0;
         }
     }
 
-
-    public int getXCoordinate() { return xCoordinate; }
-    public int getYCoordinate() { return yCoordinate; }
+    public double getXCoordinate() { return xCoordinate; }
+    public double getYCoordinate() { return yCoordinate; }
+    public void setXCoordinate(double x) { this.xCoordinate = x; }
+    public void setYCoordinate(double y) { this.yCoordinate = y; }
+    public void setDelta(double dx, double dy) { this.deltaX = dx; this.deltaY = dy; }
+    public double getDeltaX() { return deltaX; }
+    public double getDeltaY() { return deltaY; }
     public String getCurrentAction() { return currentAction; }
     public int getFrameIndex() { return frameIndex; }
-
-    public void setXCoordinate(int x) { this.xCoordinate = x; }
-    public void setYCoordinate(int y) { this.yCoordinate = y; }
-    public void setDelta(int dx, int dy) { this.deltaX = dx; this.deltaY = dy; }
-    public int getDeltaX() { return deltaX; }
-    public int getDeltaY() { return deltaY; }
-
-    public void setAnimationSpeed(int speed) {
-        this.animationSpeed = speed;
-    }
 }

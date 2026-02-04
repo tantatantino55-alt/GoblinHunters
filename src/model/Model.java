@@ -8,11 +8,16 @@ public class Model implements IModel {
     private Player player;
 
     private static final int[][] testMap = {
-            {0,1,0,0,0,0,0,0,0,0,0,0,0}, {0,1,0,0,0,0,0,2,0,0,0,0,0},
-            {0,1,1,1,1,0,0,0,0,0,0,0,0}, {0,0,0,0,1,0,0,0,0,0,0,0,0},
-            {1,1,1,0,1,0,0,0,0,0,2,0,0}, {0,0,2,0,0,0,0,0,0,0,0,0,0},
-            {0,0,0,0,0,2,0,0,0,0,0,0,0}, {0,0,2,0,0,0,0,0,0,0,0,0,0},
-            {0,0,0,0,0,0,0,0,0,2,0,0,0}, {0,0,0,0,0,2,2,0,0,0,0,0,0},
+            {0,1,0,0,0,0,0,0,0,0,0,0,0},
+            {0,1,0,0,0,0,0,2,0,0,0,0,0},
+            {0,1,1,1,1,0,0,0,0,0,0,0,0},
+            {0,0,0,0,1,0,0,0,0,0,0,0,0},
+            {1,1,1,0,1,0,0,0,0,0,2,0,0},
+            {0,0,2,0,0,0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,2,0,0,0,0,0,0,0},
+            {0,0,2,0,0,0,0,0,0,0,0,0,0},
+            {0,0,0,0,0,0,0,0,0,2,0,0,0},
+            {0,0,0,0,0,2,2,0,0,0,0,0,0},
             {0,0,0,0,0,0,0,0,0,0,0,0,0}
     };
 
@@ -21,44 +26,32 @@ public class Model implements IModel {
         for (int i = 0; i < Config.GRID_HEIGHT; i++)
             System.arraycopy(testMap[i], 0, gameAreaArray[i], 0, Config.GRID_WIDTH);
 
-        // Il mondo logico inizia a 0.0
+        // Il player nasce a (0.0, 0.0) logico
         this.player = new Player(0.0, 0.0);
     }
 
     public boolean isWalkable(double nextX, double nextY) {
-        // 1. Trasformiamo le dimensioni della Hitbox in proporzioni logiche (Unità Mondo)
-        // hbW = 32/64 = 0.5 unità; hbH = 16/64 = 0.25 unità
-        double hbW = (double) Config.PLAYER_HITBOX_WIDTH / Config.TILE_SIZE;
-        double hbH = (double) Config.PLAYER_HITBOX_HEIGHT / Config.TILE_SIZE;
+        // Usiamo solo le costanti LOGICHE. Nessuna divisione per TILE_SIZE.
+        double hbW = Config.PLAYER_LOGICAL_HITBOX_WIDTH;
+        double hbH = Config.PLAYER_LOGICAL_HITBOX_HEIGHT;
 
-        // 2. Calcolo dei bordi della Hitbox logica
+        // Calcolo hitbox logica
         double left = nextX + (1.0 - hbW) / 2.0;
-
-        // Usiamo un Epsilon infinitesimale (0.0001) per la massima precisione.
-        // Questo previene collisioni "fantasma" dovute a errori di calcolo dei numeri double.
         double right = left + hbW - 0.0001;
-
         double top = nextY + (1.0 - hbH);
         double bottom = nextY + 1.0 - 0.0001;
 
-        // 3. Traduzione in indici di matrice (matrice discreta)
         int startCol = (int) Math.floor(left);
         int endCol = (int) Math.floor(right);
         int startRow = (int) Math.floor(top);
         int endRow = (int) Math.floor(bottom);
 
-        // 4. Controllo bordi del mondo logico
-        if (startCol < 0 || endCol >= Config.GRID_WIDTH || startRow < 0 || endRow >= Config.GRID_HEIGHT) {
-            return false;
-        }
+        // Controllo confini logici
+        if (startCol < 0 || endCol >= Config.GRID_WIDTH || startRow < 0 || endRow >= Config.GRID_HEIGHT) return false;
 
-        // 5. Verifica ostacoli nella matrice discreta
         for (int r = startRow; r <= endRow; r++) {
             for (int c = startCol; c <= endCol; c++) {
-                int cellType = gameAreaArray[r][c];
-                if (cellType == Config.CELL_INDESTRUCTIBLE_BLOCK || cellType == Config.CELL_DESTRUCTIBLE_BLOCK) {
-                    return false;
-                }
+                if (gameAreaArray[r][c] == Config.CELL_INDESTRUCTIBLE_BLOCK || gameAreaArray[r][c] == Config.CELL_DESTRUCTIBLE_BLOCK) return false;
             }
         }
         return true;
@@ -76,11 +69,23 @@ public class Model implements IModel {
 
         if (deltaX == 0 && deltaY == 0) return;
 
+        // Movimento asse X con limiti logici
         double nextX = currentX + deltaX;
-        if (isWalkable(nextX, currentY)) player.setXCoordinate(nextX);
+        if (isWalkable(nextX, currentY)) {
+            player.setXCoordinate(Math.max(Config.MIN_LOGICAL_X, Math.min(Config.MAX_LOGICAL_X, nextX)));
+        }
 
+        // Movimento asse Y con limiti logici
         double nextY = currentY + deltaY;
-        if (isWalkable(player.getXCoordinate(), nextY)) player.setYCoordinate(nextY);
+        if (isWalkable(player.getXCoordinate(), nextY)) {
+            player.setYCoordinate(Math.max(Config.MIN_LOGICAL_Y, Math.min(Config.MAX_LOGICAL_Y, nextY)));
+        }
+    }
+
+    @Override
+    public void setPlayerDelta(double dx, double dy) {
+        // Riceve già valori logici (es. 0.05), li salva direttamente
+        this.player.setDelta(dx, dy);
     }
 
     private void updatePlayerAction(double dx, double dy) {
@@ -96,15 +101,6 @@ public class Model implements IModel {
             else player.setAction("PLAYER_FRONT_IDLE", 16);
         }
     }
-
-
-    @Override
-    public void setPlayerDelta(double dx, double dy) {
-        // Non arrotondiamo più.
-        // Il Model accetta la precisione massima del processore (64 bit).
-        this.player.setDelta(dx, dy);
-    }
-
 
     @Override public double xCoordinatePlayer() { return player.getXCoordinate(); }
     @Override public double yCoordinatePlayer() { return player.getYCoordinate(); }

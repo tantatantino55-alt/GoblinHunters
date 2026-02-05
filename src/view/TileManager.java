@@ -1,4 +1,6 @@
-package utils;
+package view;
+
+import utils.Config;
 
 import java.awt.image.BufferedImage;
 import java.util.HashMap;

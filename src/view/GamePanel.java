@@ -9,6 +9,8 @@ import java.awt.event.ActionEvent;
 public class GamePanel extends JPanel {
     private AbstractDrawer drawer = null;
 
+    private boolean canPlaceBomb = true;
+
     public GamePanel(AbstractDrawer drawer) {
         this.drawer = drawer;
         this.setPreferredSize(new Dimension(Config.GAME_PANEL_WIDTH, Config.GAME_PANEL_HEIGHT));
@@ -85,6 +87,28 @@ public class GamePanel extends JPanel {
             public void actionPerformed(ActionEvent e) {
                 if (ControllerForView.getInstance().getDeltaY() > 0)
                     ControllerForView.getInstance().setPlayerMovement(ControllerForView.getInstance().getDeltaX(), 0);
+            }
+        });
+
+        // --- PRESSIONE SPAZIO ---
+        im.put(KeyStroke.getKeyStroke("SPACE"), "placeBomb");
+        am.put("placeBomb", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // Piazziamo la bomba solo se il tasto era stato precedentemente rilasciato
+                if (canPlaceBomb) {
+                    ControllerForView.getInstance().PlaceBomb();
+                    canPlaceBomb = false; // Blocchiamo ulteriori attivazioni
+                }
+            }
+        });
+
+// --- RILASCIO SPAZIO ---
+        im.put(KeyStroke.getKeyStroke("released SPACE"), "resetBomb");
+        am.put("resetBomb", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                canPlaceBomb = true; // Sblocchiamo la possibilità di piazzare una nuova bomba
             }
         });
     }

@@ -37,8 +37,7 @@ public class ControllerForModel implements IControllerForModel {
     // Implementazione di IControllerForModel.updateGame()
     @Override
     public void updateGame() {
-        Model.getInstance().updatePlayerMovement();
-
+        Model.getInstance().updateGameLogic();
     }
 
     // Implementazione di IControllerForModel.startGameLoop()

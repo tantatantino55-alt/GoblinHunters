@@ -1,5 +1,7 @@
 package model;
 
+import utils.Config;
+
 public class Player extends Entity {
     private double xCoordinate;
     private double yCoordinate;
@@ -11,6 +13,9 @@ public class Player extends Entity {
     private int totalFrames = 1;
     private int animationTick = 0;
     private int animationSpeed = 3;
+
+    private int maxBombs = Config.INITIAL_MAX_BOMBS;
+    private int bombRadius = Config.DEFAULT_BOMB_RADIUS;
 
     public Player(double startX, double startY) {
         this.xCoordinate = startX;
@@ -43,4 +48,9 @@ public class Player extends Entity {
     public double getDeltaY() { return deltaY; }
     public String getCurrentAction() { return currentAction; }
     public int getFrameIndex() { return frameIndex; }
+
+    public int getMaxBombs() { return maxBombs; }
+    public void setMaxBombs(int maxBombs) { this.maxBombs = maxBombs; }
+    public int getBombRadius() { return bombRadius; }
+    public void setBombRadius(int radius) { this.bombRadius = radius; }
 }

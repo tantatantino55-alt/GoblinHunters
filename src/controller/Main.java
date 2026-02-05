@@ -1,11 +1,13 @@
 package controller;
 
+import view.View;
+
 public class Main {
 
     public static void main(String[] args) {
-      ControllerForView.getInstance().openGameGUI();
-      ControllerForModel.getInstance().startGameLoop();
-      ControllerForView.getInstance().setupResources();
+        View.getInstance().setupResources();
+        ControllerForView.getInstance().openGameGUI();
+        ControllerForModel.getInstance().startGameLoop();
     }
 
 }// end class

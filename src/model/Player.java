@@ -1,6 +1,7 @@
 package model;
 
 import utils.Config;
+import utils.PlayerState;
 
 public class Player extends Entity {
     private double xCoordinate;
@@ -8,11 +9,9 @@ public class Player extends Entity {
     private double deltaX = 0;
     private double deltaY = 0;
 
-    private String currentAction = "PLAYER_FRONT_IDLE";
-    private int frameIndex = 0;
-    private int totalFrames = 1;
-    private int animationTick = 0;
-    private int animationSpeed = 3;
+    // STATO LOGICO (Sostituisce le stringhe e i numeri di frame)
+    private PlayerState currentState;
+    private long stateStartTime;
 
     private int maxBombs = Config.INITIAL_MAX_BOMBS;
     private int bombRadius = Config.DEFAULT_BOMB_RADIUS;
@@ -20,23 +19,21 @@ public class Player extends Entity {
     public Player(double startX, double startY) {
         this.xCoordinate = startX;
         this.yCoordinate = startY;
+
+        this.currentState = PlayerState.IDLE_FRONT;
+    }
+    // --- GESTIONE STATO (Sostituisce setAction) ---
+
+    public void setState(PlayerState newState) {
+        this.currentState = newState;
     }
 
-    public void updateAnimation() {
-        animationTick++;
-        if (animationTick >= animationSpeed) {
-            animationTick = 0;
-            frameIndex = (frameIndex + 1) % totalFrames;
-        }
+    public PlayerState getState() {
+        return currentState;
     }
-
-    public void setAction(String newAction, int framesCount) {
-        if (!this.currentAction.equals(newAction)) {
-            this.currentAction = newAction;
-            this.totalFrames = (framesCount > 0) ? framesCount : 1;
-            this.frameIndex = 0;
-            this.animationTick = 0;
-        }
+    // NUOVO GETTER: Serve alla View per calcolare i frame
+    public long getStateStartTime() {
+        return stateStartTime;
     }
 
     public double getXCoordinate() { return xCoordinate; }
@@ -46,9 +43,6 @@ public class Player extends Entity {
     public void setDelta(double dx, double dy) { this.deltaX = dx; this.deltaY = dy; }
     public double getDeltaX() { return deltaX; }
     public double getDeltaY() { return deltaY; }
-    public String getCurrentAction() { return currentAction; }
-    public int getFrameIndex() { return frameIndex; }
-
     public int getMaxBombs() { return maxBombs; }
     public void setMaxBombs(int maxBombs) { this.maxBombs = maxBombs; }
     public int getBombRadius() { return bombRadius; }

@@ -21,8 +21,9 @@ public class Config {
 
 // --- LOGICA NEMICI (GOBLIN) ---
     public static final double GOBLIN_COMMON_SPEED = 0.03;    // Velocità del Goblin base
-    public static final double GOBLIN_HITBOX_WIDTH = 0.5;     // Larghezza logica (metà cella)
-    public static final double GOBLIN_HITBOX_HEIGHT = 0.5;
+    // HITBOX GOBLIN (Leggermente più piccoli della cella per non incastrarsi)
+    public static final double GOBLIN_HITBOX_WIDTH = 0.8;
+    public static final double GOBLIN_HITBOX_HEIGHT = 0.8;
     // Altezza logica
     // --- PARAMETRI DI SPAWN ---
     public static final int MAX_ENEMIES_ON_MAP = 6;           // Requisito: Max 4-6
@@ -43,6 +44,10 @@ public class Config {
     public static final int FPS = 60;
     public static final int GAME_LOOP_DELAY_MS = 1000 / FPS;
 
+    // --- CONFIGURAZIONE ANIMAZIONE PLAYER ---
+    public static final int PLAYER_RUN_FRAMES = 12;   // Numero frame corsa
+    public static final int PLAYER_IDLE_FRAMES = 16;  // Numero frame riposo
+
     // --- RISORSE ---
     public static final String PLAYER1_SHEET ="/wizardmale.png";
     public static final int PLAYER_FRAME_SIZE = 128;
@@ -61,4 +66,5 @@ public class Config {
     public static final int BOMB_DETONATION_TICKS = 180; // 3 secondi a 60 FPS
     public static final int INITIAL_MAX_BOMBS = 1;       // Numero di bombe iniziali
     public static final int DEFAULT_BOMB_RADIUS = 1;    // Raggio iniziale (1 cella in croce)
+    public static final int ANIMATION_DELAY = 50 ;
 }

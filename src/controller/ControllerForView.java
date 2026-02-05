@@ -3,6 +3,7 @@ package controller;
 import model.Model;
 import utils.Direction;
 import utils.EnemyType;
+import utils.PlayerState;
 import view.View;
 
 public class ControllerForView implements IControllerForView {
@@ -24,10 +25,10 @@ public class ControllerForView implements IControllerForView {
     public int getNumRows() { return Model.getInstance().getNumRows(); }
 
     @Override
-    public double XCoordinatePlayer() { return Model.getInstance().xCoordinatePlayer(); }
+    public double getXCoordinatePlayer() { return Model.getInstance().xCoordinatePlayer(); }
 
     @Override
-    public double yCoordinatePlayer() { return Model.getInstance().yCoordinatePlayer(); }
+    public double getYCoordinatePlayer() { return Model.getInstance().yCoordinatePlayer(); }
 
     @Override
     public double getDeltaX() { return Model.getInstance().getPlayerDeltaX(); }
@@ -47,11 +48,9 @@ public class ControllerForView implements IControllerForView {
     @Override
     public void requestRepaint() { View.getInstance().requestRepaint(); }
 
-    @Override
-    public String getPlayerAction() { return Model.getInstance().getPlayerAction(); }
 
-    @Override
-    public int getCurrentPlayerFrameIndex() { return Model.getInstance().getPlayerFrameIndex(); }
+
+
 
     @Override
     public int[][] getActiveBombsData() {
@@ -80,6 +79,14 @@ public class ControllerForView implements IControllerForView {
     @Override
     public EnemyType getEnemyType(int index) {
         return Model.getInstance().getEnemyType(index);
+    }
+
+    @Override
+    public PlayerState getPlayerState() {
+        return Model.getInstance().getPlayerState();
+    }
+    public long getPlayerStateStartTime() {
+        return Model.getInstance().getPlayerStateStartTime();
     }
 
     public static IControllerForView getInstance() {

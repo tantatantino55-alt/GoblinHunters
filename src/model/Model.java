@@ -3,6 +3,7 @@ package model;
 import utils.Config;
 import utils.Direction;
 import utils.EnemyType;
+import utils.PlayerState;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -83,7 +84,6 @@ public class Model implements IModel {
         double deltaY = player.getDeltaY();
 
         updatePlayerAction(deltaX, deltaY);
-        player.updateAnimation();
 
         if (deltaX == 0 && deltaY == 0) return;
 
@@ -106,7 +106,54 @@ public class Model implements IModel {
         this.player.setDelta(dx, dy);
     }
 
+
+
     private void updatePlayerAction(double dx, double dy) {
+        if (dx > 0) {
+            player.setState(PlayerState.RUN_RIGHT);
+        }
+        else if (dx < 0) {
+            player.setState(PlayerState.RUN_LEFT);
+        }
+        else if (dy > 0) {
+            player.setState(PlayerState.RUN_FRONT);
+        }
+        else if (dy < 0) {
+            player.setState(PlayerState.RUN_BACK);
+        }
+        else {
+            // IL GIOCATORE È FERMO (dx == 0 e dy == 0)
+            // Dobbiamo capire in che direzione guardava prima di fermarsi
+            updateIdleState();
+        }
+    }
+    private void updateIdleState() {
+        PlayerState current = player.getState();
+
+        switch (current) {
+            case RUN_RIGHT:
+            case IDLE_RIGHT: // Se era già fermo a destra, resta fermo
+                player.setState(PlayerState.IDLE_RIGHT);
+                break;
+
+            case RUN_LEFT:
+            case IDLE_LEFT:
+                player.setState(PlayerState.IDLE_LEFT);
+                break;
+
+            case RUN_BACK:
+            case IDLE_BACK:
+                player.setState(PlayerState.IDLE_BACK);
+                break;
+
+            case RUN_FRONT:
+            case IDLE_FRONT:
+            default:
+                player.setState(PlayerState.IDLE_FRONT);
+                break;
+        }
+    }
+    /*private void updatePlayerAction(double dx, double dy) {
         if (dx > 0) player.setAction("PLAYER_RIGHT_RUNNING", 12);
         else if (dx < 0) player.setAction("PLAYER_LEFT_RUNNING", 12);
         else if (dy > 0) player.setAction("PLAYER_FRONT_RUNNING", 12);
@@ -118,7 +165,7 @@ public class Model implements IModel {
             else if (last.contains("BACK")) player.setAction("PLAYER_BACK_IDLE", 16);
             else player.setAction("PLAYER_FRONT_IDLE", 16);
         }
-    }
+    }*/
 
     @Override
     public double xCoordinatePlayer() { return player.getXCoordinate(); }
@@ -141,11 +188,7 @@ public class Model implements IModel {
     @Override
     public int[][] getGameAreaArray() { return gameAreaArray; }
 
-    @Override
-    public String getPlayerAction() { return player.getCurrentAction(); }
 
-    @Override
-    public int getPlayerFrameIndex() { return player.getFrameIndex(); }
 
 
     //Metodi di gestione bombe
@@ -243,6 +286,11 @@ public class Model implements IModel {
             data[i][1] = b.getCol(); // Coordinata X (colonna)
         }
         return data;
+    }
+
+    @Override
+    public PlayerState getPlayerState() {
+        return this.player.getState();
     }
 
 
@@ -395,6 +443,11 @@ public class Model implements IModel {
             return enemies.get(index).getType();
         }
         return EnemyType.COMMON; // Default sicuro
+    }
+
+    @Override
+    public long getPlayerStateStartTime() {
+        return player.getStateStartTime();
     }
 
     // Helper privato per evitare crash se la View chiede un indice che non esiste più

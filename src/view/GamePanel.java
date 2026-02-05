@@ -29,7 +29,7 @@ public class GamePanel extends JPanel {
     private void setupKeyBindings() {
         InputMap im = this.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
         ActionMap am = this.getActionMap();
-        double speed = Config.PLAYER_LOGICAL_SPEED;
+        double speed = Config.ENTITY_LOGICAL_SPEED;
 
         // Destra
         im.put(KeyStroke.getKeyStroke("RIGHT"), "moveRight");

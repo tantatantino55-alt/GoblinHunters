@@ -13,17 +13,17 @@ public class Config {
     public static final int WINDOW_PREFERRED_HEIGHT = 896;
 
     // --- LOGICA PLAYER (Unità Mondo - PURE MVC) ---
-    public static final double PLAYER_LOGICAL_SPEED = 0.05;
+    public static final double ENTITY_LOGICAL_SPEED = 0.05;
 
     // Hitbox espressa in Unità Mondo (es. 0.5 unità = 32 pixel se tile è 64)
-    public static final double PLAYER_LOGICAL_HITBOX_WIDTH = 0.5;
-    public static final double PLAYER_LOGICAL_HITBOX_HEIGHT = 0.25;
+    public static final double ENTITY_LOGICAL_HITBOX_WIDTH = 0.5;
+    public static final double ENTITY_LOGICAL_HITBOX_HEIGHT = 0.25;
 
 // --- LOGICA NEMICI (GOBLIN) ---
     public static final double GOBLIN_COMMON_SPEED = 0.03;    // Velocità del Goblin base
     // HITBOX GOBLIN (Leggermente più piccoli della cella per non incastrarsi)
-    public static final double GOBLIN_HITBOX_WIDTH = 0.8;
-    public static final double GOBLIN_HITBOX_HEIGHT = 0.8;
+    public static final double GOBLIN_HITBOX_WIDTH = 0.8; // BOSS
+    public static final double GOBLIN_HITBOX_HEIGHT = 0.8; //BOSS
     // Altezza logica
     // --- PARAMETRI DI SPAWN ---
     public static final int MAX_ENEMIES_ON_MAP = 6;           // Requisito: Max 4-6

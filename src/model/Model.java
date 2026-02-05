@@ -52,8 +52,8 @@ public class Model implements IModel {
 
     public boolean isWalkable(double nextX, double nextY) {
         // Usiamo solo le costanti LOGICHE. Nessuna divisione per TILE_SIZE.
-        double hbW = Config.PLAYER_LOGICAL_HITBOX_WIDTH;
-        double hbH = Config.PLAYER_LOGICAL_HITBOX_HEIGHT;
+        double hbW = Config.ENTITY_LOGICAL_HITBOX_WIDTH;
+        double hbH = Config.ENTITY_LOGICAL_HITBOX_HEIGHT;
 
         // Calcolo hitbox logica
         double left = nextX + (1.0 - hbW) / 2.0;
@@ -252,7 +252,7 @@ public class Model implements IModel {
         if (activeBombs.size() < player.getMaxBombs()) {
 
             // Recuperiamo le dimensioni della hitbox logica da Config
-            double hbH = Config.PLAYER_LOGICAL_HITBOX_HEIGHT;
+            double hbH = Config.ENTITY_LOGICAL_HITBOX_HEIGHT;
 
             // --- IL CALCOLO CORRETTO ---
             // Il centro X rimane lo stesso (x + 0.5) perché la hitbox è centrata orizzontalmente.
@@ -351,14 +351,14 @@ public class Model implements IModel {
         // Recuperiamo le dimensioni delle hitbox da Config
         double pX = player.getXCoordinate();
         double pY = player.getYCoordinate();
-        double pHW = Config.PLAYER_LOGICAL_HITBOX_WIDTH;
-        double pHH = Config.PLAYER_LOGICAL_HITBOX_HEIGHT;
+        double pHW = Config.ENTITY_LOGICAL_HITBOX_WIDTH;
+        double pHH = Config.ENTITY_LOGICAL_HITBOX_HEIGHT;
 
         for (Enemy e : enemies) {
             double eX = e.getX();
             double eY = e.getY();
-            double eHW = Config.GOBLIN_HITBOX_WIDTH;
-            double eHH = Config.GOBLIN_HITBOX_HEIGHT;
+            double eHW = Config.ENTITY_LOGICAL_HITBOX_WIDTH;
+            double eHH = Config.ENTITY_LOGICAL_HITBOX_HEIGHT;
 
             // Logica di intersezione AABB (Axis-Aligned Bounding Box)
             // Due rettangoli si toccano se si sovrappongono sia in orizzontale che verticale

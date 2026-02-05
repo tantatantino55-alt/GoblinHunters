@@ -2,6 +2,7 @@ package view;
 
 import controller.ControllerForView;
 import utils.Config;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;

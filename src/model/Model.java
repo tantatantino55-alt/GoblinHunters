@@ -50,28 +50,33 @@ public class Model implements IModel {
         this.enemies = new ArrayList<>();
     }
 
+    // In Model.java
     public boolean isWalkable(double nextX, double nextY) {
-        // Usiamo solo le costanti LOGICHE. Nessuna divisione per TILE_SIZE.
         double hbW = Config.ENTITY_LOGICAL_HITBOX_WIDTH;
         double hbH = Config.ENTITY_LOGICAL_HITBOX_HEIGHT;
 
-        // Calcolo hitbox logica
+        // Calcolo bordi
         double left = nextX + (1.0 - hbW) / 2.0;
-        double right = left + hbW - 0.0001;
-        double top = nextY + (1.0 - hbH);
-        double bottom = nextY + 1.0 - 0.0001;
+        double right = left + hbW - 0.01;
+        double top = nextY + (1.0 - hbH); // <--- SE QUESTO È SBAGLIATO, ESCE IN ALTO
+        double bottom = nextY + 1.0 - 0.01;
 
         int startCol = (int) Math.floor(left);
         int endCol = (int) Math.floor(right);
         int startRow = (int) Math.floor(top);
         int endRow = (int) Math.floor(bottom);
 
-        // Controllo confini logici
-        if (startCol < 0 || endCol >= Config.GRID_WIDTH || startRow < 0 || endRow >= Config.GRID_HEIGHT) return false;
-
+        // SE NON HAI QUESTO IF, IL GOBLIN ENTRA NELL'ARIA NERA IN ALTO (startRow < 0)
+        if (startCol < 0 || endCol >= Config.GRID_WIDTH || startRow < 0 || endRow >= Config.GRID_HEIGHT) {
+            return false;
+        }
+        // Controllo collisione con i blocchi (muri)
         for (int r = startRow; r <= endRow; r++) {
             for (int c = startCol; c <= endCol; c++) {
-                if (gameAreaArray[r][c] == Config.CELL_INDESTRUCTIBLE_BLOCK || gameAreaArray[r][c] == Config.CELL_DESTRUCTIBLE_BLOCK) return false;
+                if (gameAreaArray[r][c] == Config.CELL_INDESTRUCTIBLE_BLOCK ||
+                        gameAreaArray[r][c] == Config.CELL_DESTRUCTIBLE_BLOCK) {
+                    return false;
+                }
             }
         }
         return true;

@@ -1,5 +1,6 @@
 package model;
 
+import utils.Config;
 import utils.Direction;
 import utils.EnemyType;
 
@@ -18,18 +19,16 @@ public abstract class Enemy extends Entity {
         this.y = startY;
         this.speed = speed;
         this.random = new Random();
-        this.currentDirection = Direction.getRandom(); // Direzione iniziale casuale
+        this.currentDirection = Direction.getRandom();
         this.type = type;
     }
 
     public abstract void updateBehavior();
 
-    // Logica di movimento corretta: cammina dritto finché non sbatte
     protected void moveInDirection() {
         double nextX = x;
         double nextY = y;
 
-        // Calcola la posizione successiva in base alla direzione attuale
         switch (currentDirection) {
             case UP:    nextY -= speed; break;
             case DOWN:  nextY += speed; break;
@@ -37,31 +36,30 @@ public abstract class Enemy extends Entity {
             case RIGHT: nextX += speed; break;
         }
 
-        // Verifica collisione con bordi e muri tramite il Model
-        if (canMove(nextX, nextY)) {
+        // 1. Controllo isWalkable (Muri e Confini Matrice)
+        // 2. Controllo Range (Sicurezza extra per l'area nera)
+        if (Model.getInstance().isWalkable(nextX, nextY) && isInsideMap(nextX, nextY)) {
             this.x = nextX;
             this.y = nextY;
         } else {
-            // Se sbatte (canMove è false), cambia direzione
+            // Se sbatte in alto (o altrove), cambia direzione
             changeDirection();
         }
     }
 
-    private boolean canMove(double nx, double ny) {
-        // Delega al Model il controllo della mappa e dei confini
-        return Model.getInstance().isWalkable(nx, ny);
+    // Controllo rigoroso per l'area nera
+    private boolean isInsideMap(double nx, double ny) {
+        return nx >= 0 && nx <= (Config.GRID_WIDTH - 1) &&
+                ny >= 0 && ny <= (Config.GRID_HEIGHT - 1);
     }
 
     protected void changeDirection() {
-        Direction newDir = currentDirection;
-        // Cerca una nuova direzione diversa dalla precedente per evitare di bloccarsi
-        while (newDir == currentDirection) {
-            newDir = Direction.getRandom();
+        Direction oldDir = currentDirection;
+        while (currentDirection == oldDir) {
+            currentDirection = Direction.getRandom();
         }
-        currentDirection = newDir;
     }
 
-    // Getters
     public double getX() { return x; }
     public double getY() { return y; }
     public Direction getDirection() { return currentDirection; }

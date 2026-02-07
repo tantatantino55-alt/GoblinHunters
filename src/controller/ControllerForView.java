@@ -43,7 +43,7 @@ public class ControllerForView implements IControllerForView {
     public int[][] getGameAreaArray() { return Model.getInstance().getGameAreaArray(); }
 
     @Override
-    public void PlaceBomb() { Model.getInstance().PlaceBomb(); }
+    public void placeBomb() { Model.getInstance().placeBomb(); }
 
     @Override
     public void requestRepaint() { View.getInstance().requestRepaint(); }

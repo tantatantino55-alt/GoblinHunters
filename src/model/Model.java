@@ -251,7 +251,7 @@ public class Model implements IModel {
     }
 
     @Override
-    public void PlaceBomb() {
+    public void placeBomb() {
         // 1. Controllo disponibilità bombe
         if (activeBombs.size() < player.getMaxBombs()) {
 

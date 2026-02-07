@@ -12,7 +12,7 @@ public interface IControllerForView {
     public double getXCoordinatePlayer();
     public double getYCoordinatePlayer();
     public void requestRepaint();
-    public void PlaceBomb();
+    public void placeBomb();
     public void setPlayerMovement(double dx, double dy); // Cambiato in double
     public double getDeltaX();
     public double getDeltaY();

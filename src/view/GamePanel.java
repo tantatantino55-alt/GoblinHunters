@@ -98,7 +98,7 @@ public class GamePanel extends JPanel {
             public void actionPerformed(ActionEvent e) {
                 // Piazziamo la bomba solo se il tasto era stato precedentemente rilasciato
                 if (canPlaceBomb) {
-                    ControllerForView.getInstance().PlaceBomb();
+                    ControllerForView.getInstance().placeBomb();
                     canPlaceBomb = false; // Blocchiamo ulteriori attivazioni
                 }
             }

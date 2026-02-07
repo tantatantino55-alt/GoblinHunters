@@ -16,7 +16,7 @@ public interface IModel {
     public double getPlayerDeltaY();
     public int[][] getGameAreaArray();
     public boolean isWalkable(double nextX, double nextY);
-    public void PlaceBomb();
+    public void placeBomb();
     public void updateGameLogic();
     public List<Enemy> getEnemies();
     public int[][] getActiveBombsData();

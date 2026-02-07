@@ -88,6 +88,17 @@ public class ControllerForView implements IControllerForView {
     public long getPlayerStateStartTime() {
         return Model.getInstance().getPlayerStateStartTime();
     }
+    // ... dentro ControllerForView ...
+
+    @Override
+    public Direction getEnemyTelegraph(int index) {
+        return Model.getInstance().getEnemyTelegraph(index);
+    }
+
+    @Override
+    public java.util.List<double[]> getProjectilesData() {
+        return Model.getInstance().getProjectilesData();
+    }
 
     public static IControllerForView getInstance() {
         if (instance == null) instance = new ControllerForView();

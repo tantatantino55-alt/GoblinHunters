@@ -25,6 +25,8 @@ public class Model implements IModel {
     //Attributi bomb
     private final List<Bomb> activeBombs = new ArrayList<>();
 
+    private List<Projectile> projectiles = new ArrayList<>();
+
     private static final int[][] testMap = {
             {0,1,0,0,0,0,0,0,0,0,0,0,0},
             {0,1,0,0,0,0,0,2,0,0,0,0,0},
@@ -193,9 +195,6 @@ public class Model implements IModel {
     @Override
     public int[][] getGameAreaArray() { return gameAreaArray; }
 
-
-
-
     //Metodi di gestione bombe
     /**
      * Gestisce il ciclo di vita di tutte le bombe attive.
@@ -310,22 +309,36 @@ public class Model implements IModel {
             lastSpawnTime = currentTime;
         }
     }
+    // In Model.java, aggiorna il metodo spawnEnemy
     private void spawnEnemy() {
         int r, c;
         int attempts = 0;
         boolean validPosition = false;
 
-        // Tentiamo di trovare una posizione valida
-        // (Aggiungiamo un limite ai tentativi per evitare loop infiniti in caso di mappa piena)
         while (!validPosition && attempts < 20) {
             r = randomGenerator.nextInt(Config.GRID_HEIGHT);
             c = randomGenerator.nextInt(Config.GRID_WIDTH);
 
             if (isValidSpawnPoint(c, r)) {
                 validPosition = true;
-                // Factory Method implicito: qui creiamo il nemico
-                enemies.add(new CommonGoblin(c, r));
-                System.out.println("Model: Nemico generato in (" + c + ", " + r + ")");
+
+                // Logica per alternare i tipi in base al numero di nemici già presenti
+                int typeIndex = enemies.size() % 3;
+
+                switch (typeIndex) {
+                    case 0:
+                        enemies.add(new CommonGoblin(c, r));
+                        System.out.println("Model: Generato CommonGoblin in (" + c + ", " + r + ")");
+                        break;
+                    case 1:
+                        enemies.add(new ChasingGoblin(c, r));
+                        System.out.println("Model: Generato ChasingGoblin in (" + c + ", " + r + ")");
+                        break;
+                    case 2:
+                        enemies.add(new ShooterGoblin(c, r));
+                        System.out.println("Model: Generato ShooterGoblin in (" + c + ", " + r + ")");
+                        break;
+                }
             }
             attempts++;
         }
@@ -405,6 +418,8 @@ public class Model implements IModel {
         // 2. Poi gestisci le bombe (quando le implementerai)
         updateBombs();          // private
 
+        updateProjectiles(); // <--- AGGIUNGI QUESTO
+
         // 3. Infine controlli chi è morto o cosa è esploso
         checkCollisions();      // private
 
@@ -454,6 +469,72 @@ public class Model implements IModel {
     public long getPlayerStateStartTime() {
         return player.getStateStartTime();
     }
+
+    // 2. Aggiungi il metodo per aggiungere proiettili (chiamato da ShooterGoblin)
+    public void addProjectile(Projectile p) {
+        projectiles.add(p);
+    }
+
+    // 3. Aggiungi il metodo di aggiornamento
+    private void updateProjectiles() {
+        Iterator<Projectile> it = projectiles.iterator();
+        while (it.hasNext()) {
+            Projectile p = it.next();
+            p.update(); // Muove il proiettile
+
+            if (!p.isActive()) {
+                it.remove(); // Rimuove se ha colpito un muro
+                continue;
+            }
+
+            // Collisione Proiettile Nemico -> Player
+            if (p.isEnemyProjectile()) {
+                // Hitbox semplice 0.5 (metà cella)
+                if (Math.abs(p.getX() - player.getXCoordinate()) < 0.5 &&
+                        Math.abs(p.getY() - player.getYCoordinate()) < 0.5) {
+
+                    handlePlayerHit();
+                    p.setActive(false);
+                }
+            }
+        }
+    }
+    // ... in fondo alla classe Model ...
+
+    @Override
+    public Direction getEnemyTelegraph(int index) {
+        if (isValidIndex(index)) {
+            // Chiediamo al nemico: "Stai mirando?"
+            // Nota: getTelegraphDirection() è definito in Enemy (base) e ritorna null,
+            // ma ShooterGoblin fa override e ritorna la direzione vera.
+            return enemies.get(index).getTelegraphDirection();
+        }
+        return null;
+    }
+
+    @Override
+    public List<double[]> getProjectilesData() {
+        List<double[]> data = new ArrayList<>();
+
+        for (Projectile p : projectiles) {
+            // Convertiamo l'oggetto Projectile in un array di 4 numeri
+            double[] info = new double[4];
+
+            info[0] = p.getX(); // Coordinata X
+            info[1] = p.getY(); // Coordinata Y
+
+            // Tipo: 0.0 = Proiettile Nemico (Osso), 1.0 = Proiettile Player (Aura)
+            info[2] = p.isEnemyProjectile() ? 0.0 : 1.0;
+
+            // Direzione: La convertiamo in numero per semplicità (opzionale, se vuoi ruotare lo sprite)
+            // 0=UP, 1=DOWN, 2=LEFT, 3=RIGHT
+            info[3] = (double) p.getDirection().ordinal();
+
+            data.add(info);
+        }
+        return data;
+    }
+
 
     // Helper privato per evitare crash se la View chiede un indice che non esiste più
     private boolean isValidIndex(int index) {

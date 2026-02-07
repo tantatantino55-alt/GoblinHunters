@@ -45,4 +45,8 @@ public abstract class Projectile extends Entity {
     public double getX() { return x; }
     public double getY() { return y; }
     public boolean isEnemyProjectile() { return isEnemyProjectile; }
+    // In Projectile.java, aggiungi questo metodo:
+    public Direction getDirection() {
+        return direction;
+    }
 }

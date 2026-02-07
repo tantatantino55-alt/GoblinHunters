@@ -111,7 +111,7 @@ public class ShooterGoblin extends ChasingGoblin {
         ammo--;
         System.out.println("Shooter: BANG! Direzione: " + telegraphDirection);
         // Qui dovrai aggiungere al Model il proiettile:
-        // Model.getInstance().addProjectile(new Projectile(this.x, this.y, telegraphDirection));
+         Model.getInstance().addProjectile(new BoneProjectile(this.x, this.y, telegraphDirection));
 
         telegraphDirection = null; // Rimuovi il mirino rosso
     }

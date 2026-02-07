@@ -27,4 +27,13 @@ public interface IModel {
     Direction getEnemyDirection(int index); // 4. Dove guarda?
     EnemyType getEnemyType(int index);    // 5. Che cos'è? (Common, Hunter...)
     long getPlayerStateStartTime();
+
+    void addProjectile(Projectile projectile);
+    // Restituisce la direzione di mira (o null) dell'i-esimo nemico
+    Direction getEnemyTelegraph(int index);
+
+    // Restituisce una lista di "dati grezzi" dei proiettili
+    // Ogni double[] contiene: { x, y, tipo, direzione }
+    List<double[]> getProjectilesData();
+
 }

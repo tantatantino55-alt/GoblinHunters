@@ -26,4 +26,8 @@ public interface IControllerForView {
     PlayerState getPlayerState();
 
     long getPlayerStateStartTime();
+
+    Direction getEnemyTelegraph(int index);
+
+    java.util.List<double[]> getProjectilesData();
 }

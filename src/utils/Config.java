@@ -51,9 +51,7 @@ public class Config {
     // --- RISORSE ---
     public static final String PLAYER1_SHEET = "/wizardmale.png";
     public static final int PLAYER_FRAME_SIZE = 128;
-    public static final String TILE_FLOOR = "/colonnasabbia.png";
-    public static final String TILE_WALL_INDESTRUCTIBLE = "/murosabbia.png";
-    public static final String TILE_WALL_DESTRUCTIBLE = "/castellosabbia.png";
+    public static final String MAIN_SHEET = "/MapItems.png"; // Il tuo file unico
     public static final int CELL_EMPTY = 0;
     public static final int CELL_INDESTRUCTIBLE_BLOCK = 1;
     public static final int CELL_DESTRUCTIBLE_BLOCK = 2;
@@ -81,4 +79,7 @@ public class Config {
     public static final int SHOOTER_MAX_AMMO = 2;
     public static final int SHOOTER_RELOAD_TIME = 180;     // 3 secondi
     public static final int SHOOTER_TELEGRAPH_TIME = 30;   // 0.5 secondi pre-sparo
-}
+    public static final int TILE_FLOOR_COL = ;
+    // VISUAIZZZAI
+
+} 

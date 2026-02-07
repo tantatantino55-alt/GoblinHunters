@@ -36,4 +36,5 @@ public interface IModel {
     // Ogni double[] contiene: { x, y, tipo, direzione }
     List<double[]> getProjectilesData();
 
+    public boolean isAreaOccupiedByOtherEnemy(double nextX, double nextY, Enemy enemy);
 }

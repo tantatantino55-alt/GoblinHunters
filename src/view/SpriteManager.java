@@ -1,16 +1,21 @@
 package view;
 
-import utils.PlayerState;
-
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Gestisce il caricamento e il ritaglio (slicing) delle risorse grafiche.
+ * Supporta sia animazioni (strisce di sprite) che tile statiche (singoli riquadri).
+ */
 public class SpriteManager {
 
     private static SpriteManager instance = null;
 
+    // Cache per le animazioni già ritagliate (Array di immagini)
     private final Map<Object, BufferedImage[]> animations;
+
+    // Cache per i file sorgente interi (per non ricaricare il PNG dal disco 100 volte)
     private final Map<String, BufferedImage> sheetsCache;
 
     private SpriteManager() {
@@ -19,73 +24,93 @@ public class SpriteManager {
     }
 
     public static SpriteManager getInstance() {
-        if (instance == null)
+        if (instance == null) {
             instance = new SpriteManager();
+        }
         return instance;
     }
 
-    public void loadAnimation(Object key, String path, int startIdx, int count, int spriteSize) {
-        BufferedImage masterSheet = sheetsCache.get(path);
-
-        if (masterSheet == null) {
-            masterSheet = ResourceManager.loadImage(path);
-            // FIX 1: Controllo robusto se l'immagine non esiste
-            if (masterSheet == null) {
-                System.err.println("SpriteManager: ERRORE FATALE! Immagine non trovata: " + path);
-                return; // Esce senza fare calcoli che farebbero crashare tutto
+    /**
+     * Carica un'immagine intera in memoria (o la recupera dalla cache).
+     */
+    private BufferedImage loadSheet(String path) {
+        if (!sheetsCache.containsKey(path)) {
+            BufferedImage sheet = ResourceManager.loadImage(path);
+            if (sheet == null) {
+                System.err.println("SpriteManager: ERRORE FATALE! Sheet non trovato: " + path);
+                return null;
             }
-            sheetsCache.put(path, masterSheet);
+            sheetsCache.put(path, sheet);
         }
-
-        // FIX 2: Prevenzione divisione per zero
-        if (masterSheet.getWidth() < spriteSize) {
-            System.err.println("SpriteManager: ERRORE! L'immagine " + path + " è troppo piccola per sprite di size " + spriteSize);
-            return;
-        }
-
-        int cols = masterSheet.getWidth() / spriteSize;
-
-        // FIX 3: Un ulteriore controllo di sicurezza
-        if (cols == 0) cols = 1;
-
-        animations.put(key, extract(masterSheet, startIdx, count, cols, spriteSize));
-        // Debug opzionale per confermare il caricamento
-        // System.out.println("Caricata animazione: " + key);
+        return sheetsCache.get(path);
     }
 
-    private BufferedImage[] extract(BufferedImage sheet, int startIdx, int count, int cols, int size) {
+    /**
+     * METODO NUOVO: Estrae una SINGOLA tile statica da uno sheet.
+     * Utile per TileManager (muri, pavimenti, oggetti fermi).
+     *
+     * @param path Percorso del file (es. "/dungeon.png")
+     * @param col Indice colonna (0, 1, 2...)
+     * @param row Indice riga (0, 1, 2...)
+     * @param width Larghezza del ritaglio
+     * @param height Altezza del ritaglio
+     * @return L'immagine ritagliata o null se errore
+     */
+    public BufferedImage extractTile(String path, int col, int row, int width, int height) {
+        BufferedImage sheet = loadSheet(path);
+        if (sheet == null) return null;
+
+        // Calcolo coordinate pixel
+        int x = col * width;
+        int y = row * height;
+
+        // Controllo bordi per sicurezza
+        if (x + width > sheet.getWidth() || y + height > sheet.getHeight()) {
+            System.err.println("SpriteManager: Errore ritaglio Tile statico (" + col + "," + row + ") fuori dai bordi in " + path);
+            return new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB); // Ritorna vuoto per non crashare
+        }
+
+        return sheet.getSubimage(x, y, width, height);
+    }
+
+    /**
+     * Carica una sequenza di animazione (striscia orizzontale).
+     *
+     * @param key Chiave univoca per salvare l'animazione (es. PlayerState.IDLE)
+     * @param path Percorso file
+     * @param startCol Colonna di partenza
+     * @param row Riga dell'animazione
+     * @param count Numero di frame da prendere
+     * @param size Dimensione (lato) del frame quadrato
+     */
+    public void loadAnimation(Object key, String path, int startCol, int row, int count, int size) {
+        BufferedImage sheet = loadSheet(path);
+        if (sheet == null) return;
+
         BufferedImage[] frames = new BufferedImage[count];
-
         for (int i = 0; i < count; i++) {
-            int currentIdx = startIdx + i;
+            int col = startCol + i;
 
-            int col = currentIdx % cols;
-            int row = currentIdx / cols;
-
-            // FIX 4: Controllo bordi migliorato
-            // Verifica che il rettangolo che stiamo per tagliare esista davvero nell'immagine
-            if (col * size + size > sheet.getWidth() || row * size + size > sheet.getHeight()) {
-                System.err.println("SpriteManager: Errore! Frame " + i + " (Indice " + currentIdx + ") è fuori dall'immagine!");
-                // Invece di 'continue' (che lascia null), usiamo un'immagine vuota o nera per evitare crash al disegno
+            // Verifica bordi
+            if ((col * size) + size > sheet.getWidth() || (row * size) + size > sheet.getHeight()) {
+                System.err.println("SpriteManager: Frame animazione fuori bordo! Key: " + key);
                 frames[i] = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
             } else {
                 frames[i] = sheet.getSubimage(col * size, row * size, size, size);
             }
         }
-        return frames;
+        animations.put(key, frames);
     }
 
+    /**
+     * Recupera un frame specifico di un'animazione.
+     */
     public BufferedImage getSprite(Object key, int frameIdx) {
         BufferedImage[] anim = animations.get(key);
-
         if (anim != null && anim.length > 0) {
-            // FIX 5: Math.abs per gestire casi strani di frame negativi (non si sa mai)
+            // Usa il modulo per ciclare l'animazione all'infinito
             return anim[Math.abs(frameIdx) % anim.length];
         }
         return null;
-    }
-
-    public BufferedImage getPlayerSprite(PlayerState state, int frameIdx) {
-        return getSprite(state, frameIdx);
     }
 }

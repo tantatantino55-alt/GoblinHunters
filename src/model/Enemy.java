@@ -28,10 +28,13 @@ public abstract class Enemy extends Entity {
 
     public abstract void updateBehavior();
 
+// --- DA INSERIRE IN Enemy.java (sovrascrive il metodo precedente) ---
+
     protected void moveInDirection() {
         double nextX = x;
         double nextY = y;
 
+        // Calcolo coordinate future
         switch (currentDirection) {
             case UP:    nextY -= speed; break;
             case DOWN:  nextY += speed; break;
@@ -39,15 +42,33 @@ public abstract class Enemy extends Entity {
             case RIGHT: nextX += speed; break;
         }
 
-        // 1. Controllo isWalkable (Muri e Confini Matrice)
-        // 2. Controllo Range (Sicurezza extra per l'area nera)
-        if (Model.getInstance().isWalkable(nextX, nextY) && isInsideMap(nextX, nextY)) {
-            this.x = nextX;
-            this.y = nextY;
-        } else {
-            // Se sbatte in alto (o altrove), cambia direzione
+        IModel model = Model.getInstance();
+
+        // 1. PRIMO CONTROLLO: MURI E BLOCCHI (Indistruttibili E Distruttibili)
+        // Se isWalkable ritorna false, c'è un muro: STOP immediato.
+        if (!model.isWalkable(nextX, nextY)) {
             changeDirection();
+            return;
         }
+
+        // 2. SECONDO CONTROLLO: CONFINI MAPPA
+        // Evita che escano dallo schermo (area nera)
+        if (!isInsideMap(nextX, nextY)) {
+            changeDirection();
+            return;
+        }
+
+        // 3. TERZO CONTROLLO: COLLISIONE TRA NEMICI
+        // Se la cella è libera da muri ma c'è un altro goblin, STOP.
+        if (model.isAreaOccupiedByOtherEnemy(nextX, nextY, this)) {
+            // Opzionale: Se sbatte contro un amico, può provare a cambiare direzione subito
+            changeDirection();
+            return;
+        }
+
+        // SE TUTTI I CONTROLLI PASSANO: Aggiorna la posizione
+        this.x = nextX;
+        this.y = nextY;
     }
 
     // Controllo rigoroso per l'area nera

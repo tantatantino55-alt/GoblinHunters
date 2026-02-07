@@ -6,57 +6,18 @@ import java.awt.image.BufferedImage;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Gestisce le immagini per le celle statiche della mappa (Muri, Pavimenti, ecc.).
+ * Usa SpriteManager per estrarre le texture da un unico foglio.
+ */
 public class TileManager {
 
     private static TileManager instance = null;
+    private final Map<Integer, BufferedImage> tileImages;
 
-    // ---------------------------------------------------------------
-    // ATTRIBUTES
-    // ---------------------------------------------------------------
-    private Map<Integer, BufferedImage> tileImages;
-
-    // ---------------------------------------------------------------
-    // CONSTRUCTOR
-    // ---------------------------------------------------------------
     private TileManager() {
         this.tileImages = new HashMap<>();
-        loadTileImages();
-    }
-
-    private void loadTileImages() {
-        System.out.println("TileManager: Inizio caricamento tiles...");
-
-        loadTileImage(Config.CELL_EMPTY, Config.TILE_FLOOR);
-        loadTileImage(Config.CELL_INDESTRUCTIBLE_BLOCK, Config.TILE_WALL_INDESTRUCTIBLE);
-        loadTileImage(Config.CELL_DESTRUCTIBLE_BLOCK, Config.TILE_WALL_DESTRUCTIBLE);
-
-        System.out.println("TileManager: Caricamento completato (" + tileImages.size() + " tiles)");
-    }
-
-    private void loadTileImage(int cellType, String resourcePath) {
-        // Usa ResourceManager (compatibile JAR!)
-        BufferedImage img = ResourceManager.loadImage(resourcePath);
-
-        if (img != null) {
-            tileImages.put(cellType, img);
-            System.out.println("  → Tile tipo " + cellType + " caricata");
-        } else {
-            System.err.println("  → Tile tipo " + cellType + " NON trovata");
-        }
-    }
-
-
-
-    public BufferedImage getTileImage(int cellType) {
-        return tileImages.get(cellType);
-    }
-
-    public boolean hasTileImage(int cellType) {
-        return tileImages.containsKey(cellType);
-    }
-
-    public int getTileCount() {
-        return tileImages.size();
+        loadTilesFromSheet();
     }
 
     public static TileManager getInstance() {
@@ -66,5 +27,55 @@ public class TileManager {
         return instance;
     }
 
+    /**
+     * Carica i tasselli (tiles) usando lo SpriteManager.
+     * Le coordinate (COL/ROW) devono essere definite in Config.
+     */
+    private void loadTilesFromSheet() {
+        System.out.println("TileManager: Estrazione tiles dallo Sheet unico...");
 
-} // end class
+        SpriteManager sm = SpriteManager.getInstance();
+
+        // Dimensione della tile sul file PNG (potrebbe essere diversa da quella a schermo!)
+        // Se il tuo sprite sheet è 32x32 ma il gioco è 64x64, qui metti 32 (o Config.TILE_SIZE_ON_SHEET)
+        // Se è 1:1, usa Config.TILE_SIZE
+        int size = Config.TILE_SIZE;
+
+        // 1. Pavimento (Vuoto)
+        BufferedImage floor = sm.extractTile(
+                Config.MAIN_SHEET,
+                Config.TILE_FLOOR_COL,
+                Config.TILE_FLOOR_ROW,
+                size, size
+        );
+        if (floor != null) tileImages.put(Config.CELL_EMPTY, floor);
+
+        // 2. Muro Indistruttibile
+        BufferedImage wallInd = sm.extractTile(
+                Config.MAIN_SHEET,
+                Config.TILE_WALL_IND_COL,
+                Config.TILE_WALL_IND_ROW,
+                size, size
+        );
+        if (wallInd != null) tileImages.put(Config.CELL_INDESTRUCTIBLE_BLOCK, wallInd);
+
+        // 3. Muro Distruttibile
+        BufferedImage wallDest = sm.extractTile(
+                Config.MAIN_SHEET,
+                Config.TILE_WALL_DEST_COL,
+                Config.TILE_WALL_DEST_ROW,
+                size, size
+        );
+        if (wallDest != null) tileImages.put(Config.CELL_DESTRUCTIBLE_BLOCK, wallDest);
+
+        System.out.println("TileManager: Caricamento completato. Tiles caricate: " + tileImages.size());
+    }
+
+    public BufferedImage getTileImage(int cellType) {
+        return tileImages.get(cellType);
+    }
+
+    public boolean hasTileImage(int cellType) {
+        return tileImages.containsKey(cellType);
+    }
+}

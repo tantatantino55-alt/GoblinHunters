@@ -364,6 +364,38 @@ public class Model implements IModel {
 
         return true;
     }
+    // --- DA INSERIRE IN Model.java ---
+
+    /**
+     * Verifica se la posizione futura (nextX, nextY) è occupata da un altro nemico.
+     * Impedisce la sovrapposizione delle sprite.
+     */
+    public boolean isAreaOccupiedByOtherEnemy(double nextX, double nextY, Enemy self) {
+        // Usiamo la hitbox definita specificamente per i Goblin (0.8 solitamente)
+        double w = Config.GOBLIN_HITBOX_WIDTH;
+        double h = Config.GOBLIN_HITBOX_HEIGHT;
+
+        // Margine di tolleranza per evitare "tremolii" quando sono vicini
+        double epsilon = 0.05;
+
+        for (Enemy other : enemies) {
+            // Non controlliamo la collisione con noi stessi
+            if (other == self) continue;
+
+            double otherX = other.getX();
+            double otherY = other.getY();
+
+            // Calcolo collisione AABB (Axis-Aligned Bounding Box)
+            // Aggiungiamo epsilon per rendere la collisione più "solida"
+            boolean collisionX = (nextX + epsilon) < (otherX + w - epsilon) && (nextX + w - epsilon) > (otherX + epsilon);
+            boolean collisionY = (nextY + epsilon) < (otherY + h - epsilon) && (nextY + h - epsilon) > (otherY + epsilon);
+
+            if (collisionX && collisionY) {
+                return true; // C'è collisione con un altro nemico
+            }
+        }
+        return false; // Via libera
+    }
     // Metodo interno per gestire le collisioni (Player vs Nemici)
     private void checkCollisions() {
         // Recuperiamo le dimensioni delle hitbox da Config

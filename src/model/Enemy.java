@@ -14,6 +14,9 @@ public abstract class Enemy extends Entity {
     protected EnemyType type;
     protected Random random;
 
+    protected boolean isChasing = false;
+    protected Direction telegraphDirection = null; // Se non null, sta mirando
+
     public Enemy(double startX, double startY, double speed, EnemyType type) {
         this.x = startX;
         this.y = startY;
@@ -58,6 +61,10 @@ public abstract class Enemy extends Entity {
         while (currentDirection == oldDir) {
             currentDirection = Direction.getRandom();
         }
+    }
+    // Default: nessun telegraph. ShooterGoblin farà l'override.
+    public Direction getTelegraphDirection() {
+        return null;
     }
 
     public double getX() { return x; }

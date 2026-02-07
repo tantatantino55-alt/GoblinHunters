@@ -19,7 +19,7 @@ public class Config {
     public static final double ENTITY_LOGICAL_HITBOX_WIDTH = 0.5;
     public static final double ENTITY_LOGICAL_HITBOX_HEIGHT = 0.25;
 
-// --- LOGICA NEMICI (GOBLIN) ---
+    // --- LOGICA NEMICI (GOBLIN) ---
     public static final double GOBLIN_COMMON_SPEED = 0.03;    // Velocità del Goblin base
     // HITBOX GOBLIN (Leggermente più piccoli della cella per non incastrarsi)
     public static final double GOBLIN_HITBOX_WIDTH = 0.8; // BOSS
@@ -49,7 +49,7 @@ public class Config {
     public static final int PLAYER_IDLE_FRAMES = 16;  // Numero frame riposo
 
     // --- RISORSE ---
-    public static final String PLAYER1_SHEET ="/wizardmale.png";
+    public static final String PLAYER1_SHEET = "/wizardmale.png";
     public static final int PLAYER_FRAME_SIZE = 128;
     public static final String TILE_FLOOR = "/colonnasabbia.png";
     public static final String TILE_WALL_INDESTRUCTIBLE = "/murosabbia.png";
@@ -66,5 +66,19 @@ public class Config {
     public static final int BOMB_DETONATION_TICKS = 180; // 3 secondi a 60 FPS
     public static final int INITIAL_MAX_BOMBS = 1;       // Numero di bombe iniziali
     public static final int DEFAULT_BOMB_RADIUS = 1;    // Raggio iniziale (1 cella in croce)
-    public static final int ANIMATION_DELAY = 50 ;
+    public static final int ANIMATION_DELAY = 50;
+
+
+    // --- AI & PERCEZIONE (ChasingGoblin) ---
+    public static final int SMELL_THRESHOLD_DISTANCE = 6; // Raggio olfatto
+    public static final int SMELL_BLOCK_PENALTY = 3;      // Quanto i muri bloccano l'odore
+    public static final int SAFE_DISTANCE_FROM_BOMB = 2;  // Raggio fuga bombe
+    public static final int MIN_SPAWN_DISTANCE = 5;       // Spawn sicuro
+
+    // --- SHOOTER GOBLIN (Estende Chasing) ---
+    public static final double SHOOTER_SPEED_AIMING = 0.0; // Fermo quando mira
+    public static final double SHOOTER_SPEED_CHASE = 0.06; // Veloce quando insegue
+    public static final int SHOOTER_MAX_AMMO = 2;
+    public static final int SHOOTER_RELOAD_TIME = 180;     // 3 secondi
+    public static final int SHOOTER_TELEGRAPH_TIME = 30;   // 0.5 secondi pre-sparo
 }

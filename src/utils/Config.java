@@ -47,6 +47,7 @@ public class Config {
     // --- CONFIGURAZIONE ANIMAZIONE PLAYER ---
     public static final int PLAYER_RUN_FRAMES = 12;   // Numero frame corsa
     public static final int PLAYER_IDLE_FRAMES = 16;  // Numero frame riposo
+    public static final int PLAYER_ATTACK_FRAMES = 10;
 
     // --- RISORSE ---
     public static final String PLAYER1_SHEET = "/wizardmale.png";
@@ -79,7 +80,15 @@ public class Config {
     public static final int SHOOTER_MAX_AMMO = 2;
     public static final int SHOOTER_RELOAD_TIME = 180;     // 3 secondi
     public static final int SHOOTER_TELEGRAPH_TIME = 30;   // 0.5 secondi pre-sparo
-    public static final int TILE_FLOOR_COL = ;
+
+    // Villaggio in rovina
+    // Coordinate (Colonna, Riga) nello sheet
+    public static final int TILE_FLOOR_COL = 1;
+    public static final int TILE_FLOOR_ROW = 0;
+    public static final int TILE_WALL_IND_COL = 0;
+    public static final int TILE_WALL_IND_ROW =0;
+    public static final int TILE_WALL_DEST_COL = 2;
+    public static final int TILE_WALL_DEST_ROW = 0;
     // VISUAIZZZAI
 
 } 

@@ -142,19 +142,31 @@ public class ConcreteDrawer extends AbstractDrawer {
         }
     }
 
+// In src/view/ConcreteDrawer.java
+
     private void drawBombs(Graphics2D g2d) {
+        // [0]=Row, [1]=Col, [2]=Elapsed Time (ms)
         int[][] bombsData = ControllerForView.getInstance().getActiveBombsData();
 
-        for (int[] bomb : bombsData) {
-            int row = bomb[0];
-            int col = bomb[1];
+        for (int[] bombInfo : bombsData) {
+            int row = bombInfo[0];
+            int col = bombInfo[1];
+            int elapsedTime = bombInfo[2]; // Tempo trascorso in ms
+
+            // --- CALCOLO FRAME LATO VIEW (Puro MVC) ---
+            // 1. Dividiamo il tempo totale per la durata di un singolo frame
+            // 2. Usiamo il modulo (%) per ciclare (0,1,2...7, 0,1...)
+            int currentFrame = (elapsedTime / Config.BOMB_ANIM_FRAME_DURATION) % Config.BOMB_FRAMES;
 
             int screenX = Config.GRID_OFFSET_X + col * Config.TILE_SIZE;
             int screenY = Config.GRID_OFFSET_Y + row * Config.TILE_SIZE;
 
-            // PLACEHOLDER BOMBA (Cerchio nero pulsante o statico)
-            g2d.setColor(Color.BLACK);
-            g2d.fillOval(screenX + 10, screenY + 10, Config.TILE_SIZE - 20, Config.TILE_SIZE - 20);
+            // Chiediamo allo SpriteManager il frame calcolato
+            BufferedImage sprite = SpriteManager.getInstance().getSprite("BOMB_ANIM", currentFrame);
+
+            if (sprite != null) {
+                g2d.drawImage(sprite, screenX, screenY, null);
+            }
         }
     }
 

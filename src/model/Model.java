@@ -27,19 +27,26 @@ public class Model implements IModel {
 
     private List<Projectile> projectiles = new ArrayList<>();
 
-    private static final int[][] testMap = {
-            {0,1,0,0,0,0,0,0,0,0,0,0,0},
-            {0,1,0,0,0,0,0,2,0,0,0,0,0},
-            {0,1,1,1,1,0,0,0,0,0,0,0,0},
-            {0,0,0,0,1,0,0,0,0,0,0,0,0},
-            {1,1,1,0,1,0,0,0,0,0,2,0,0},
-            {0,0,2,0,0,0,0,0,0,0,0,0,0},
-            {0,0,0,0,0,2,0,0,0,0,0,0,0},
-            {0,0,2,0,0,0,0,0,0,0,0,0,0},
-            {0,0,0,0,0,0,0,0,0,2,0,0,0},
-            {0,0,0,0,0,2,2,0,0,0,0,0,0},
-            {0,0,0,0,0,0,0,0,0,0,0,0,0}
+
+   private static final int[][] testMap = {
+            {0, 0, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 2}, // Riga 0: Start Safe (0,0)
+            {0, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 2}, // Riga 1: Pilastri fissi
+            {0, 2, 0, 2, 0, 0, 0, 2, 2, 2, 0, 2, 0}, // Riga 2: Misto
+            {2, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 0}, // Riga 3: Pilastri
+            {2, 2, 0, 2, 2, 2, 0, 0, 0, 2, 2, 0, 2}, // Riga 4: Spazi aperti (Arena)
+            {0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0}, // Riga 5: Linea centrale
+            {2, 2, 2, 2, 2, 0, 0, 0, 2, 2, 2, 2, 2}, // Riga 6: Muro di casse
+            {0, 1, 2, 1, 2, 1, 2, 1, 0, 1, 2, 1, 0}, // Riga 7: Pilastri
+            {2, 2, 0, 2, 0, 2, 2, 2, 0, 0, 0, 2, 0}, // Riga 8: Labirinto
+            {0, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 2}, // Riga 9: Pilastri
+            {2, 2, 0, 0, 0, 2, 0, 2, 0, 2, 2, 2, 2}  // Riga 10: Fondo
     };
+   // 0 = Vuoto
+   // 1 = Muro Indistruttibile (Test Sliding)
+   // 0 = Vuoto
+   // 1 = Muro Indistruttibile (Test Sliding)
+// 0 = Vuoto
+   // 1 = Muro Indistruttibile (Test Sliding)
 
     private Model() {
         this.gameAreaArray = new int[Config.GRID_HEIGHT][Config.GRID_WIDTH];
@@ -51,38 +58,96 @@ public class Model implements IModel {
 
         this.enemies = new ArrayList<>();
     }
-
-    // In Model.java
     public boolean isWalkable(double nextX, double nextY) {
         double hbW = Config.ENTITY_LOGICAL_HITBOX_WIDTH;
         double hbH = Config.ENTITY_LOGICAL_HITBOX_HEIGHT;
 
-        // Calcolo bordi
+        // --- 1. CALCOLO HITBOX CORRETTO ---
+        // Centriamo la hitbox orizzontalmente
         double left = nextX + (1.0 - hbW) / 2.0;
         double right = left + hbW - 0.01;
-        double top = nextY + (1.0 - hbH); // <--- SE QUESTO È SBAGLIATO, ESCE IN ALTO
-        double bottom = nextY + 1.0 - 0.01;
+
+        // Calibrazione Verticale: "Piedi" piantati a terra, altezza a salire
+        // (Questo corregge anche il problema dell'invasione verso l'alto)
+        double yOffset = 0.4; // Margine per dare profondità 2.5D
+        double bottom = nextY + 1.0 - yOffset;
+        double top = bottom - hbH;
 
         int startCol = (int) Math.floor(left);
         int endCol = (int) Math.floor(right);
         int startRow = (int) Math.floor(top);
         int endRow = (int) Math.floor(bottom);
 
-        // SE NON HAI QUESTO IF, IL GOBLIN ENTRA NELL'ARIA NERA IN ALTO (startRow < 0)
+        // Controllo Limiti Mappa
         if (startCol < 0 || endCol >= Config.GRID_WIDTH || startRow < 0 || endRow >= Config.GRID_HEIGHT) {
             return false;
         }
-        // Controllo collisione con i blocchi (muri)
+
+        // --- 2. CONTROLLO COLLISIONI ---
         for (int r = startRow; r <= endRow; r++) {
             for (int c = startCol; c <= endCol; c++) {
+
+                // A. MURI E CASSE (Sempre Solidi)
                 if (gameAreaArray[r][c] == Config.CELL_INDESTRUCTIBLE_BLOCK ||
                         gameAreaArray[r][c] == Config.CELL_DESTRUCTIBLE_BLOCK) {
                     return false;
+                }
+
+                // B. BOMBE (Solide, ma con eccezione)
+                if (isBombAt(r, c)) {
+                    // Se c'è una bomba, è un muro...
+                    // ...TRANNE SE il player ci è attualmente "dentro" (appena piazzata)
+                    if (!isPlayerCurrentlyInside(r, c)) {
+                        return false;
+                    }
+                    // Se siamo dentro, isWalkable ritorna TRUE per questa cella,
+                    // permettendoci di camminare per uscire dalla bomba.
                 }
             }
         }
         return true;
     }
+
+    // --- HELPER 1: C'è una bomba qui? ---
+    private boolean isBombAt(int r, int c) {
+        for (Bomb b : activeBombs) {
+            if (b.getRow() == r && b.getCol() == c) return true;
+        }
+        return false;
+    }
+
+    // --- HELPER 2: Sono dentro la bomba? (SENZA MARGINI) ---
+    private boolean isPlayerCurrentlyInside(int r, int c) {
+        // Coordinate attuali del Player (prima del movimento)
+        double pX = player.getXCoordinate();
+        double pY = player.getYCoordinate();
+        double hbW = Config.ENTITY_LOGICAL_HITBOX_WIDTH;
+        double hbH = Config.ENTITY_LOGICAL_HITBOX_HEIGHT;
+
+        // Calcoliamo i bordi esatti della hitbox attuale
+        double pLeft = pX + (1.0 - hbW) / 2.0;
+        double pRight = pLeft + hbW;
+
+        // Usiamo lo stesso calcolo verticale di isWalkable per coerenza
+        double yOffset = 0.4;
+        double pBottom = pY + 1.0 - yOffset;
+        double pTop = pBottom - hbH;
+
+        // Coordinate della Cella Bomba (Intera cella 1x1)
+        double cellLeft = c;
+        double cellRight = c + 1.0;
+        double cellTop = r;
+        double cellBottom = r + 1.0;
+
+        // CONTROLLO INTERSEZIONE SEMPLICE (Nessun margine "sicuro")
+        // Se le due aree si sovrappongono anche minimamente, ritorna true.
+        boolean overlapX = pRight > cellLeft && pLeft < cellRight;
+        boolean overlapY = pBottom > cellTop && pTop < cellBottom;
+
+        return overlapX && overlapY;
+    }
+
+// In src/model/Model.java
 
     private void updatePlayerMovement() {
         double currentX = player.getXCoordinate();
@@ -94,16 +159,71 @@ public class Model implements IModel {
 
         if (deltaX == 0 && deltaY == 0) return;
 
-        // Movimento asse X con limiti logici
+        // -------------------------------------------------
+        // MOVIMENTO ASSE X (Sliding Verticale - Su/Giù)
+        // -------------------------------------------------
         double nextX = currentX + deltaX;
-        if (isWalkable(nextX, currentY)) {
+
+        // 1. Provo il movimento diretto
+        if (isWalkable(nextX, currentY) && !isOccupiedByEnemies(nextX, currentY)) {
             player.setXCoordinate(Math.max(Config.MIN_LOGICAL_X, Math.min(Config.MAX_LOGICAL_X, nextX)));
         }
+        // 2. Se bloccato, cerco un "vicino" libero in alto o in basso
+        else if (deltaX != 0) {
+            // Coordinate intere candidate (Sopra e Sotto)
+            double targetY_Up = Math.floor(currentY);
+            double targetY_Down = targetY_Up + 1.0;
 
-        // Movimento asse Y con limiti logici
+            // Verifico quali sono libere
+            boolean canGoUp = isWalkable(nextX, targetY_Up) && !isOccupiedByEnemies(nextX, targetY_Up);
+            boolean canGoDown = isWalkable(nextX, targetY_Down) && !isOccupiedByEnemies(nextX, targetY_Down);
+
+            // Distanza attuale dai target
+            double distUp = Math.abs(currentY - targetY_Up);
+            double distDown = Math.abs(currentY - targetY_Down);
+
+            // LOGICA DI SCELTA: Vai verso il buco libero. Se entrambi liberi, vai al più vicino.
+            if (canGoUp && (!canGoDown || distUp < distDown)) {
+                player.setYCoordinate(currentY - Config.CORNER_ALIGN_SPEED);
+            }
+            else if (canGoDown && (!canGoUp || distDown < distUp)) {
+                player.setYCoordinate(currentY + Config.CORNER_ALIGN_SPEED);
+            }
+        }
+
+        currentY = player.getYCoordinate(); // Aggiorno Y post-sliding
+
+        // -------------------------------------------------
+        // MOVIMENTO ASSE Y (Sliding Orizzontale - Destra/Sinistra)
+        // -------------------------------------------------
         double nextY = currentY + deltaY;
-        if (isWalkable(player.getXCoordinate(), nextY)) {
+
+        // 1. Provo il movimento diretto
+        if (isWalkable(currentX, nextY) && !isOccupiedByEnemies(currentX, nextY)) {
             player.setYCoordinate(Math.max(Config.MIN_LOGICAL_Y, Math.min(Config.MAX_LOGICAL_Y, nextY)));
+        }
+        // 2. Se bloccato, cerco un "vicino" libero a sinistra o destra
+        else if (deltaY != 0) {
+            // Coordinate intere candidate (Sinistra e Destra)
+            double targetX_Left = Math.floor(currentX);
+            double targetX_Right = targetX_Left + 1.0;
+
+            // Verifico quali sono libere alla nuova altezza (nextY)
+            // NOTA: Controlliamo se mettendoci ESATTAMENTE su targetX (0.0, 1.0...) passiamo
+            boolean canGoLeft = isWalkable(targetX_Left, nextY) && !isOccupiedByEnemies(targetX_Left, nextY);
+            boolean canGoRight = isWalkable(targetX_Right, nextY) && !isOccupiedByEnemies(targetX_Right, nextY);
+
+            // Distanza dai target
+            double distLeft = Math.abs(currentX - targetX_Left);
+            double distRight = Math.abs(currentX - targetX_Right);
+
+            // LOGICA DI SCELTA
+            if (canGoLeft && (!canGoRight || distLeft < distRight)) {
+                player.setXCoordinate(currentX - Config.CORNER_ALIGN_SPEED);
+            }
+            else if (canGoRight && (!canGoLeft || distRight < distLeft)) {
+                player.setXCoordinate(currentX + Config.CORNER_ALIGN_SPEED);
+            }
         }
     }
 
@@ -160,19 +280,38 @@ public class Model implements IModel {
                 break;
         }
     }
-    /*private void updatePlayerAction(double dx, double dy) {
-        if (dx > 0) player.setAction("PLAYER_RIGHT_RUNNING", 12);
-        else if (dx < 0) player.setAction("PLAYER_LEFT_RUNNING", 12);
-        else if (dy > 0) player.setAction("PLAYER_FRONT_RUNNING", 12);
-        else if (dy < 0) player.setAction("PLAYER_BACK_RUNNING", 12);
-        else {
-            String last = player.getCurrentAction();
-            if (last.contains("RIGHT")) player.setAction("PLAYER_RIGHT_IDLE", 16);
-            else if (last.contains("LEFT")) player.setAction("PLAYER_LEFT_IDLE", 16);
-            else if (last.contains("BACK")) player.setAction("PLAYER_BACK_IDLE", 16);
-            else player.setAction("PLAYER_FRONT_IDLE", 16);
+    /**
+     * Controlla se la posizione futura (nextX, nextY) è occupata fisicamente da un nemico.
+     * Usa un margine per rendere la collisione fisica leggermente più piccola della hitbox di danno.
+     */
+    private boolean isOccupiedByEnemies(double nextX, double nextY) {
+        double pHW = Config.ENTITY_LOGICAL_HITBOX_WIDTH;
+        double pHH = Config.ENTITY_LOGICAL_HITBOX_HEIGHT;
+
+        // Il margine serve a bloccare il player un attimo DOPO che le hitbox di danno si sono toccate.
+        // In questo modo il contatto (e la perdita di vita) avviene sicuramente.
+        double margin = 0.15;
+
+        for (Enemy e : enemies) {
+            double eX = e.getX();
+            double eY = e.getY();
+            double eW = Config.GOBLIN_HITBOX_WIDTH;
+            double eH = Config.GOBLIN_HITBOX_HEIGHT;
+
+            // Verifica sovrapposizione AABB con margine
+            boolean overlapX = (nextX + margin) < (eX + eW - margin) &&
+                    (nextX + pHW - margin) > (eX + margin);
+
+            boolean overlapY = (nextY + margin) < (eY + eH - margin) &&
+                    (nextY + pHH - margin) > (eY + margin);
+
+            if (overlapX && overlapY) {
+                return true; // Spazio occupato da un nemico
+            }
         }
-    }*/
+        return false; // Spazio libero
+    }
+
 
     @Override
     public double xCoordinatePlayer() { return player.getXCoordinate(); }
@@ -212,82 +351,151 @@ public class Model implements IModel {
         }
     }
 
-    /**
-     * Calcola l'area d'impatto dell'esplosione e distrugge i blocchi.
-     */
+// In src/model/Model.java
+
     private void handleExplosion(Bomb b) {
         int r = b.getRow();
         int c = b.getCol();
         int rad = b.getRadius();
 
-        // L'esplosione colpisce il centro e si espande nelle 4 direzioni (croce)
-        destroyTile(r, c);
-        for (int i = 1; i <= rad; i++) if (!destroyTile(r + i, c)) break; // Giù
-        for (int i = 1; i <= rad; i++) if (!destroyTile(r - i, c)) break; // Su
-        for (int i = 1; i <= rad; i++) if (!destroyTile(r, c + i)) break; // Destra
-        for (int i = 1; i <= rad; i++) if (!destroyTile(r, c - i)) break; // Sinistra
+        // 1. Esplosione al CENTRO (dove c'era la bomba)
+        checkExplosionDamage(r, c); // Uccide nemici sul posto
+        // destroyTile(r, c); // Non serve distruggere il tile centrale (era vuoto per forza), ma per coerenza potresti lasciarlo
+
+        // 2. Espansione nelle 4 direzioni
+        for (int i = 1; i <= rad; i++) if (!processExplosionStep(r + i, c)) break; // Giù
+        for (int i = 1; i <= rad; i++) if (!processExplosionStep(r - i, c)) break; // Su
+        for (int i = 1; i <= rad; i++) if (!processExplosionStep(r, c + i)) break; // Destra
+        for (int i = 1; i <= rad; i++) if (!processExplosionStep(r, c - i)) break; // Sinistra
+    }
+
+    /**
+     * Gestisce l'effetto dell'esplosione su una singola cella.
+     * Ritorna TRUE se l'esplosione può continuare attraverso questa cella.
+     * Ritorna FALSE se l'esplosione viene fermata (da un muro o cassa).
+     */
+    private boolean processExplosionStep(int r, int c) {
+        // Controllo confini mappa
+        if (r < 0 || r >= Config.GRID_HEIGHT || c < 0 || c >= Config.GRID_WIDTH) return false;
+
+        int type = gameAreaArray[r][c];
+
+        // CASO 1: Muro Indistruttibile
+        // Ferma il fuoco. Nessun danno ai nemici (si assume siano protetti dal muro o non possano esserci dentro).
+        if (type == Config.CELL_INDESTRUCTIBLE_BLOCK) return false;
+
+        // CASO 2: Cella Accessibile (Vuota o Cassa Distruttibile)
+        // Il fuoco entra in questa cella -> Controlliamo se uccide qualcuno
+        checkExplosionDamage(r, c);
+
+        // CASO 3: Muro Distruttibile (Cassa)
+        if (type == Config.CELL_DESTRUCTIBLE_BLOCK) {
+            gameAreaArray[r][c] = Config.CELL_EMPTY; // Distrugge la cassa
+            return false; // Il fuoco SI FERMA qui (ha colpito l'ostacolo), non va oltre
+        }
+
+        // CASO 4: Cella Vuota
+        // Il fuoco continua a espandersi
+        return true;
     }
 
     /**
      * Tenta di distruggere una cella. Ritorna true se l'onda d'urto può proseguire.
      */
-    private boolean destroyTile(int r, int c) {
-        // Controllo confini della griglia
-        if (r < 0 || r >= Config.GRID_HEIGHT || c < 0 || c >= Config.GRID_WIDTH) return false;
 
-        int type = gameAreaArray[r][c]; //
-
-        // Un blocco indistruttibile ferma l'esplosione immediatamente
-        if (type == Config.CELL_INDESTRUCTIBLE_BLOCK) return false;
-
-        // Un blocco distruttibile viene rimosso, ma ferma l'onda d'urto
-        if (type == Config.CELL_DESTRUCTIBLE_BLOCK) {
-            gameAreaArray[r][c] = Config.CELL_EMPTY;
-            return false;
-        }
-
-        // Se la cella è vuota, l'esplosione prosegue verso la successiva
-        return true;
-    }
+    // In src/model/Model.java
 
     @Override
     public void placeBomb() {
-        // 1. Controllo disponibilità bombe
-        if (activeBombs.size() < player.getMaxBombs()) {
+        //if (activeBombs.size() >= player.getMaxBombs()) return;
 
-            // Recuperiamo le dimensioni della hitbox logica da Config
-            double hbH = Config.ENTITY_LOGICAL_HITBOX_HEIGHT;
+        // --- CALCOLO PERFETTO DEL CENTRO ---
+        // X: Centro orizzontale (Invariato)
+        double centerX = player.getXCoordinate() + (Config.ENTITY_LOGICAL_HITBOX_WIDTH / 2.0);
 
-            // --- IL CALCOLO CORRETTO ---
-            // Il centro X rimane lo stesso (x + 0.5) perché la hitbox è centrata orizzontalmente.
-            // Il centro Y deve essere traslato verso il basso, dove si trova la hitbox (i piedi).
-            // Invece di +0.5, usiamo il punto medio dell'altezza della hitbox rispetto al fondo della cella.
-            double centerX = player.getXCoordinate() + 0.5;
-            double centerY = player.getYCoordinate() + (1.0 - (hbH / 2.0));
+        // Y: Qui c'era l'errore. Dobbiamo puntare al centro della hitbox di collisione.
+        // In isWalkable la hitbox va da (Y+0.1) a (Y+0.6). Il centro è Y + 0.35.
+        // Usiamo questo valore fisso per essere sicuri di restare nella cella camminabile.
+        double centerY = player.getYCoordinate() + 0.35;
 
-            int row = (int) Math.floor(centerY);
-            int col = (int) Math.floor(centerX);
+        // Math.floor per ottenere l'indice della griglia
+        int col = (int) Math.floor(centerX);
+        int row = (int) Math.floor(centerY);
 
-            // 2. Controllo per non sovrapporre bombe nella stessa cella
-            for (Bomb b : activeBombs) {
-                if (b.getRow() == row && b.getCol() == col) return;
+        // --- CONTROLLI ---
+        if (row < 0 || row >= Config.GRID_HEIGHT || col < 0 || col >= Config.GRID_WIDTH) return;
+
+        // CHECK DI SICUREZZA (Smart Fallback)
+        // Se per qualche motivo di arrotondamento siamo finiti dentro un muro...
+        if (gameAreaArray[row][col] != Config.CELL_EMPTY) {
+            // ...proviamo a piazzare nella cella superiore (dove c'è la testa),
+            // che è sicuramente libera se ci stiamo camminando.
+            if (gameAreaArray[row - 1][col] == Config.CELL_EMPTY) {
+                row = row - 1;
+            } else {
+                return; // Se neanche quella è libera, allora siamo davvero bloccati.
             }
+        }
 
-            // 3. Aggiunta della bomba
-            activeBombs.add(new Bomb(row, col, Config.BOMB_DETONATION_TICKS, player.getBombRadius()));
-            System.out.println("Bomba piazzata correttamente nella cella: [" + row + "," + col + "]");
+        // Controllo sovrapposizione bombe
+        for (Bomb b : activeBombs) {
+            if (b.getRow() == row && b.getCol() == col) return;
+        }
+
+        activeBombs.add(new Bomb(row, col, Config.BOMB_DETONATION_TICKS, player.getBombRadius()));
+        System.out.println("Bomba piazzata in [" + row + "," + col + "]");
+    }
+    /**
+     * Controlla se ci sono nemici nella cella (row, col) colpita dall'esplosione
+     * e li elimina se presenti.
+     */
+    private void checkExplosionDamage(int row, int col) {
+        // Usiamo un iteratore per poter rimuovere elementi dalla lista mentre cicliamo in sicurezza
+        Iterator<Enemy> it = enemies.iterator();
+
+        // Area dell'esplosione (la cella intera 1x1)
+        double expX = col;
+        double expY = row;
+        double expSize = 1.0;
+
+        while (it.hasNext()) {
+            Enemy e = it.next();
+
+            // Coordinate e Hitbox del nemico
+            double eX = e.getX();
+            double eY = e.getY();
+            double eW = Config.GOBLIN_HITBOX_WIDTH;
+            double eH = Config.GOBLIN_HITBOX_HEIGHT;
+
+            // Intersezione tra Rettangoli (AABB)
+            // Se il rettangolo del nemico tocca il rettangolo dell'esplosione...
+            boolean hitX = eX < expX + expSize && eX + eW > expX;
+            boolean hitY = eY < expY + expSize && eY + eH > expY;
+
+            if (hitX && hitY) {
+                it.remove(); // RIMUOVI IL NEMICO DALLA LISTA
+                System.out.println("Goblin eliminato dall'esplosione in [" + row + "," + col + "]!");
+            }
         }
     }
 
+
+// In src/model/Model.java
+
     @Override
     public int[][] getActiveBombsData() {
-        // Creiamo una matrice: tante righe quante sono le bombe, 2 colonne per [row, col]
-        int[][] data = new int[activeBombs.size()][2];
+        // Matrice Nx3: [Row, Col, ElapsedTime]
+        int[][] data = new int[activeBombs.size()][3];
+        long currentTime = System.currentTimeMillis();
 
         for (int i = 0; i < activeBombs.size(); i++) {
             Bomb b = activeBombs.get(i);
-            data[i][0] = b.getRow(); // Coordinata Y (riga)
-            data[i][1] = b.getCol(); // Coordinata X (colonna)
+            data[i][0] = b.getRow();
+            data[i][1] = b.getCol();
+
+            // Calcoliamo quanto tempo è passato (in ms) da quando esiste
+            // Cast a int è sicuro perché una bomba dura pochi secondi
+            data[i][2] = (int) (currentTime - b.getCreationTime());
         }
         return data;
     }
@@ -457,7 +665,11 @@ public class Model implements IModel {
 
         // 4. Gestisci lo spawn
         manageSpawning();       // private
+        // LOGICA DI PULIZIA: Il Model decide che dopo 500ms l'evento "distruzione" non esiste più.
+        long currentTime = System.currentTimeMillis();
+        destructionEffects.removeIf(bd -> (currentTime - bd.getCreationTime()) > 500);
     }
+
 
     @Override
     public int getEnemyCount() {

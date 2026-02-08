@@ -17,7 +17,9 @@ public class Config {
 
     // Hitbox espressa in Unità Mondo (es. 0.5 unità = 32 pixel se tile è 64)
     public static final double ENTITY_LOGICAL_HITBOX_WIDTH = 0.5;
-    public static final double ENTITY_LOGICAL_HITBOX_HEIGHT = 0.25;
+    public static final double ENTITY_LOGICAL_HITBOX_HEIGHT = 0.3;
+
+
 
     // --- LOGICA NEMICI (GOBLIN) ---
     public static final double GOBLIN_COMMON_SPEED = 0.03;    // Velocità del Goblin base
@@ -56,10 +58,25 @@ public class Config {
     public static final int CELL_EMPTY = 0;
     public static final int CELL_INDESTRUCTIBLE_BLOCK = 1;
     public static final int CELL_DESTRUCTIBLE_BLOCK = 2;
-    // --- RISORSE BOMBA (Placeholder) ---
-    public static final String BOMB_SHEET = "/bomb.png"; // Nome file da decidere
-    public static final int BOMB_FRAME_SIZE = 64;       // Dimensione sprite (es. 64x64)
-    public static final int BOMB_ANIMATION_FRAMES = 1;  // Numero di frame iniziali
+    public static final String ITEM_SHEET = "/Items.png";
+    public static final int BOMB_SPRITE_START = 0;
+    public static final int BOMB_FRAMES = 8;
+    public static final int BOMB_ANIM_FRAME_DURATION = 100;
+    // --- FUOCO ESPLOSIONE (Consumabili.png - Riga 1) ---
+    public static final int DESTRUCTION_START = 3;
+    public static final int DESTRUCTION_FRAMES = 3;    // Caricherà le colonne 3, 4, 5
+
+    // Durata visiva: 150ms per frame
+    public static final int DESTRUCTION_FRAME_DURATION = 150;
+
+
+    // --- MAPPA & DISTRUZIONE (MapItems.png) ---
+    // Celle Statiche
+
+
+
+
+
 
     // --- LOGICA BOMBE ---
     public static final int BOMB_DETONATION_TICKS = 180; // 3 secondi a 60 FPS
@@ -89,6 +106,15 @@ public class Config {
     public static final int TILE_WALL_IND_ROW =0;
     public static final int TILE_WALL_DEST_COL = 2;
     public static final int TILE_WALL_DEST_ROW = 0;
-    // VISUAIZZZAI
+
+    // In src/utils/Config.java
+
+// ... (altre costanti)
+
+    // --- SLIDING / CORNER CORRECTION ---
+
+
+    // Velocità con cui il player viene riallineato (di solito uguale alla velocità di movimento)
+    public static final double CORNER_ALIGN_SPEED = ENTITY_LOGICAL_SPEED * 1.5;
 
 } 

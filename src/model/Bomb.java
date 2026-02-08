@@ -1,16 +1,16 @@
 package model;
 
-/*
- * Rappresenta l'entità Bomba nel Modello.
- * Ancorata alla griglia discreta (row, col) per semplificare esplosioni e collisioni.
- */
 public class Bomb extends Entity {
 
     private final int row;
     private final int col;
-    private int timer;
+    private int timer; // Timer logico per l'esplosione (gameplay)
     private final int radius;
     private boolean exploded;
+
+    // TIMESTAMP: Serve alla View per calcolare l'animazione,
+    // ma per il Model è solo un dato temporale.
+    private final long creationTime;
 
     public Bomb(int row, int col, int timer, int radius) {
         this.row = row;
@@ -18,23 +18,22 @@ public class Bomb extends Entity {
         this.timer = timer;
         this.radius = radius;
         this.exploded = false;
+        this.creationTime = System.currentTimeMillis(); // Segniamo l'orario di creazione
     }
 
-    /*
-     * Riduce il tempo mancante alla detonazione.
-     * Il nome riflette specificamente l'azione di countdown per la bomba.
-     */
     public void updateDetonationTimer() {
+        // Solo logica di gameplay (Countdown)
         if (timer > 0) {
             timer--;
         } else {
             exploded = true;
         }
+        // NESSUN calcolo di frame qui!
     }
 
-    // Getters per la logica e il disegno della View
     public int getRow() { return row; }
     public int getCol() { return col; }
     public int getRadius() { return radius; }
     public boolean isExploded() { return exploded; }
+    public long getCreationTime() { return creationTime; }
 }

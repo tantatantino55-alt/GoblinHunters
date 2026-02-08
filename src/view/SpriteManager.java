@@ -1,7 +1,5 @@
 package view;
 
-import utils.PlayerState;
-
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
 import java.util.Map;
@@ -85,11 +83,6 @@ public class SpriteManager {
             return anim[Math.abs(frameIdx) % anim.length];
         }
         return null; // O ritorna un placeholder rosa per debug
-    }
-
-    /** Helper per il Player (Compatibilità con ConcreteDrawer) */
-    public BufferedImage getPlayerSprite(PlayerState state, int frameIdx) {
-        return getSprite(state, frameIdx);
     }
 
     // ========================================================================

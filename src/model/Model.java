@@ -30,6 +30,8 @@ public class Model implements IModel {
     // Lista che tiene traccia dei blocchi appena distrutti per la View
     private final List<BlockDestruction> destructionEffects = new ArrayList<>();
 
+    private final List<int[]> activeFire = new ArrayList<>(); // [row, col, type, timestamp]
+
    private static final int[][] testMap = {
             {0, 0, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 2}, // Riga 0: Start Safe (0,0)
             {0, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 2}, // Riga 1: Pilastri fissi
@@ -359,19 +361,19 @@ public class Model implements IModel {
         int r = b.getRow();
         int c = b.getCol();
         int rad = b.getRadius();
+        int now = (int) System.currentTimeMillis();
 
-        // 1. Esplosione al CENTRO (dove c'era la bomba)
-        checkExplosionDamage(r, c); // Uccide nemici sul posto
-        // destroyTile(r, c); // Non serve distruggere il tile centrale (era vuoto per forza), ma per coerenza potresti lasciarlo
+        // 1. Centro (Tipo 0)
+        activeFire.add(new int[]{r, c, 0, now});
+        processExplosionStep(r, c);
 
-        // 2. Espansione nelle 4 direzioni
-        for (int i = 1; i <= rad; i++) if (!processExplosionStep(r + i, c)) break; // Giù
-        for (int i = 1; i <= rad; i++) if (!processExplosionStep(r - i, c)) break; // Su
-        for (int i = 1; i <= rad; i++) if (!processExplosionStep(r, c + i)) break; // Destra
-        for (int i = 1; i <= rad; i++) if (!processExplosionStep(r, c - i)) break; // Sinistra
+        // 2. Espansione nelle 4 direzioni con i tipi specifici
+        expandFireDirection(r, c, -1, 0, rad, 4, 8); // Su: Central Up (4), End Up (8)
+        expandFireDirection(r, c, 1, 0, rad, 5, 1);  // Giù: Central Down (5), End Down (1)
+        expandFireDirection(r, c, 0, -1, rad, 2, 6); // Sinistra: Central Left (2), End Left (6)
+        expandFireDirection(r, c, 0, 1, rad, 3, 7);  // Destra: Central Right (3), End Right (7)
     }
-
-    /**
+    /*
      * Gestisce l'effetto dell'esplosione su una singola cella.
      * Ritorna TRUE se l'esplosione può continuare attraverso questa cella.
      * Ritorna FALSE se l'esplosione viene fermata (da un muro o cassa).
@@ -669,8 +671,11 @@ public class Model implements IModel {
         // 4. Gestisci lo spawn
         manageSpawning();       // private
         // LOGICA DI PULIZIA: Il Model decide che dopo 500ms l'evento "distruzione" non esiste più.
-        long currentTime = System.currentTimeMillis();
-        destructionEffects.removeIf(bd -> (currentTime - bd.getCreationTime()) > 500);
+
+        long now = System.currentTimeMillis();
+        activeFire.removeIf(f -> (now - f[3]) > 500); // Il fuoco dura 500ms
+        destructionEffects.removeIf(bd -> (now - bd.getCreationTime()) > 500);
+
     }
 
 
@@ -800,6 +805,36 @@ public class Model implements IModel {
             data.add(info);
         }
         return data;
+    }
+
+    @Override
+    public List<int[]> getActiveFireData() {
+        return new ArrayList<>(activeFire);
+    }
+    private void expandFireDirection(int startR, int startC, int dr, int dc, int rad, int centralType, int endType) {
+        for (int i = 1; i <= rad; i++) {
+            int r = startR + dr * i;
+            int c = startC + dc * i;
+
+            if (r < 0 || r >= Config.GRID_HEIGHT || c < 0 || c >= Config.GRID_WIDTH) break;
+
+            int cellType = gameAreaArray[r][c];
+            if (cellType == Config.CELL_INDESTRUCTIBLE_BLOCK) break;
+
+            // Determina se è la fine del raggio
+            boolean isEnd = (i == rad);
+            if (!isEnd) {
+                int nr = r + dr, nc = c + dc;
+                if (nr < 0 || nr >= Config.GRID_HEIGHT || nc < 0 || nc >= Config.GRID_WIDTH || gameAreaArray[nr][nc] != Config.CELL_EMPTY)
+                    isEnd = true;
+            }
+            if (cellType == Config.CELL_DESTRUCTIBLE_BLOCK) isEnd = true;
+
+            activeFire.add(new int[]{r, c, isEnd ? endType : centralType, (int) System.currentTimeMillis()});
+            processExplosionStep(r, c);
+
+            if (cellType == Config.CELL_DESTRUCTIBLE_BLOCK) break;
+        }
     }
 
     public static IModel getInstance() {

@@ -30,6 +30,7 @@ public class ConcreteDrawer extends AbstractDrawer {
         // 2. Disegna la Mappa (Pavimento + Muri)
         drawMap(g2d);
         drawDestructions(g2d);
+        drawFire(g2d); // Disegna il fuoco sopra la mappa ma sotto le entità
 
         // 3. Disegna le Entità
         drawBombs(g2d);
@@ -212,6 +213,19 @@ public class ConcreteDrawer extends AbstractDrawer {
 
             if (sprite != null) {
                 g2d.drawImage(sprite, screenX, screenY, Config.TILE_SIZE, Config.TILE_SIZE, null);
+            }
+        }
+    }
+    private void drawFire(Graphics2D g2d) {
+        List<int[]> fireData = ControllerForView.getInstance().getActiveFireData();
+        for (int[] f : fireData) {
+            int r = f[0], c = f[1], type = f[2];
+            int screenX = Config.GRID_OFFSET_X + c * Config.TILE_SIZE;
+            int screenY = Config.GRID_OFFSET_Y + r * Config.TILE_SIZE;
+
+            BufferedImage img = SpriteManager.getInstance().getSprite("FIRE_" + type, 0);
+            if (img != null) {
+                g2d.drawImage(img, screenX, screenY, Config.TILE_SIZE, Config.TILE_SIZE, null);
             }
         }
     }

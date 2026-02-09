@@ -12,13 +12,13 @@ public class ResourceLoader {
     public void loadAllResources() {
         SpriteManager sm = SpriteManager.getInstance();
 
-        // Carichiamo le animazioni del Player
+
         loadPlayerAnimations(sm);
         loadBombResources(sm);
         loadDestructionAnimations(sm);
-        // In futuro qui potrai aggiungere:
-        // loadEnemyAnimations(sm);
-        // loadItemSprites(sm);
+        loadFireResources( sm);
+
+
     }
 
     private void loadPlayerAnimations(SpriteManager sm) {
@@ -75,6 +75,21 @@ public class ResourceLoader {
                 64                            // Dimensione Tile
         );
         System.out.println("ResourceLoader: Animazione Distruzione caricata (Frame 3-5).");
+    }
+
+    private void loadFireResources(SpriteManager sm) {
+        String sheet = Config.ITEM_SHEET;
+        int size = 64;
+        // Carichiamo i 9 sprite come animazioni da 1 frame ciascuna per semplicità
+        sm.loadAnimation("FIRE_0", sheet, 24, 1, size); // Center
+        sm.loadAnimation("FIRE_1", sheet, 25, 1, size); // End Down (2nd)
+        sm.loadAnimation("FIRE_2", sheet, 26, 1, size); // Central Left (3rd)
+        sm.loadAnimation("FIRE_3", sheet, 27, 1, size); // Central Right (4th)
+        sm.loadAnimation("FIRE_4", sheet, 28, 1, size); // Central Up (5th)
+        sm.loadAnimation("FIRE_5", sheet, 29, 1, size); // Central Down (6th)
+        sm.loadAnimation("FIRE_6", sheet, 30, 1, size); // End Left (7th)
+        sm.loadAnimation("FIRE_7", sheet, 31, 1, size); // End Right (8th)
+        sm.loadAnimation("FIRE_8", sheet, 32, 1, size); // End Up (9th - Row 3 Col 0)
     }
 }
 

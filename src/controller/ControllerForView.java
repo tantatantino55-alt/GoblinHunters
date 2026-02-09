@@ -6,6 +6,8 @@ import utils.EnemyType;
 import utils.PlayerState;
 import view.View;
 
+import java.util.List;
+
 public class ControllerForView implements IControllerForView {
 
     private static ControllerForView instance = null;
@@ -102,6 +104,11 @@ public class ControllerForView implements IControllerForView {
     @Override
     public java.util.List<int[]> getDestructionsData() {
         return Model.getInstance().getDestructionsData();
+    }
+
+    @Override
+    public List<int[]> getActiveFireData() {
+        return Model.getInstance().getActiveFireData();
     }
 
     public static IControllerForView getInstance() {

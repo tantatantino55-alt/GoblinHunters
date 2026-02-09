@@ -37,4 +37,6 @@ public interface IModel {
     List<double[]> getProjectilesData();
     List<int[]> getDestructionsData();
     public boolean isAreaOccupiedByOtherEnemy(double nextX, double nextY, Enemy enemy);
+
+    List<int[]> getActiveFireData();
 }

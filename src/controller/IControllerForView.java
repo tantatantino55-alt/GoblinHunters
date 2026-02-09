@@ -33,4 +33,6 @@ public interface IControllerForView {
 
     List<double[]> getProjectilesData();
     List<int[]> getDestructionsData();
+
+    List<int[]> getActiveFireData();
 }

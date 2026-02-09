@@ -35,6 +35,6 @@ public interface IModel {
     // Restituisce una lista di "dati grezzi" dei proiettili
     // Ogni double[] contiene: { x, y, tipo, direzione }
     List<double[]> getProjectilesData();
-
+    List<int[]> getDestructionsData();
     public boolean isAreaOccupiedByOtherEnemy(double nextX, double nextY, Enemy enemy);
 }

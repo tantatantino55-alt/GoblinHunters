@@ -27,6 +27,8 @@ public class Model implements IModel {
 
     private List<Projectile> projectiles = new ArrayList<>();
 
+    // Lista che tiene traccia dei blocchi appena distrutti per la View
+    private final List<BlockDestruction> destructionEffects = new ArrayList<>();
 
    private static final int[][] testMap = {
             {0, 0, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 2}, // Riga 0: Start Safe (0,0)
@@ -783,6 +785,20 @@ public class Model implements IModel {
     // Helper privato per evitare crash se la View chiede un indice che non esiste più
     private boolean isValidIndex(int index) {
         return index >= 0 && index < enemies.size();
+    }
+    @Override
+    public List<int[]> getDestructionsData() {
+        List<int[]> data = new ArrayList<>();
+        long currentTime = System.currentTimeMillis();
+
+        for (BlockDestruction bd : destructionEffects) {
+            int[] info = new int[3];
+            info[0] = bd.getRow();
+            info[1] = bd.getCol();
+            info[2] = (int) (currentTime - bd.getCreationTime()); // Tempo trascorso in ms
+            data.add(info);
+        }
+        return data;
     }
 
     public static IModel getInstance() {

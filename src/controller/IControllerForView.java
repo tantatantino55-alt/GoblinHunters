@@ -4,6 +4,8 @@ import utils.Direction;
 import utils.EnemyType;
 import utils.PlayerState;
 
+import java.util.List;
+
 public interface IControllerForView {
     public void openGameGUI();
     public void closeGameGUI();
@@ -29,5 +31,6 @@ public interface IControllerForView {
 
     Direction getEnemyTelegraph(int index);
 
-    java.util.List<double[]> getProjectilesData();
+    List<double[]> getProjectilesData();
+    List<int[]> getDestructionsData();
 }

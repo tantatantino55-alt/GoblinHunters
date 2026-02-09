@@ -7,6 +7,7 @@ import utils.PlayerState;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.util.List;
 
 public class ConcreteDrawer extends AbstractDrawer {
 
@@ -28,6 +29,7 @@ public class ConcreteDrawer extends AbstractDrawer {
 
         // 2. Disegna la Mappa (Pavimento + Muri)
         drawMap(g2d);
+        drawDestructions(g2d);
 
         // 3. Disegna le Entità
         drawBombs(g2d);
@@ -184,6 +186,33 @@ public class ConcreteDrawer extends AbstractDrawer {
         for (int row = 0; row <= Config.GRID_HEIGHT; row++) {
             int y = Config.GRID_OFFSET_Y + (row * Config.TILE_SIZE);
             g2d.drawLine(Config.GRID_OFFSET_X, y, Config.GRID_OFFSET_X + (Config.GRID_WIDTH * Config.TILE_SIZE), y);
+        }
+    }
+    private void drawDestructions(Graphics2D g2d) {
+        // Supponendo che il controller restituisca una lista di int[] {row, col, elapsedTime}
+        List<int[]> destructions = ControllerForView.getInstance().getDestructionsData();
+
+        for (int[] d : destructions) {
+            int row = d[0];
+            int col = d[1];
+            int elapsed = d[2];
+
+            // Calcolo del frame:
+            // Hai definito DESTRUCTION_FRAMES = 3 e DESTRUCTION_FRAME_DURATION = 150 in Config
+            int currentFrame = elapsed / Config.DESTRUCTION_FRAME_DURATION;
+
+            // Evita di andare fuori indice se il Model non ha ancora rimosso l'effetto
+            if (currentFrame >= Config.DESTRUCTION_FRAMES) currentFrame = Config.DESTRUCTION_FRAMES - 1;
+
+            int screenX = Config.GRID_OFFSET_X + col * Config.TILE_SIZE;
+            int screenY = Config.GRID_OFFSET_Y + row * Config.TILE_SIZE;
+
+            // Recupera lo sprite caricato con la chiave "CRATE_BREAK" nel ResourceLoader
+            BufferedImage sprite = SpriteManager.getInstance().getSprite("CREATE_BREAK", currentFrame);
+
+            if (sprite != null) {
+                g2d.drawImage(sprite, screenX, screenY, Config.TILE_SIZE, Config.TILE_SIZE, null);
+            }
         }
     }
 

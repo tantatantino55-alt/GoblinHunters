@@ -99,6 +99,10 @@ public class ControllerForView implements IControllerForView {
     public java.util.List<double[]> getProjectilesData() {
         return Model.getInstance().getProjectilesData();
     }
+    @Override
+    public java.util.List<int[]> getDestructionsData() {
+        return Model.getInstance().getDestructionsData();
+    }
 
     public static IControllerForView getInstance() {
         if (instance == null) instance = new ControllerForView();

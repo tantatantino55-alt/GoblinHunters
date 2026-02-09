@@ -217,15 +217,24 @@ public class ConcreteDrawer extends AbstractDrawer {
         }
     }
     private void drawFire(Graphics2D g2d) {
-        List<int[]> fireData = ControllerForView.getInstance().getActiveFireData();
-        for (int[] f : fireData) {
-            int r = f[0], c = f[1], type = f[2];
-            int screenX = Config.GRID_OFFSET_X + c * Config.TILE_SIZE;
-            int screenY = Config.GRID_OFFSET_Y + r * Config.TILE_SIZE;
+        List<int[]> fireData = ControllerForView.getInstance().getFireData();
+        long now = System.currentTimeMillis();
 
-            BufferedImage img = SpriteManager.getInstance().getSprite("FIRE_" + type, 0);
+        for (int[] f : fireData) {
+            int r = f[0];
+            int col = f[1];
+            int type = f[2];
+            int creationTime = f[3];
+
+            // Animazione: cambiamo frame ogni 100ms
+            int currentFrame = (int)((now - creationTime) / 100) % 4;
+
+            int x = Config.GRID_OFFSET_X + col * Config.TILE_SIZE;
+            int y = Config.GRID_OFFSET_Y + r * Config.TILE_SIZE;
+
+            BufferedImage img = SpriteManager.getInstance().getSprite("FIRE_" + type, currentFrame);
             if (img != null) {
-                g2d.drawImage(img, screenX, screenY, Config.TILE_SIZE, Config.TILE_SIZE, null);
+                g2d.drawImage(img, x, y, Config.TILE_SIZE, Config.TILE_SIZE, null);
             }
         }
     }

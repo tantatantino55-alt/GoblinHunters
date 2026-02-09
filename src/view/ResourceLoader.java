@@ -16,7 +16,9 @@ public class ResourceLoader {
         loadPlayerAnimations(sm);
         loadBombResources(sm);
         loadDestructionAnimations(sm);
-        loadFireResources( sm);
+        loadFireResources(sm);
+
+
 
 
     }

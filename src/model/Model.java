@@ -31,6 +31,8 @@ public class Model implements IModel {
     private final List<BlockDestruction> destructionEffects = new ArrayList<>();
 
     private final List<int[]> activeFire = new ArrayList<>(); // [row, col, type, timestamp]
+    // Lista per il fuoco: int[]{row, col, type, timestamp}
+
 
    private static final int[][] testMap = {
             {0, 0, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 2}, // Riga 0: Start Safe (0,0)
@@ -361,17 +363,61 @@ public class Model implements IModel {
         int r = b.getRow();
         int c = b.getCol();
         int rad = b.getRadius();
-        int now = (int) System.currentTimeMillis();
+        long now = System.currentTimeMillis();
 
-        // 1. Centro (Tipo 0)
-        activeFire.add(new int[]{r, c, 0, now});
-        processExplosionStep(r, c);
+        // 1. CENTRO (Tipo 0)
+        activeFire.add(new int[]{r, c, 0, (int) now});
+        checkExplosionDamage(r, c);
 
-        // 2. Espansione nelle 4 direzioni con i tipi specifici
-        expandFireDirection(r, c, -1, 0, rad, 4, 8); // Su: Central Up (4), End Up (8)
-        expandFireDirection(r, c, 1, 0, rad, 5, 1);  // Giù: Central Down (5), End Down (1)
-        expandFireDirection(r, c, 0, -1, rad, 2, 6); // Sinistra: Central Left (2), End Left (6)
-        expandFireDirection(r, c, 0, 1, rad, 3, 7);  // Destra: Central Right (3), End Right (7)
+        // 2. ESPANSIONE NELLE 4 DIREZIONI
+        // Parametri: riga, colonna, dirR, dirC, raggio, TipoCentrale, TipoFinale
+        // Mapping Tipi: 0=Center, 1=EndDown, 2=Left, 3=Right, 4=Up, 5=Down, 6=EndLeft, 7=EndRight, 8=EndUp
+        expandFireDirection(r, c, -1, 0, rad, 4, 8); // SU
+        expandFireDirection(r, c, 1, 0, rad, 5, 1);  // GIÙ
+        expandFireDirection(r, c, 0, -1, rad, 2, 6); // SINISTRA
+        expandFireDirection(r, c, 0, 1, rad, 3, 7);  // DESTRA
+    }
+
+    private void expandFireDirection(int startR, int startC, int dr, int dc, int rad, int centralType, int endType) {
+        for (int i = 1; i <= rad; i++) {
+            int r = startR + dr * i;
+            int c = startC + dc * i;
+
+            // Controllo limiti mappa
+            if (r < 0 || r >= Config.GRID_HEIGHT || c < 0 || c >= Config.GRID_WIDTH) break;
+
+            int cellType = gameAreaArray[r][c];
+
+            // 1. Muro Indistruttibile: ferma tutto PRIMA di disegnare
+            if (cellType == Config.CELL_INDESTRUCTIBLE_BLOCK) break;
+
+            // 2. Calcolo se è l'ultimo pezzo del raggio (Fine)
+            boolean isEnd = (i == rad);
+            if (!isEnd) {
+                // Se la PROSSIMA cella è un muro o fuori mappa, allora QUESTA è la fine
+                int nextR = r + dr;
+                int nextC = c + dc;
+                if (nextR < 0 || nextR >= Config.GRID_HEIGHT || nextC < 0 || nextC >= Config.GRID_WIDTH
+                        || gameAreaArray[nextR][nextC] != Config.CELL_EMPTY) {
+                    isEnd = true;
+                }
+            }
+            // Se è una cassa, è sicuramente la fine perché il fuoco si ferma lì
+            if (cellType == Config.CELL_DESTRUCTIBLE_BLOCK) isEnd = true;
+
+            // 3. Aggiungo il fuoco alla lista
+            activeFire.add(new int[]{r, c, isEnd ? endType : centralType, (int) System.currentTimeMillis()});
+
+            // 4. Gestione Danni e Distruzione
+            if (cellType == Config.CELL_DESTRUCTIBLE_BLOCK) {
+                gameAreaArray[r][c] = Config.CELL_EMPTY; // Rompo la cassa
+                destructionEffects.add(new BlockDestruction(r, c)); // Effetto distruzione
+                checkExplosionDamage(r, c);
+                break; // Stop espansione
+            }
+
+            checkExplosionDamage(r, c); // Danno ai nemici
+        }
     }
     /*
      * Gestisce l'effetto dell'esplosione su una singola cella.
@@ -609,6 +655,12 @@ public class Model implements IModel {
         }
         return false; // Via libera
     }
+
+    @Override
+    public List<int[]> getFireData() {
+        return new ArrayList<>(activeFire);
+    }
+
     // Metodo interno per gestire le collisioni (Player vs Nemici)
     private void checkCollisions() {
         // Recuperiamo le dimensioni delle hitbox da Config
@@ -807,35 +859,7 @@ public class Model implements IModel {
         return data;
     }
 
-    @Override
-    public List<int[]> getActiveFireData() {
-        return new ArrayList<>(activeFire);
-    }
-    private void expandFireDirection(int startR, int startC, int dr, int dc, int rad, int centralType, int endType) {
-        for (int i = 1; i <= rad; i++) {
-            int r = startR + dr * i;
-            int c = startC + dc * i;
 
-            if (r < 0 || r >= Config.GRID_HEIGHT || c < 0 || c >= Config.GRID_WIDTH) break;
-
-            int cellType = gameAreaArray[r][c];
-            if (cellType == Config.CELL_INDESTRUCTIBLE_BLOCK) break;
-
-            // Determina se è la fine del raggio
-            boolean isEnd = (i == rad);
-            if (!isEnd) {
-                int nr = r + dr, nc = c + dc;
-                if (nr < 0 || nr >= Config.GRID_HEIGHT || nc < 0 || nc >= Config.GRID_WIDTH || gameAreaArray[nr][nc] != Config.CELL_EMPTY)
-                    isEnd = true;
-            }
-            if (cellType == Config.CELL_DESTRUCTIBLE_BLOCK) isEnd = true;
-
-            activeFire.add(new int[]{r, c, isEnd ? endType : centralType, (int) System.currentTimeMillis()});
-            processExplosionStep(r, c);
-
-            if (cellType == Config.CELL_DESTRUCTIBLE_BLOCK) break;
-        }
-    }
 
     public static IModel getInstance() {
         if (instance == null) instance = new Model();

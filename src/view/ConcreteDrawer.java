@@ -110,13 +110,13 @@ public class ConcreteDrawer extends AbstractDrawer {
             // 2. CENTRAMENTO SPRITE
             // Lo sprite del mago è grande (es. 128px) ma la casella è piccola (64px).
             // Centriamo orizzontalmente
-            int drawX = screenX + (Config.TILE_SIZE - Config.PLAYER_FRAME_SIZE) / 2;
+            int drawX = screenX + (Config.TILE_SIZE - Config.ENTITY_FRAME_SIZE) / 2;
 
             // Allineiamo in basso (i piedi del mago devono toccare il fondo della casella)
             // Aggiungiamo un piccolo offset se necessario (+10 nel codice precedente, qui rimosso per pulizia ma riaggiungibile)
-            int drawY = screenY + (Config.TILE_SIZE - Config.PLAYER_FRAME_SIZE);
+            int drawY = screenY + (Config.TILE_SIZE - Config.ENTITY_FRAME_SIZE);
 
-            g2d.drawImage(sprite, drawX, drawY, Config.PLAYER_FRAME_SIZE, Config.PLAYER_FRAME_SIZE, null);
+            g2d.drawImage(sprite, drawX, drawY, Config.ENTITY_FRAME_SIZE, Config.ENTITY_FRAME_SIZE, null);
 
             // Debug Hitbox Player (commentare in produzione)
             // g2d.setColor(Color.RED);
@@ -218,23 +218,29 @@ public class ConcreteDrawer extends AbstractDrawer {
     }
     private void drawFire(Graphics2D g2d) {
         List<int[]> fireData = ControllerForView.getInstance().getFireData();
-        long now = System.currentTimeMillis();
+
+        // Se vuoi debuggare se il fuoco esiste
+         if (!fireData.isEmpty()) System.out.println("Disegno " + fireData.size() + " fuochi");
 
         for (int[] f : fireData) {
             int r = f[0];
             int col = f[1];
             int type = f[2];
-            int creationTime = f[3];
-
-            // Animazione: cambiamo frame ogni 100ms
-            int currentFrame = (int)((now - creationTime) / 100) % 4;
+            // f[3] è la vita rimanente, ma non ci serve per l'animazione perché è statica.
+            // Ci serve solo sapere che ESISTE nella lista.
 
             int x = Config.GRID_OFFSET_X + col * Config.TILE_SIZE;
             int y = Config.GRID_OFFSET_Y + r * Config.TILE_SIZE;
 
-            BufferedImage img = SpriteManager.getInstance().getSprite("FIRE_" + type, currentFrame);
+            // Chiediamo sempre il frame 0, perché ne abbiamo caricato solo 1
+            BufferedImage img = SpriteManager.getInstance().getSprite("FIRE_" + type, 0);
+
             if (img != null) {
                 g2d.drawImage(img, x, y, Config.TILE_SIZE, Config.TILE_SIZE, null);
+            } else {
+                // Quadrato rosso SOLO se hai sbagliato gli indici in ResourceLoader
+                g2d.setColor(Color.RED);
+                g2d.drawRect(x, y, Config.TILE_SIZE, Config.TILE_SIZE);
             }
         }
     }

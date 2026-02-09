@@ -25,7 +25,7 @@ public class ResourceLoader {
 
     private void loadPlayerAnimations(SpriteManager sm) {
         String sheet = Config.PLAYER1_SHEET;
-        int size = Config.PLAYER_FRAME_SIZE;
+        int size = Config.ENTITY_FRAME_SIZE;
 
         // --- FRONTE (Giù) -> FRONT ---
         // Nel file PNG le animazioni frontali partono dalla riga 5 (Indici 58+)

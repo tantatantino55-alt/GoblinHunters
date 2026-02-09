@@ -359,64 +359,83 @@ public class Model implements IModel {
 
 // In src/model/Model.java
 
+    // Sostituisci il metodo handleExplosion
     private void handleExplosion(Bomb b) {
         int r = b.getRow();
         int c = b.getCol();
         int rad = b.getRadius();
-        long now = System.currentTimeMillis();
 
-        // 1. CENTRO (Tipo 0)
-        activeFire.add(new int[]{r, c, 0, (int) now});
+        // 0 = CENTRO. Durata = FIRE_DURATION_TICKS
+        activeFire.add(new int[]{r, c, 0, Config.FIRE_DURATION_TICKS});
+
         checkExplosionDamage(r, c);
 
-        // 2. ESPANSIONE NELLE 4 DIREZIONI
-        // Parametri: riga, colonna, dirR, dirC, raggio, TipoCentrale, TipoFinale
-        // Mapping Tipi: 0=Center, 1=EndDown, 2=Left, 3=Right, 4=Up, 5=Down, 6=EndLeft, 7=EndRight, 8=EndUp
+        // Espansione nelle 4 direzioni
+        // I numeri (4,8,5,1...) sono i TIPI di pezzo (Logica posizionale)
+        // 4=MedioVert, 8=FineSu | 5=MedioVert, 1=FineGiu | ...
         expandFireDirection(r, c, -1, 0, rad, 4, 8); // SU
         expandFireDirection(r, c, 1, 0, rad, 5, 1);  // GIÙ
         expandFireDirection(r, c, 0, -1, rad, 2, 6); // SINISTRA
         expandFireDirection(r, c, 0, 1, rad, 3, 7);  // DESTRA
     }
 
+    // Sostituisci il metodo expandFireDirection
     private void expandFireDirection(int startR, int startC, int dr, int dc, int rad, int centralType, int endType) {
         for (int i = 1; i <= rad; i++) {
-            int r = startR + dr * i;
-            int c = startC + dc * i;
+            int currentR = startR + dr * i;
+            int currentC = startC + dc * i;
 
-            // Controllo limiti mappa
-            if (r < 0 || r >= Config.GRID_HEIGHT || c < 0 || c >= Config.GRID_WIDTH) break;
+            // A. Controllo Limiti Mappa
+            if (currentR < 0 || currentR >= Config.GRID_HEIGHT || currentC < 0 || currentC >= Config.GRID_WIDTH) {
+                break; // Fuori mappa, stop.
+            }
 
-            int cellType = gameAreaArray[r][c];
+            int cellType = gameAreaArray[currentR][currentC];
 
-            // 1. Muro Indistruttibile: ferma tutto PRIMA di disegnare
-            if (cellType == Config.CELL_INDESTRUCTIBLE_BLOCK) break;
+            // B. Controllo Muro INDISTRUTTIBILE
+            if (cellType == Config.CELL_INDESTRUCTIBLE_BLOCK) {
+                // Il fuoco si ferma PRIMA di entrare nel muro.
+                // NON aggiungiamo fuoco qui.
+                break;
+            }
 
-            // 2. Calcolo se è l'ultimo pezzo del raggio (Fine)
-            boolean isEnd = (i == rad);
-            if (!isEnd) {
-                // Se la PROSSIMA cella è un muro o fuori mappa, allora QUESTA è la fine
-                int nextR = r + dr;
-                int nextC = c + dc;
+            // C. Controllo Muro DISTRUTTIBILE (Cassa)
+            if (cellType == Config.CELL_DESTRUCTIBLE_BLOCK) {
+                // 1. Logica di distruzione
+                gameAreaArray[currentR][currentC] = Config.CELL_EMPTY;
+                destructionEffects.add(new BlockDestruction(currentR, currentC));
+
+                // 2. Danni (se c'era un nemico *dentro* la cassa, raro ma possibile)
+                checkExplosionDamage(currentR, currentC);
+
+                // 3. STOP IMPORTANTE:
+                // Non aggiungiamo 'activeFire' su questa cella.
+                // Così vediamo solo l'animazione della cassa che si rompe, senza fuoco sopra.
+                break;
+            }
+
+            // D. Cella Vuota (o calpestabile) -> QUI METTIAMO IL FUOCO
+
+            // Calcoliamo se questa è la "Punta" della fiamma.
+            // È la punta se siamo arrivati al raggio massimo (i == rad)
+            // OPPURE se la PROSSIMA cella è un ostacolo (muro o cassa).
+            boolean isTip = (i == rad);
+
+            if (!isTip) {
+                int nextR = currentR + dr;
+                int nextC = currentC + dc;
+                // Se la prossima è fuori mappa o NON vuota, allora QUESTA cella corrente è l'ultima fiammata (Punta).
                 if (nextR < 0 || nextR >= Config.GRID_HEIGHT || nextC < 0 || nextC >= Config.GRID_WIDTH
                         || gameAreaArray[nextR][nextC] != Config.CELL_EMPTY) {
-                    isEnd = true;
+                    isTip = true;
                 }
             }
-            // Se è una cassa, è sicuramente la fine perché il fuoco si ferma lì
-            if (cellType == Config.CELL_DESTRUCTIBLE_BLOCK) isEnd = true;
 
-            // 3. Aggiungo il fuoco alla lista
-            activeFire.add(new int[]{r, c, isEnd ? endType : centralType, (int) System.currentTimeMillis()});
+            // Aggiungiamo il fuoco alla lista
+            activeFire.add(new int[]{currentR, currentC, isTip ? endType : centralType, Config.FIRE_DURATION_TICKS});
 
-            // 4. Gestione Danni e Distruzione
-            if (cellType == Config.CELL_DESTRUCTIBLE_BLOCK) {
-                gameAreaArray[r][c] = Config.CELL_EMPTY; // Rompo la cassa
-                destructionEffects.add(new BlockDestruction(r, c)); // Effetto distruzione
-                checkExplosionDamage(r, c);
-                break; // Stop espansione
-            }
-
-            checkExplosionDamage(r, c); // Danno ai nemici
+            // Controlliamo se colpiamo player o nemici in questa cella vuota
+            checkExplosionDamage(currentR, currentC);
         }
     }
     /*
@@ -424,31 +443,6 @@ public class Model implements IModel {
      * Ritorna TRUE se l'esplosione può continuare attraverso questa cella.
      * Ritorna FALSE se l'esplosione viene fermata (da un muro o cassa).
      */
-    private boolean processExplosionStep(int r, int c) {
-        // Controllo confini mappa
-        if (r < 0 || r >= Config.GRID_HEIGHT || c < 0 || c >= Config.GRID_WIDTH) return false;
-
-        int type = gameAreaArray[r][c];
-
-        // CASO 1: Muro Indistruttibile
-        // Ferma il fuoco. Nessun danno ai nemici (si assume siano protetti dal muro o non possano esserci dentro).
-        if (type == Config.CELL_INDESTRUCTIBLE_BLOCK) return false;
-
-        // CASO 2: Cella Accessibile (Vuota o Cassa Distruttibile)
-        // Il fuoco entra in questa cella -> Controlliamo se uccide qualcuno
-        checkExplosionDamage(r, c);
-
-        // CASO 3: Muro Distruttibile (Cassa)
-        if (type == Config.CELL_DESTRUCTIBLE_BLOCK) {
-            gameAreaArray[r][c] = Config.CELL_EMPTY; // Distrugge la cassa
-            destructionEffects.add(new BlockDestruction(r, c));
-            return false; // Il fuoco SI FERMA qui (ha colpito l'ostacolo), non va oltre
-        }
-
-        // CASO 4: Cella Vuota
-        // Il fuoco continua a espandersi
-        return true;
-    }
 
     /**
      * Tenta di distruggere una cella. Ritorna true se l'onda d'urto può proseguire.
@@ -723,11 +717,21 @@ public class Model implements IModel {
         // 4. Gestisci lo spawn
         manageSpawning();       // private
         // LOGICA DI PULIZIA: Il Model decide che dopo 500ms l'evento "distruzione" non esiste più.
+// --- GESTIONE FUOCO (PURE LOGIC) ---
+        // Decrementiamo la "vita" del fuoco.
+        Iterator<int[]> it = activeFire.iterator();
+        while (it.hasNext()) {
+            int[] f = it.next();
+            f[3]--; // Decrementa i tick (30 -> 29 -> ... -> 0)
 
+            if (f[3] <= 0) {
+                it.remove(); // Tempo scaduto, rimuovi logicamente
+            }
+        }
+
+        // Pulizia effetti grafici di distruzione (basati su tempo reale o tick, a tua scelta)
         long now = System.currentTimeMillis();
-        activeFire.removeIf(f -> (now - f[3]) > 500); // Il fuoco dura 500ms
         destructionEffects.removeIf(bd -> (now - bd.getCreationTime()) > 500);
-
     }
 
 

@@ -53,8 +53,44 @@ public class Config {
 
     // --- RISORSE ---
     public static final String PLAYER1_SHEET = "/wizardmale.png";
-    public static final int PLAYER_FRAME_SIZE = 128;
+    public static final int ENTITY_FRAME_SIZE = 128;
     public static final String MAIN_SHEET = "/MapItems.png"; // Il tuo file unico
+    public static final String GOBLIN_SHEET = "/goblins.png";
+
+    // Numero di frame per l'animazione di corsa (dall'immagine vedo da 000 a 011 -> 12 frame)
+    public static final int GOBLIN_RUN_FRAMES = 12;
+    public static final int GOBLIN_IDLE_FRAMES = 1; // Per ora usiamo 1 frame se stanno fermi (o usiamo il primo della corsa)
+    // Quanti frame dura ogni azione
+    public static final int SHOOTER_ATTACK_FRAMES = 2;
+
+
+    // --- 1. COMMON GOBLIN (Righe 0-3) ---
+    public static final int COMMON_BACK_RUNNING    = 0;   // Riga 0
+    public static final int COMMON_FRONT_RUNNING  = 12;  // Riga 1
+    public static final int COMMON_LEFT_RUNNING= 24;  // Riga 2
+    public static final int COMMON_RIGHT_RUNNING = 36;  // Riga 3
+
+    // --- 2. SHOOTER GOBLIN: MOVIMENTO (Righe 4-7) --
+    public static final int SHOOTER_BACK_ATTACKING = 48;
+    public static final int SHOOTER_FRONT_ATTACKING = 78;
+    public static final int SHOOTER_BACK_IDLE    = 50; // Riga 4
+    public static final int SHOOTER_BACK_RUNNING  = 66; // Riga 5
+    public static final int SHOOTER_RUN_START_LEFT  = 72; // Riga 6
+    public static final int SHOOTER_RUN_START_RIGHT = 84; // Riga 7
+
+    // --- 3. SHOOTER GOBLIN: ATTACCO (Righe 8-11) ---
+    public static final int SHOOTER_ATTACK_START_UP    = 96;  // Riga 8
+    public static final int SHOOTER_ATTACK_START_DOWN  = 108; // Riga 9
+    public static final int SHOOTER_ATTACK_START_LEFT  = 120; // Riga 10
+    public static final int SHOOTER_ATTACK_START_RIGHT = 132; // Riga 11
+
+    // --- 4. CHASER (HUNTER) GOBLIN (Righe 12-15) ---
+    public static final int HUNTER_START_UP    = 144; // Riga 12
+    public static final int HUNTER_START_DOWN  = 156; // Riga 13
+    public static final int HUNTER_START_LEFT  = 168; // Riga 14
+    public static final int HUNTER_START_RIGHT = 180; // Riga 15
+
+    
     public static final int CELL_EMPTY = 0;
     public static final int CELL_INDESTRUCTIBLE_BLOCK = 1;
     public static final int CELL_DESTRUCTIBLE_BLOCK = 2;
@@ -116,5 +152,14 @@ public class Config {
 
     // Velocità con cui il player viene riallineato (di solito uguale alla velocità di movimento)
     public static final double CORNER_ALIGN_SPEED = ENTITY_LOGICAL_SPEED * 1.5;
+    // --- LOGICA ESPLOSIONE E FUOCO (Model) ---
 
-} 
+
+    // FUOCO
+    // Quanto dura il fuoco nel mondo di gioco? (30 tick = 0.5 secondi a 60 FPS)
+    public static final int FIRE_DURATION_TICKS = 30;
+
+    // --- ANIMAZIONE FUOCO (View) ---
+
+}
+

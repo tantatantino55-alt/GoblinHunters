@@ -68,7 +68,7 @@ public class ResourceLoader {
     }
     private void loadDestructionAnimations(SpriteManager sm) {
         sm.loadAnimation(
-                "CREATE_BREAK",                // Chiave univoca
+                "CRATE_BREAK",                // Chiave univoca
                 Config.MAIN_SHEET,             // File (/MapItems.png)
                 Config.DESTRUCTION_START,
                 Config.DESTRUCTION_FRAMES,    // Quanti frame caricare (3 -> Col 3, 4, 5)

@@ -393,6 +393,7 @@ public class Model implements IModel {
         // CASO 3: Muro Distruttibile (Cassa)
         if (type == Config.CELL_DESTRUCTIBLE_BLOCK) {
             gameAreaArray[r][c] = Config.CELL_EMPTY; // Distrugge la cassa
+            destructionEffects.add(new BlockDestruction(r, c));
             return false; // Il fuoco SI FERMA qui (ha colpito l'ostacolo), non va oltre
         }
 

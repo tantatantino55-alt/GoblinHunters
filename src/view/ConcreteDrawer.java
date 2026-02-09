@@ -208,7 +208,7 @@ public class ConcreteDrawer extends AbstractDrawer {
             int screenY = Config.GRID_OFFSET_Y + row * Config.TILE_SIZE;
 
             // Recupera lo sprite caricato con la chiave "CRATE_BREAK" nel ResourceLoader
-            BufferedImage sprite = SpriteManager.getInstance().getSprite("CREATE_BREAK", currentFrame);
+            BufferedImage sprite = SpriteManager.getInstance().getSprite("CRATE_BREAK", currentFrame);
 
             if (sprite != null) {
                 g2d.drawImage(sprite, screenX, screenY, Config.TILE_SIZE, Config.TILE_SIZE, null);

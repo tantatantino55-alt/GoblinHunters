@@ -127,4 +127,9 @@ public class ChasingGoblin extends Enemy {
         }
         return null; // Nessun pericolo
     }
+    @Override
+    protected void handleWallCollision() {
+        // Gli inseguitori non cambiano direzione a caso. Si fermano e
+        // aspettano che moveTowards scelga una nuova direzione nel prossimo frame.
+    }
 }

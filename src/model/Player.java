@@ -25,6 +25,7 @@ public class Player extends Entity {
         this.yCoordinate = startY;
 
         this.currentState = PlayerState.IDLE_FRONT;
+        this.lives = Config.INITIAL_LIVES;
     }
     // --- GESTIONE STATO (Sostituisce setAction) ---
 

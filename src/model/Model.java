@@ -575,7 +575,7 @@ public class Model implements IModel {
         int attempts = 0;
         boolean validPosition = false;
 
-        while (!validPosition && attempts < 50) { // Aumenta i tentativi
+        while (!validPosition && attempts < 100) { // Aumenta i tentativi
             r = randomGenerator.nextInt(Config.GRID_HEIGHT);
             c = randomGenerator.nextInt(Config.GRID_WIDTH);
 

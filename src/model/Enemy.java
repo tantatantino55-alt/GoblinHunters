@@ -30,11 +30,11 @@ public abstract class Enemy extends Entity {
 
 // --- DA INSERIRE IN Enemy.java (sovrascrive il metodo precedente) ---
 
+    // In src/model/Enemy.java
     protected void moveInDirection() {
         double nextX = x;
         double nextY = y;
 
-        // 1. Calcolo futuro basato sulla velocità (Configurata nel Model)
         switch (currentDirection) {
             case UP:    nextY -= speed; break;
             case DOWN:  nextY += speed; break;
@@ -44,27 +44,26 @@ public abstract class Enemy extends Entity {
 
         IModel model = Model.getInstance();
 
-        // 2. CONTROLLO COLLISIONI (Muri e Mappa)
-        // Usiamo un piccolo offset (margine) per non farli camminare "dentro" i muri
-        double margin = 0.2;
+        // Riduciamo il margine per evitare che si incastrino vicino agli angoli
+        double margin = 0.1;
         if (!model.isWalkable(nextX + margin, nextY + margin) ||
                 !model.isWalkable(nextX + 1 - margin, nextY + 1 - margin)) {
-            changeDirection(); // Se sbatte, cambia strada
+
+            // Se è un inseguitore, NON chiamiamo changeDirection() casuale.
+            // Lasciamo che la sua updateBehavior() scelga la mossa successiva.
+            if (this.type == EnemyType.COMMON) {
+                changeDirection();
+            }
             return;
         }
 
-        // 3. COLLISIONE CON ALTRI NEMICI
-        // Questo evita che si ammassino tutti in un unico punto rosa/sdoppiato
         if (model.isAreaOccupiedByOtherEnemy(nextX, nextY, this)) {
-            // Se la strada è bloccata da un compagno, rallenta o cambia direzione
             return;
         }
 
-        // 4. AGGIORNAMENTO POSIZIONE
         this.x = nextX;
         this.y = nextY;
     }
-
     // Controllo rigoroso per l'area nera
     private boolean isInsideMap(double nx, double ny) {
         return nx >= 0 && nx <= (Config.GRID_WIDTH - 1) &&
@@ -76,6 +75,10 @@ public abstract class Enemy extends Entity {
         while (currentDirection == oldDir) {
             currentDirection = Direction.getRandom();
         }
+    }
+    // Metodo da sovrascrivere nelle sottoclassi
+    protected void handleWallCollision() {
+        changeDirection(); // Comportamento di default (casuale) per CommonGoblin
     }
     // Default: nessun telegraph. ShooterGoblin farà l'override.
     public Direction getTelegraphDirection() {

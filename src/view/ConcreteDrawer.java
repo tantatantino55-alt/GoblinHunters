@@ -2,7 +2,6 @@ package view;
 
 import controller.ControllerForView;
 import utils.Config;
-import utils.Direction;
 import utils.PlayerState;
 
 import java.awt.*;
@@ -81,18 +80,18 @@ public class ConcreteDrawer extends AbstractDrawer {
     }
 
     private void drawPlayer(Graphics2D g2d) {
-        // Recuperiamo lo stato di invincibilità dal Controller
+        // 1. RECUPERO STATO INVINCIBILITÀ
         boolean isInvincible = ControllerForView.getInstance().isPlayerInvincible();
 
-        // LOGICA LAMPEGGIO: Se è invincibile, disegniamo solo in certi intervalli di tempo
+        // 2. LOGICA LAMPEGGIO (Flickering)
         if (isInvincible) {
-            // Usa il tempo corrente per decidere se mostrare lo sprite (ON/OFF ogni 100ms)
+            // Alterna visibilità ogni Config.FLICKER_DELAY_MS millisecondi
             if ((System.currentTimeMillis() / Config.FLICKER_DELAY_MS) % 2 == 0) {
-                return; // Salta il disegno in questo frame (effetto "invisibile")
+                return; // Salta il disegno per questo frame (effetto "invisibile")
             }
         }
 
-        // A. RECUPERO DATI
+        // A. RECUPERO DATI LOGICI
         PlayerState state = ControllerForView.getInstance().getPlayerState();
         double logX = ControllerForView.getInstance().getXCoordinatePlayer();
         double logY = ControllerForView.getInstance().getYCoordinatePlayer();
@@ -115,24 +114,14 @@ public class ConcreteDrawer extends AbstractDrawer {
 
         // D. DISEGNO A SCHERMO
         if (sprite != null) {
-            // 1. Convertiamo coordinate logiche (es. 4.5) in pixel schermo
             int screenX = (int) (logX * Config.TILE_SIZE) + Config.GRID_OFFSET_X;
             int screenY = (int) (logY * Config.TILE_SIZE) + Config.GRID_OFFSET_Y;
 
-            // 2. CENTRAMENTO SPRITE
-            // Lo sprite del mago è grande (es. 128px) ma la casella è piccola (64px).
-            // Centriamo orizzontalmente
+            // Centramento orizzontale e allineamento piedi in basso
             int drawX = screenX + (Config.TILE_SIZE - Config.ENTITY_FRAME_SIZE) / 2;
-
-            // Allineiamo in basso (i piedi del mago devono toccare il fondo della casella)
-            // Aggiungiamo un piccolo offset se necessario (+10 nel codice precedente, qui rimosso per pulizia ma riaggiungibile)
             int drawY = screenY + (Config.TILE_SIZE - Config.ENTITY_FRAME_SIZE);
 
             g2d.drawImage(sprite, drawX, drawY, Config.ENTITY_FRAME_SIZE, Config.ENTITY_FRAME_SIZE, null);
-
-            // Debug Hitbox Player (commentare in produzione)
-            // g2d.setColor(Color.RED);
-            // g2d.drawRect(screenX, screenY, Config.TILE_SIZE, Config.TILE_SIZE);
         }
     }
     // In src/view/ConcreteDrawer.java
@@ -142,12 +131,13 @@ public class ConcreteDrawer extends AbstractDrawer {
         int count = ControllerForView.getInstance().getEnemyCount();
 
         for (int i = 0; i < count; i++) {
+            // 1. Recupero dati logici dal Controller
             double x = ControllerForView.getInstance().getEnemyX(i);
             double y = ControllerForView.getInstance().getEnemyY(i);
             utils.Direction dir = ControllerForView.getInstance().getEnemyDirection(i);
             utils.EnemyType type = ControllerForView.getInstance().getEnemyType(i);
 
-            // Determiniamo il prefisso in base al tipo
+            // 2. Definizione del prefisso per lo SpriteManager
             String prefix = switch (type) {
                 case COMMON -> "COMMON";
                 case HUNTER -> "HUNTER";
@@ -155,39 +145,39 @@ public class ConcreteDrawer extends AbstractDrawer {
                 default -> "COMMON";
             };
 
-            // FORZIAMO LO STATO: Eliminiamo ogni riferimento a HURT o DIE
+            // 3. Gestione degli stati e delle animazioni
             String state = "RUN";
             int frames = Config.GOBLIN_RUN_FRAMES;
 
-            // Gestiamo solo l'eccezione dell'attacco per lo Shooter
+            // Se lo Shooter sta mirando (telegraph != null), usiamo l'animazione di attacco
             if (type == utils.EnemyType.SHOOTER && ControllerForView.getInstance().getEnemyTelegraph(i) != null) {
                 state = "ATTACK";
                 frames = Config.SHOOTER_ATTACK_FRAMES;
             }
 
+            // Calcolo del frame corrente (velocità 80ms)
             int currentFrame = (int) (System.currentTimeMillis() / 80) % frames;
             String spriteKey = prefix + "_" + state + "_" + dir.name();
 
+            // 4. Recupero dello sprite caricato
             BufferedImage sprite = SpriteManager.getInstance().getSprite(spriteKey, currentFrame);
 
-            int screenX = (int) (x * Config.TILE_SIZE) + Config.GRID_OFFSET_X;
-            int screenY = (int) (y * Config.TILE_SIZE) + Config.GRID_OFFSET_Y;
-
             if (sprite != null) {
-                // Disegniamo a 128x128 come sono le tue sprite reali
-                g2d.drawImage(sprite, screenX, screenY, 128, 128, null);
-            }
-        }
-    }
+                // 5. CALCOLO COORDINATE SCHERMO (Stessa logica del Player)
+                // Convertiamo la posizione logica in pixel aggiungendo l'offset della griglia
+                int screenX = (int) (x * Config.TILE_SIZE) + Config.GRID_OFFSET_X;
+                int screenY = (int) (y * Config.TILE_SIZE) + Config.GRID_OFFSET_Y;
 
-    // Metodo Helper per convertire l'Enum Direction nelle stringhe usate nei file PNG
-    private String getDirectionString(Direction dir) {
-        switch (dir) {
-            case UP: return "BACK";
-            case DOWN: return "FRONT";
-            case LEFT: return "LEFT";
-            case RIGHT: return "RIGHT";
-            default: return "FRONT";
+                // 6. CENTRAMENTO E ALLINEAMENTO (Sprite 128x128 su Tile 64x64)
+                // Centriamo orizzontalmente rispetto alla tile
+                int drawX = screenX + (Config.TILE_SIZE - 128) / 2;
+
+                // Allineiamo i piedi alla base della tile (screenY + 64 - 128)
+                int drawY = screenY + (Config.TILE_SIZE - 128);
+
+                // Disegno finale dello sprite
+                g2d.drawImage(sprite, drawX, drawY, 128, 128, null);
+            }
         }
     }
 
@@ -327,8 +317,9 @@ public class ConcreteDrawer extends AbstractDrawer {
             if (key != null) {
                 BufferedImage sprite = SpriteManager.getInstance().getSprite(key, 0);
 
-                int screenX = (int)(x * Config.TILE_SIZE) + Config.GRID_OFFSET_X;
-                int screenY = (int)(y * Config.TILE_SIZE) + Config.GRID_OFFSET_Y;
+                // In drawProjectiles, modifica il calcolo della posizione:
+                int screenX = (int)(x * Config.TILE_SIZE) + Config.GRID_OFFSET_X + (Config.TILE_SIZE / 4);
+                int screenY = (int)(y * Config.TILE_SIZE) + Config.GRID_OFFSET_Y + (Config.TILE_SIZE / 4);
 
                 if (sprite != null) {
                     g2d.drawImage(sprite, screenX, screenY, Config.TILE_SIZE, Config.TILE_SIZE, null);

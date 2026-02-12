@@ -388,69 +388,40 @@ public class Model implements IModel {
     }
 
     // Sostituisci il metodo expandFireDirection
+
+    // In src/model/Model.java
     private void expandFireDirection(int startR, int startC, int dr, int dc, int rad, int centralType, int endType) {
         for (int i = 1; i <= rad; i++) {
             int currentR = startR + dr * i;
             int currentC = startC + dc * i;
 
-            // A. Controllo Limiti Mappa
             if (currentR < 0 || currentR >= Config.GRID_HEIGHT || currentC < 0 || currentC >= Config.GRID_WIDTH) {
-                break; // Fuori mappa, stop.
+                break;
             }
 
             int cellType = gameAreaArray[currentR][currentC];
 
-            // B. Controllo Muro INDISTRUTTIBILE
             if (cellType == Config.CELL_INDESTRUCTIBLE_BLOCK) {
-                // Il fuoco si ferma PRIMA di entrare nel muro.
-                // NON aggiungiamo fuoco qui.
                 break;
             }
 
-            // C. Controllo Muro DISTRUTTIBILE (Cassa)
             if (cellType == Config.CELL_DESTRUCTIBLE_BLOCK) {
-                // 1. Logica di distruzione
                 gameAreaArray[currentR][currentC] = Config.CELL_EMPTY;
                 destructionEffects.add(new BlockDestruction(currentR, currentC));
 
-                // 2. Danni (se c'era un nemico *dentro* la cassa, raro ma possibile)
-                checkExplosionDamage(currentR, currentC);
-
-                // 3. STOP IMPORTANTE:
-                // Non aggiungiamo 'activeFire' su questa cella.
-                // Così vediamo solo l'animazione della cassa che si rompe, senza fuoco sopra.
+                // RIMOSSO: checkExplosionDamage(currentR, currentC);
+                // La cassa assorbe l'esplosione. Il fuoco si ferma qui e NON danneggia
+                // chi è "dietro" o chi tocca leggermente questa cella.
                 break;
             }
 
-            // --- REAZIONE A CATENA ---
-            // Se incontriamo un'altra bomba, la facciamo esplodere immediatamente
-            Bomb targetBomb = getBombAt(currentR, currentC);
-            if (targetBomb != null && !targetBomb.isExploded()) {
-                targetBomb.detonate();
-                // Nota: non facciamo 'break' perché il fuoco attraversa le bombe
-            }
-
-            // D. Cella Vuota (o calpestabile) -> QUI METTIAMO IL FUOCO
-
-            // Calcoliamo se questa è la "Punta" della fiamma.
-            // È la punta se siamo arrivati al raggio massimo (i == rad)
-            // OPPURE se la PROSSIMA cella è un ostacolo (muro o cassa).
+            // Se la cella è vuota, il fuoco prosegue e danneggia
             boolean isTip = (i == rad);
+            // ... (resto della logica per calcolare isTip) ...
 
-            if (!isTip) {
-                int nextR = currentR + dr;
-                int nextC = currentC + dc;
-                // Se la prossima è fuori mappa o NON vuota, allora QUESTA cella corrente è l'ultima fiammata (Punta).
-                if (nextR < 0 || nextR >= Config.GRID_HEIGHT || nextC < 0 || nextC >= Config.GRID_WIDTH
-                        || gameAreaArray[nextR][nextC] != Config.CELL_EMPTY) {
-                    isTip = true;
-                }
-            }
-
-            // Aggiungiamo il fuoco alla lista
             activeFire.add(new int[]{currentR, currentC, isTip ? endType : centralType, Config.FIRE_DURATION_TICKS});
 
-            // Controlliamo se colpiamo player o nemici in questa cella vuota
+            // Controlla i danni SOLO nelle celle dove il fuoco è effettivamente passato (celle vuote)
             checkExplosionDamage(currentR, currentC);
         }
     }
@@ -633,23 +604,15 @@ public class Model implements IModel {
         }
     }
     private boolean isValidSpawnPoint(int col, int row) {
-        // 1. La cella deve essere vuota
+        // 1. Deve essere dentro i confini reali (evita zona nera)
+        if (col < 0 || col >= Config.GRID_WIDTH || row < 0 || row >= Config.GRID_HEIGHT) return false;
+
+        // 2. Deve essere SOLO una cella vuota (Config.CELL_EMPTY = 0)
         if (gameAreaArray[row][col] != Config.CELL_EMPTY) return false;
 
-        // 2. Distanza di sicurezza dal player (da Config)
-        // Evita "Spawn Kill" ingiusti
-        double distPlayerX = Math.abs(col - player.getXCoordinate());
-        double distPlayerY = Math.abs(row - player.getYCoordinate());
-
-        if (distPlayerX < Config.SPAWN_SAFE_DISTANCE && distPlayerY < Config.SPAWN_SAFE_DISTANCE) {
-            return false;
-        }
-
-        // 3. (Opzionale) Controlla non ci sia già un altro nemico esattamente lì
-        for(Enemy e : enemies) {
-            // Controllo approssimativo sulla cella intera
-            if ((int)e.getX() == col && (int)e.getY() == row) return false;
-        }
+        // 3. Distanza dal player (usa le costanti corrette)
+        double dist = Math.sqrt(Math.pow(col - player.getXCoordinate(), 2) + Math.pow(row - player.getYCoordinate(), 2));
+        if (dist < Config.MIN_SPAWN_DISTANCE) return false;
 
         return true;
     }

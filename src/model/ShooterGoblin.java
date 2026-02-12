@@ -151,14 +151,17 @@ public class ShooterGoblin extends ChasingGoblin {
         return checkPathClear(cx, cy, tx, ty);
     }
 
+
     private boolean checkPathClear(int x1, int y1, int x2, int y2) {
-        // Controllo semplice sulla riga o colonna
-        if (x1 == x2) {
-            for (int r = Math.min(y1, y2) + 1; r < Math.max(y1, y2); r++)
-                if (!Model.getInstance().isWalkable(x1, r)) return false;
-        } else {
-            for (int c = Math.min(x1, x2) + 1; c < Math.max(x1, x2); c++)
-                if (!Model.getInstance().isWalkable(c, y1)) return false;
+        int[][] map = Model.getInstance().getGameAreaArray();
+        if (x1 == x2) { // Verticale
+            for (int r = Math.min(y1, y2); r <= Math.max(y1, y2); r++) {
+                if (map[r][x1] != Config.CELL_EMPTY) return false;
+            }
+        } else { // Orizzontale
+            for (int c = Math.min(x1, x2); c <= Math.max(x1, x2); c++) {
+                if (map[y1][c] != Config.CELL_EMPTY) return false;
+            }
         }
         return true;
     }

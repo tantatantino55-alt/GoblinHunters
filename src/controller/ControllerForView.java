@@ -109,6 +109,10 @@ public class ControllerForView implements IControllerForView {
         return Model.getInstance().getFireData();
     }
 
+    @Override
+    public boolean isPlayerInvincible() {
+        return Model.getInstance().isPlayerInvincible();
+    }
 
     public static IControllerForView getInstance() {
         if (instance == null) instance = new ControllerForView();

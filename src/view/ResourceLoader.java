@@ -17,6 +17,10 @@ public class ResourceLoader {
         loadBombResources(sm);
         loadDestructionAnimations(sm);
         loadFireResources(sm);
+        loadShooterGoblinAnimations(sm);
+        loadChasingGoblinAnimations(sm);
+        loadCommonGoblinAnimations(sm);
+        loadProjectiles(sm);
 
 
 
@@ -93,5 +97,92 @@ public class ResourceLoader {
         sm.loadAnimation("FIRE_7", sheet, 31, 1, size); // End Right (8th)
         sm.loadAnimation("FIRE_8", sheet, 32, 1, size); // End Up (9th - Row 3 Col 0)
     }
-}
+    private void loadShooterGoblinAnimations(SpriteManager sm) {
+        String sheet = Config.SHOOTERGOBLIN_SHEET;
+        int size = 64;
 
+        // --- BACK (SU) ---
+        sm.loadAnimation("SHOOTER_ATTACK_UP",   sheet, Config.SHOOTER_ATTACK_BACK_START, Config.SHOOTER_ATTACK_FRAMES, size);
+        sm.loadAnimation("SHOOTER_IDLE_UP",     sheet, Config.SHOOTER_IDLE_BACK_START,   Config.GOBLIN_IDLE_FRAMES,    size);
+        sm.loadAnimation("SHOOTER_RUN_UP",      sheet, Config.SHOOTER_RUN_BACK_START,    Config.GOBLIN_RUN_FRAMES,     size);
+
+        // --- FRONT (GIÙ) ---
+        sm.loadAnimation("SHOOTER_ATTACK_DOWN", sheet, Config.SHOOTER_ATTACK_FRONT_START, Config.SHOOTER_ATTACK_FRAMES, size);
+        sm.loadAnimation("SHOOTER_IDLE_DOWN",   sheet, Config.SHOOTER_IDLE_FRONT_START,   Config.GOBLIN_IDLE_FRAMES,    size);
+        sm.loadAnimation("SHOOTER_RUN_DOWN",    sheet, Config.SHOOTER_RUN_FRONT_START,    Config.GOBLIN_RUN_FRAMES,     size);
+
+        // --- LEFT (SINISTRA) ---
+        sm.loadAnimation("SHOOTER_ATTACK_LEFT", sheet, Config.SHOOTER_ATTACK_LEFT_START, Config.SHOOTER_ATTACK_FRAMES, size);
+        sm.loadAnimation("SHOOTER_IDLE_LEFT",   sheet, Config.SHOOTER_IDLE_LEFT_START,   Config.GOBLIN_IDLE_FRAMES,    size);
+        sm.loadAnimation("SHOOTER_RUN_LEFT",    sheet, Config.SHOOTER_RUN_LEFT_START,    Config.GOBLIN_RUN_FRAMES,     size);
+
+        // --- RIGHT (DESTRA) ---
+        sm.loadAnimation("SHOOTER_ATTACK_RIGHT", sheet, Config.SHOOTER_ATTACK_RIGHT_START, Config.SHOOTER_ATTACK_FRAMES, size);
+        sm.loadAnimation("SHOOTER_IDLE_RIGHT",   sheet, Config.SHOOTER_IDLE_RIGHT_START,   Config.GOBLIN_IDLE_FRAMES,    size);
+        sm.loadAnimation("SHOOTER_RUN_RIGHT",    sheet, Config.SHOOTER_RUN_RIGHT_START,    Config.GOBLIN_RUN_FRAMES,     size);
+    }
+    private void loadCommonGoblinAnimations(SpriteManager sm) {
+        String sheet = Config.COMMON_GOBLIN;
+        int size = 64;
+        int runFrames = Config.GOBLIN_RUN_FRAMES;
+
+        // --- BACK ---
+        sm.loadAnimation("COMMON_RUN_UP",     sheet, Config.COMMON_RUN_BACK_START,   runFrames, size);
+        sm.loadAnimation("COMMON_IDLE_UP",    sheet, Config.COMMON_RUN_BACK_START,   runFrames, size); // Fallback
+
+        // --- FRONT ---
+        sm.loadAnimation("COMMON_RUN_DOWN",   sheet, Config.COMMON_RUN_FRONT_START,  runFrames, size);
+        sm.loadAnimation("COMMON_IDLE_DOWN",  sheet, Config.COMMON_RUN_FRONT_START,  runFrames, size); // Fallback
+
+        // --- LEFT ---
+        sm.loadAnimation("COMMON_RUN_LEFT",   sheet, Config.COMMON_RUN_LEFT_START,   runFrames, size);
+        sm.loadAnimation("COMMON_IDLE_LEFT",  sheet, Config.COMMON_RUN_LEFT_START,   runFrames, size); // Fallback
+
+        // --- RIGHT ---
+        sm.loadAnimation("COMMON_RUN_RIGHT",  sheet, Config.COMMON_RUN_RIGHT_START,  runFrames, size);
+        sm.loadAnimation("COMMON_IDLE_RIGHT", sheet, Config.COMMON_RUN_RIGHT_START,  runFrames, size); // Fallback
+    }
+
+    private void loadChasingGoblinAnimations(SpriteManager sm) {
+        String sheet = Config.CHASING_GOBLIN_SHEET;
+        int size = 64;
+        int idleFrames = Config.GOBLIN_IDLE_FRAMES;
+        int runFrames = Config.GOBLIN_RUN_FRAMES;
+
+        // --- BACK ---
+        sm.loadAnimation("HUNTER_IDLE_UP",    sheet, Config.CHASING_IDLE_BACK_START,  idleFrames, size);
+        sm.loadAnimation("HUNTER_RUN_UP",     sheet, Config.CHASING_RUN_BACK_START,   runFrames,  size);
+
+        // --- FRONT ---
+        sm.loadAnimation("HUNTER_IDLE_DOWN",  sheet, Config.CHASING_IDLE_FRONT_START, idleFrames, size);
+        sm.loadAnimation("HUNTER_RUN_DOWN",   sheet, Config.CHASING_RUN_FRONT_START,  runFrames,  size);
+
+        // --- LEFT ---
+        sm.loadAnimation("HUNTER_IDLE_LEFT",  sheet, Config.CHASING_IDLE_LEFT_START,  idleFrames, size);
+        sm.loadAnimation("HUNTER_RUN_LEFT",   sheet, Config.CHASING_RUN_LEFT_START,   runFrames,  size);
+
+        // --- RIGHT ---
+        sm.loadAnimation("HUNTER_IDLE_RIGHT", sheet, Config.CHASING_IDLE_RIGHT_START, idleFrames, size);
+        sm.loadAnimation("HUNTER_RUN_RIGHT",  sheet, Config.CHASING_RUN_RIGHT_START,  runFrames,  size);
+    }
+    private void loadProjectiles(SpriteManager sm) {
+        String sheet = Config.ITEM_SHEET; // "/Items.png"
+        int size = 64;
+
+        // 1. OSSA (Proiettili Goblin)
+        sm.loadAnimation("BONE_DOWN",  sheet, Config.BONE_DOWN_INDEX,  1, size);
+        sm.loadAnimation("BONE_LEFT",  sheet, Config.BONE_LEFT_INDEX,  1, size);
+        sm.loadAnimation("BONE_RIGHT", sheet, Config.BONE_RIGHT_INDEX, 1, size);
+        sm.loadAnimation("BONE_UP",    sheet, Config.BONE_UP_INDEX,    1, size);
+
+
+
+        System.out.println("ResourceLoader: Proiettili (Ossa) caricati.");
+    }
+
+
+
+
+
+
+}

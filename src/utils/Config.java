@@ -55,6 +55,10 @@ public class Config {
     public static final String PLAYER1_SHEET = "/wizardmale.png";
     public static final int ENTITY_FRAME_SIZE = 128;
     public static final String MAIN_SHEET = "/MapItems.png"; // Il tuo file unico
+    public static final String SHOOTERGOBLIN_SHEET = "ShooterGoblin/.png";
+    public static final String CHASING_GOBLIN_SHEET = "ChasingrGoblin/.png";
+    public static final String COMMON_GOBLIN = "CommonGoblin/.png";
+
 
 
 
@@ -90,7 +94,8 @@ public class Config {
 
 //SHOOTER
 // 1. BACK (Su) - Inizia a 0
-public static final int SHOOTER_ATTACK_BACK_START = 0;
+    public static final  int SHOOTER_ATTACK_FRAMES = 2;
+    public static final int SHOOTER_ATTACK_BACK_START = 0;
     public static final int SHOOTER_IDLE_BACK_START   = SHOOTER_ATTACK_BACK_START + 2;   // 2
     public static final int SHOOTER_RUN_BACK_START    = SHOOTER_IDLE_BACK_START + 16;    // 18
 
@@ -118,6 +123,24 @@ public static final int SHOOTER_ATTACK_BACK_START = 0;
     public static final int BOMB_SPRITE_START = 0;
     public static final int BOMB_FRAMES = 8;
     public static final int BOMB_ANIM_FRAME_DURATION = 100;
+
+
+
+    // --- PROIETTILI NEMICI (Items.png - Riga 0) ---
+    public static final int BONE_DOWN_INDEX  = 8;
+    public static final int BONE_LEFT_INDEX  = 9;
+    public static final int BONE_RIGHT_INDEX = 10;
+    public static final int BONE_UP_INDEX    = 11;
+
+    // --- PROIETTILI PLAYER (Items.png - Riga 0) ---
+    // Subito dopo le ossa
+    public static final int AURA_DOWN_INDEX  = 12;
+    public static final int AURA_LEFT_INDEX  = 13;
+    public static final int AURA_RIGHT_INDEX = 14;
+    public static final int AURA_UP_INDEX    = 15;
+
+
+
     // --- FUOCO ESPLOSIONE (Consumabili.png - Riga 1) ---
     public static final int DESTRUCTION_START = 3;
     public static final int DESTRUCTION_FRAMES = 3;    // Caricherà le colonne 3, 4, 5

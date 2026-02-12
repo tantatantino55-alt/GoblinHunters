@@ -2,6 +2,7 @@ package view;
 
 import controller.ControllerForView;
 import utils.Config;
+import utils.Direction;
 import utils.EnemyType;
 import utils.PlayerState;
 
@@ -134,27 +135,102 @@ public class ConcreteDrawer extends AbstractDrawer {
             // g2d.drawRect(screenX, screenY, Config.TILE_SIZE, Config.TILE_SIZE);
         }
     }
+    // In src/view/ConcreteDrawer.java
 
     private void drawEnemies(Graphics2D g2d) {
         int count = ControllerForView.getInstance().getEnemyCount();
+        long currentTime = System.currentTimeMillis();
 
         for (int i = 0; i < count; i++) {
+            // 1. Recupera i dati dal Controller
             double x = ControllerForView.getInstance().getEnemyX(i);
             double y = ControllerForView.getInstance().getEnemyY(i);
             EnemyType type = ControllerForView.getInstance().getEnemyType(i);
+            Direction dir = ControllerForView.getInstance().getEnemyDirection(i);
+            Direction telegraphDir = ControllerForView.getInstance().getEnemyTelegraph(i);
 
-            int screenX = (int) Math.round(x * Config.TILE_SIZE) + Config.GRID_OFFSET_X;
-            int screenY = (int) Math.round(y * Config.TILE_SIZE) + Config.GRID_OFFSET_Y;
+            // 2. Determina l'azione (RUN, IDLE, ATTACK)
+            String action = "RUN"; // Default
 
-            // PLACEHOLDER: Sostituiremo con SpriteManager.getEnemySprite(...) in futuro
-            switch (type) {
-                case COMMON: g2d.setColor(Color.GREEN); break;
-                case SHOOTER: g2d.setColor(Color.ORANGE); break; // Era Hunter
-                default: g2d.setColor(Color.GRAY);
+            // Logica specifica per tipo
+            if (type == EnemyType.COMMON) {
+                action = "RUN"; // Il common ha solo la corsa caricata nel Loader
             }
-            g2d.fillRect(screenX + 10, screenY + 10, Config.TILE_SIZE - 20, Config.TILE_SIZE - 20);
+            else if (type == EnemyType.HUNTER) {
+                // Semplificazione: se si muove è RUN, altrimenti IDLE.
+                // Dato che il Hunter si muove quasi sempre, RUN va bene,
+                // ma puoi implementare logica più complessa se passi lo stato dal Model.
+                action = "RUN";
+            }
+            else if (type == EnemyType.SHOOTER) {
+                // Se sta mirando (Telegraph non è null), usa ATTACK
+                if (telegraphDir != null) {
+                    action = "ATTACK";
+                    dir = telegraphDir; // Forziamo la direzione verso cui mira
+                } else {
+                    action = "RUN";
+                }
+            }
+
+            // 3. Converti Direzione in Stringa (UP->BACK, DOWN->FRONT...)
+            String dirString = getDirectionString(dir);
+
+            // 4. Costruisci la chiave (Es. "SHOOTER_RUN_FRONT")
+            String key = type.name() + "_" + action + "_" + dirString;
+
+            // 5. Calcola il frame
+            // Recuperiamo il numero di frame totali dallo sprite manager (o hardcoded se preferisci)
+            int totalFrames = 12; // Default RUN
+            if (action.equals("IDLE")) totalFrames = 16;
+            if (action.equals("ATTACK")) totalFrames = 2;
+
+            int animSpeed = Config.ANIMATION_DELAY;
+            // Rallenta l'attacco dello shooter visivamente se serve
+            if (action.equals("ATTACK")) animSpeed = 200;
+
+            int currentFrame = (int) (currentTime / animSpeed) % totalFrames;
+
+            // 6. Ottieni Sprite e Disegna
+            BufferedImage sprite = spriteManager.getSprite(key, currentFrame);
+
+            int screenX = (int) (x * Config.TILE_SIZE) + Config.GRID_OFFSET_X;
+            int screenY = (int) (y * Config.TILE_SIZE) + Config.GRID_OFFSET_Y;
+
+            if (sprite != null) {
+                // Centriamo lo sprite (che è 128px o 64px) nella cella (64px)
+                // Stesso calcolo usato per il player
+                int drawX = screenX + (Config.TILE_SIZE - Config.ENTITY_FRAME_SIZE) / 2; // Frame size 128? Controlla Config
+
+                // Nota: Se i goblin sono 64x64 nel foglio, Config.ENTITY_FRAME_SIZE (128) potrebbe essere troppo grande.
+                // Se nel ResourceLoader hai caricato con 'size = Config.TILE_SIZE' (64), usa 64 qui sotto.
+                // Assumo siano 64x64 come da ResourceLoader modificato sopra.
+                int size = Config.TILE_SIZE;
+
+                // Disegna
+                g2d.drawImage(sprite, screenX, screenY, size, size, null);
+
+                // DEBUG: Se vuoi vedere l'area di collisione reale
+                // g2d.setColor(Color.RED);
+                // g2d.drawRect(screenX, screenY, Config.TILE_SIZE, Config.TILE_SIZE);
+            } else {
+                // Fallback: Rettangolo colorato se l'immagine non carica
+                g2d.setColor(Color.MAGENTA);
+                g2d.fillRect(screenX + 10, screenY + 10, 40, 40);
+            }
         }
     }
+
+    // Metodo Helper per convertire l'Enum Direction nelle stringhe usate nei file PNG
+    private String getDirectionString(Direction dir) {
+        switch (dir) {
+            case UP: return "BACK";
+            case DOWN: return "FRONT";
+            case LEFT: return "LEFT";
+            case RIGHT: return "RIGHT";
+            default: return "FRONT";
+        }
+    }
+
 
 // In src/view/ConcreteDrawer.java
 
@@ -252,6 +328,51 @@ public class ConcreteDrawer extends AbstractDrawer {
                 // Quadrato rosso SOLO se hai sbagliato gli indici in ResourceLoader
                 g2d.setColor(Color.RED);
                 g2d.drawRect(x, y, Config.TILE_SIZE, Config.TILE_SIZE);
+            }
+        }
+    }
+
+
+    private void drawProjectiles(Graphics2D g2d) {
+        // Recupera la lista di DTO dal Controller (Puro MVC)
+        // [0]=x, [1]=y, [2]=type, [3]=dir(Ordinal)
+        List<double[]> projectiles = ControllerForView.getInstance().getProjectilesData();
+
+        for (double[] p : projectiles) {
+            double x = p[0];
+            double y = p[1];
+            int type = (int) p[2];      // 0 = Goblin, 1 = Player
+            int dirOrdinal = (int) p[3]; // Enum Direction convertito in int
+
+            String key = null;
+
+            // --- SELEZIONE SPRITE ---
+            if (type == 0) { // NEMICO (OSSO)
+                switch (dirOrdinal) {
+                    case 0 -> key = "BONE_UP";    // Direction.UP
+                    case 1 -> key = "BONE_DOWN";  // Direction.DOWN
+                    case 2 -> key = "BONE_LEFT";  // Direction.LEFT
+                    case 3 -> key = "BONE_RIGHT"; // Direction.RIGHT
+                }
+            } else if (type == 1) { // PLAYER (AURA)
+                switch (dirOrdinal) {
+                    case 0 -> key = "AURA_UP";
+                    case 1 -> key = "AURA_DOWN";
+                    case 2 -> key = "AURA_LEFT";
+                    case 3 -> key = "AURA_RIGHT";
+                }
+            }
+
+            // --- DISEGNO ---
+            if (key != null) {
+                BufferedImage sprite = SpriteManager.getInstance().getSprite(key, 0);
+
+                int screenX = (int)(x * Config.TILE_SIZE) + Config.GRID_OFFSET_X;
+                int screenY = (int)(y * Config.TILE_SIZE) + Config.GRID_OFFSET_Y;
+
+                if (sprite != null) {
+                    g2d.drawImage(sprite, screenX, screenY, Config.TILE_SIZE, Config.TILE_SIZE, null);
+                }
             }
         }
     }

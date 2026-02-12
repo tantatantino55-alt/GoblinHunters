@@ -340,6 +340,7 @@ public class Model implements IModel {
     @Override
     public int[][] getGameAreaArray() { return gameAreaArray; }
 
+
     //Metodi di gestione bombe
     /**
      * Gestisce il ciclo di vita di tutte le bombe attive.
@@ -554,8 +555,9 @@ public class Model implements IModel {
 
 
     // 3. (OPZIONALE) Getter per l'interfaccia
+    @Override
     public boolean isPlayerInvincible() {
-        return player.isInvincible();
+        return player.isInvincible(); // Chiama il metodo che controlla il timestamp
     }
 
 
@@ -860,6 +862,9 @@ public class Model implements IModel {
         return null;
     }
 
+
+
+
     @Override
     public List<double[]> getProjectilesData() {
         List<double[]> data = new ArrayList<>();
@@ -912,6 +917,8 @@ public class Model implements IModel {
         }
         return null;
     }
+
+
 
 
     public static IModel getInstance() {

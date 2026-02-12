@@ -55,40 +55,60 @@ public class Config {
     public static final String PLAYER1_SHEET = "/wizardmale.png";
     public static final int ENTITY_FRAME_SIZE = 128;
     public static final String MAIN_SHEET = "/MapItems.png"; // Il tuo file unico
-    public static final String GOBLIN_SHEET = "/goblins.png";
-
-    // Numero di frame per l'animazione di corsa (dall'immagine vedo da 000 a 011 -> 12 frame)
-    public static final int GOBLIN_RUN_FRAMES = 12;
-    public static final int GOBLIN_IDLE_FRAMES = 1; // Per ora usiamo 1 frame se stanno fermi (o usiamo il primo della corsa)
-    // Quanti frame dura ogni azione
-    public static final int SHOOTER_ATTACK_FRAMES = 2;
 
 
-    // --- 1. COMMON GOBLIN (Righe 0-3) ---
-    public static final int COMMON_BACK_RUNNING    = 0;   // Riga 0
-    public static final int COMMON_FRONT_RUNNING  = 12;  // Riga 1
-    public static final int COMMON_LEFT_RUNNING= 24;  // Riga 2
-    public static final int COMMON_RIGHT_RUNNING = 36;  // Riga 3
 
-    // --- 2. SHOOTER GOBLIN: MOVIMENTO (Righe 4-7) --
-    public static final int SHOOTER_BACK_ATTACKING = 48;
-    public static final int SHOOTER_FRONT_ATTACKING = 78;
-    public static final int SHOOTER_BACK_IDLE    = 50; // Riga 4
-    public static final int SHOOTER_BACK_RUNNING  = 66; // Riga 5
-    public static final int SHOOTER_RUN_START_LEFT  = 72; // Riga 6
-    public static final int SHOOTER_RUN_START_RIGHT = 84; // Riga 7
+    // --- CONFIGURAZIONE ANIMAZIONE CHASING GOBLIN (HUNTER) ---
+// Numero di frame per tipo di azione
+    public static final int GOBLIN_IDLE_FRAMES = 16;
+    public static final int GOBLIN_RUN_FRAMES  = 12;
 
-    // --- 3. SHOOTER GOBLIN: ATTACCO (Righe 8-11) ---
-    public static final int SHOOTER_ATTACK_START_UP    = 96;  // Riga 8
-    public static final int SHOOTER_ATTACK_START_DOWN  = 108; // Riga 9
-    public static final int SHOOTER_ATTACK_START_LEFT  = 120; // Riga 10
-    public static final int SHOOTER_ATTACK_START_RIGHT = 132; // Riga 11
+    // Indici di partenza calcolati linearmente (senza buchi)
+// BACK (Su)
+    public static final int CHASING_IDLE_BACK_START  = 0;                               // 0
+    public static final int CHASING_RUN_BACK_START   = CHASING_IDLE_BACK_START + 16;      // 16
 
-    // --- 4. CHASER (HUNTER) GOBLIN (Righe 12-15) ---
-    public static final int HUNTER_START_UP    = 144; // Riga 12
-    public static final int HUNTER_START_DOWN  = 156; // Riga 13
-    public static final int HUNTER_START_LEFT  = 168; // Riga 14
-    public static final int HUNTER_START_RIGHT = 180; // Riga 15
+    // FRONT (Giù)
+    public static final int CHASING_IDLE_FRONT_START = CHASING_RUN_BACK_START + 12;      // 28
+    public static final int CHASING_RUN_FRONT_START  = CHASING_IDLE_FRONT_START + 16;     // 44
+
+    // LEFT (Sinistra)
+    public static final int CHASING_IDLE_LEFT_START  = CHASING_RUN_FRONT_START + 12;     // 56
+    public static final int CHASING_RUN_LEFT_START   = CHASING_IDLE_LEFT_START + 16;     // 72
+
+    // RIGHT (Destra)
+    public static final int CHASING_IDLE_RIGHT_START = CHASING_RUN_LEFT_START + 12;      // 84
+    public static final int CHASING_RUN_RIGHT_START  = CHASING_IDLE_RIGHT_START + 16;     // 100
+
+
+    // Indici di partenza calcolati linearmente
+// Indici Lineari (Passo di 12)
+    public static final int COMMON_RUN_BACK_START   = 0;
+    public static final int COMMON_RUN_FRONT_START  = 12;
+    public static final int COMMON_RUN_LEFT_START   = 24;
+    public static final int COMMON_RUN_RIGHT_START  = 36;
+
+//SHOOTER
+// 1. BACK (Su) - Inizia a 0
+public static final int SHOOTER_ATTACK_BACK_START = 0;
+    public static final int SHOOTER_IDLE_BACK_START   = SHOOTER_ATTACK_BACK_START + 2;   // 2
+    public static final int SHOOTER_RUN_BACK_START    = SHOOTER_IDLE_BACK_START + 16;    // 18
+
+    // 2. FRONT (Giù) - Inizia a 30 (18 + 12)
+    public static final int SHOOTER_ATTACK_FRONT_START = 30;
+    public static final int SHOOTER_IDLE_FRONT_START   = SHOOTER_ATTACK_FRONT_START + 2;  // 32
+    public static final int SHOOTER_RUN_FRONT_START    = SHOOTER_IDLE_FRONT_START + 16;   // 48
+
+    // 3. LEFT (Sinistra) - Inizia a 60 (48 + 12)
+    public static final int SHOOTER_ATTACK_LEFT_START  = 60;
+    public static final int SHOOTER_IDLE_LEFT_START    = SHOOTER_ATTACK_LEFT_START + 2;   // 62
+    public static final int SHOOTER_RUN_LEFT_START     = SHOOTER_IDLE_LEFT_START + 16;    // 78
+
+    // 4. RIGHT (Destra) - Inizia a 90 (78 + 12)
+    public static final int SHOOTER_ATTACK_RIGHT_START = 90;
+    public static final int SHOOTER_IDLE_RIGHT_START   = SHOOTER_ATTACK_RIGHT_START + 2;  // 92
+    public static final int SHOOTER_RUN_RIGHT_START    = SHOOTER_IDLE_RIGHT_START + 16;   // 108
+
 
     
     public static final int CELL_EMPTY = 0;

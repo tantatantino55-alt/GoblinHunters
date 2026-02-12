@@ -134,6 +134,11 @@ public static final int SHOOTER_ATTACK_BACK_START = 0;
 
 
 
+    // --- LOGICA VITE E DANNI ---
+    public static final int INITIAL_LIVES = 99;           // Iniziamo con molte vite come richiesto
+    public static final long INVINCIBILITY_DURATION_MS = 3000; // 3 secondi di "invisibilità"
+    public static final int FLICKER_DELAY_MS = 100;       // Velocità del lampeggio visivo
+
     // --- LOGICA BOMBE ---
     public static final int BOMB_DETONATION_TICKS = 180; // 3 secondi a 60 FPS
     public static final int INITIAL_MAX_BOMBS = 1;       // Numero di bombe iniziali

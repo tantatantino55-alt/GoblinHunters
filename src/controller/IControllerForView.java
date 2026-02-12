@@ -35,4 +35,6 @@ public interface IControllerForView {
     List<int[]> getDestructionsData();
 
     List<int[]> getFireData();
+
+    public boolean isPlayerInvincible();
 }

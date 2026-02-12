@@ -38,5 +38,7 @@ public interface IModel {
     List<int[]> getDestructionsData();
     public boolean isAreaOccupiedByOtherEnemy(double nextX, double nextY, Enemy enemy);
     List<int[]> getFireData();
-;
+
+    public boolean isPlayerInvincible();
+
 }

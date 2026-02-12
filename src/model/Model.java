@@ -370,6 +370,13 @@ public class Model implements IModel {
 
         checkExplosionDamage(r, c);
 
+
+        // --- AGGIUNTA: Reazione a catena nel centro ---
+        // (Utile se un'esplosione colpisce una bomba appena piazzata lì)
+        Bomb other = getBombAt(r, c);
+        if (other != null && !other.isExploded()) {
+            other.detonate();
+        }
         // Espansione nelle 4 direzioni
         // I numeri (4,8,5,1...) sono i TIPI di pezzo (Logica posizionale)
         // 4=MedioVert, 8=FineSu | 5=MedioVert, 1=FineGiu | ...
@@ -412,6 +419,14 @@ public class Model implements IModel {
                 // Non aggiungiamo 'activeFire' su questa cella.
                 // Così vediamo solo l'animazione della cassa che si rompe, senza fuoco sopra.
                 break;
+            }
+
+            // --- REAZIONE A CATENA ---
+            // Se incontriamo un'altra bomba, la facciamo esplodere immediatamente
+            Bomb targetBomb = getBombAt(currentR, currentC);
+            if (targetBomb != null && !targetBomb.isExploded()) {
+                targetBomb.detonate();
+                // Nota: non facciamo 'break' perché il fuoco attraversa le bombe
             }
 
             // D. Cella Vuota (o calpestabile) -> QUI METTIAMO IL FUOCO
@@ -522,6 +537,25 @@ public class Model implements IModel {
                 System.out.println("Goblin eliminato dall'esplosione in [" + row + "," + col + "]!");
             }
         }
+
+        // --- AGGIUNTA: DANNO AL PLAYER ---
+        if (!player.isInvincible()) {
+            double pX = player.getXCoordinate();
+            double pY = player.getYCoordinate();
+            double pW = Config.ENTITY_LOGICAL_HITBOX_WIDTH;
+            double pH = Config.ENTITY_LOGICAL_HITBOX_HEIGHT;
+
+            if (pX < expX + expSize && pX + pW > expX && pY < expY + expSize && pY + pH > expY) {
+                handlePlayerHit();
+            }
+        }
+    }
+
+
+
+    // 3. (OPZIONALE) Getter per l'interfaccia
+    public boolean isPlayerInvincible() {
+        return player.isInvincible();
     }
 
 
@@ -681,14 +715,20 @@ public class Model implements IModel {
         }
     }
 
+    // 2. Aggiorniamo handlePlayerHit per gestire Respawn e Reset
     private void handlePlayerHit() {
-        // PER ORA: Stampiamo solo su console (lo implementeremo meglio con le vite dopo)
-        System.out.println("!!! COLLISIONE! IL GIOCATORE È STATO COLPITO !!!");
+        if (player.isInvincible()) return;
 
-        // TODO Futuro:
-        // lives--;
-        // if (lives <= 0) gameOver();
-        // else resetPositions();
+        // Applica il danno (riduce vita e imposta timer invincibilità)
+        player.takeDamage();
+
+        // RESET POSIZIONE (Respawn)
+        player.setXCoordinate(0.0);
+        player.setYCoordinate(0.0);
+        player.setDelta(0, 0); // Ferma eventuali movimenti residui
+        player.setState(PlayerState.IDLE_FRONT); // Reset animazione
+
+        System.out.println("RESPAWN: Player riportato all'inizio.");
     }
 
     @Override
@@ -863,6 +903,15 @@ public class Model implements IModel {
         return data;
     }
 
+
+    private Bomb getBombAt(int r, int c) {
+        for (Bomb b : activeBombs) {
+            if (b.getRow() == r && b.getCol() == c) {
+                return b;
+            }
+        }
+        return null;
+    }
 
 
     public static IModel getInstance() {

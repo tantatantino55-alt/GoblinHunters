@@ -80,6 +80,17 @@ public class ConcreteDrawer extends AbstractDrawer {
     }
 
     private void drawPlayer(Graphics2D g2d) {
+        // Recuperiamo lo stato di invincibilità dal Controller
+        boolean isInvincible = ControllerForView.getInstance().isPlayerInvincible();
+
+        // LOGICA LAMPEGGIO: Se è invincibile, disegniamo solo in certi intervalli di tempo
+        if (isInvincible) {
+            // Usa il tempo corrente per decidere se mostrare lo sprite (ON/OFF ogni 100ms)
+            if ((System.currentTimeMillis() / Config.FLICKER_DELAY_MS) % 2 == 0) {
+                return; // Salta il disegno in questo frame (effetto "invisibile")
+            }
+        }
+
         // A. RECUPERO DATI
         PlayerState state = ControllerForView.getInstance().getPlayerState();
         double logX = ControllerForView.getInstance().getXCoordinatePlayer();

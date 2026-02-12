@@ -31,6 +31,11 @@ public class Bomb extends Entity {
         // NESSUN calcolo di frame qui!
     }
 
+    public void detonate() {
+        this.timer = 0;
+        this.exploded = true;
+    }
+
     public int getRow() { return row; }
     public int getCol() { return col; }
     public int getRadius() { return radius; }

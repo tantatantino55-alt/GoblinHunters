@@ -16,6 +16,10 @@ public class Player extends Entity {
     private int maxBombs = Config.INITIAL_MAX_BOMBS;
     private int bombRadius = Config.DEFAULT_BOMB_RADIUS;
 
+    // --- NUOVI ATTRIBUTI PER VITE E INVINCIBILITÀ ---
+    private int lives;
+    private long invincibilityEndTime = 0;
+
     public Player(double startX, double startY) {
         this.xCoordinate = startX;
         this.yCoordinate = startY;
@@ -35,6 +39,24 @@ public class Player extends Entity {
     public long getStateStartTime() {
         return stateStartTime;
     }
+
+    // --- METODI LOGICA DANNI ---
+
+    public boolean isInvincible() {
+        return System.currentTimeMillis() < invincibilityEndTime;
+    }
+
+    public void takeDamage() {
+        if (!isInvincible() && lives > 0) {
+            lives--;
+            // Attiva l'invincibilità per la durata scelta in Config
+            invincibilityEndTime = System.currentTimeMillis() + Config.INVINCIBILITY_DURATION_MS;
+            System.out.println("Player colpito! Vite rimaste: " + lives);
+        }
+    }
+
+    public int getLives() { return lives; }
+
 
     public double getXCoordinate() { return xCoordinate; }
     public double getYCoordinate() { return yCoordinate; }

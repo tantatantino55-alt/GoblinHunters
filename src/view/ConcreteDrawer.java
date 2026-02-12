@@ -3,7 +3,6 @@ package view;
 import controller.ControllerForView;
 import utils.Config;
 import utils.Direction;
-import utils.EnemyType;
 import utils.PlayerState;
 
 import java.awt.*;
@@ -36,6 +35,7 @@ public class ConcreteDrawer extends AbstractDrawer {
         // 3. Disegna le Entità
         drawBombs(g2d);
         drawEnemies(g2d);
+        drawProjectiles(g2d);
         drawPlayer(g2d);
 
         // 4. Debug Griglia (Disegna linee sopra tutto per controllo)
@@ -137,85 +137,45 @@ public class ConcreteDrawer extends AbstractDrawer {
     }
     // In src/view/ConcreteDrawer.java
 
+
     private void drawEnemies(Graphics2D g2d) {
         int count = ControllerForView.getInstance().getEnemyCount();
-        long currentTime = System.currentTimeMillis();
 
         for (int i = 0; i < count; i++) {
-            // 1. Recupera i dati dal Controller
             double x = ControllerForView.getInstance().getEnemyX(i);
             double y = ControllerForView.getInstance().getEnemyY(i);
-            EnemyType type = ControllerForView.getInstance().getEnemyType(i);
-            Direction dir = ControllerForView.getInstance().getEnemyDirection(i);
-            Direction telegraphDir = ControllerForView.getInstance().getEnemyTelegraph(i);
+            utils.Direction dir = ControllerForView.getInstance().getEnemyDirection(i);
+            utils.EnemyType type = ControllerForView.getInstance().getEnemyType(i);
 
-            // 2. Determina l'azione (RUN, IDLE, ATTACK)
-            String action = "RUN"; // Default
+            // Determiniamo il prefisso in base al tipo
+            String prefix = switch (type) {
+                case COMMON -> "COMMON";
+                case HUNTER -> "HUNTER";
+                case SHOOTER -> "SHOOTER";
+                default -> "COMMON";
+            };
 
-            // Logica specifica per tipo
-            if (type == EnemyType.COMMON) {
-                action = "RUN"; // Il common ha solo la corsa caricata nel Loader
-            }
-            else if (type == EnemyType.HUNTER) {
-                // Semplificazione: se si muove è RUN, altrimenti IDLE.
-                // Dato che il Hunter si muove quasi sempre, RUN va bene,
-                // ma puoi implementare logica più complessa se passi lo stato dal Model.
-                action = "RUN";
-            }
-            else if (type == EnemyType.SHOOTER) {
-                // Se sta mirando (Telegraph non è null), usa ATTACK
-                if (telegraphDir != null) {
-                    action = "ATTACK";
-                    dir = telegraphDir; // Forziamo la direzione verso cui mira
-                } else {
-                    action = "RUN";
-                }
+            // FORZIAMO LO STATO: Eliminiamo ogni riferimento a HURT o DIE
+            String state = "RUN";
+            int frames = Config.GOBLIN_RUN_FRAMES;
+
+            // Gestiamo solo l'eccezione dell'attacco per lo Shooter
+            if (type == utils.EnemyType.SHOOTER && ControllerForView.getInstance().getEnemyTelegraph(i) != null) {
+                state = "ATTACK";
+                frames = Config.SHOOTER_ATTACK_FRAMES;
             }
 
-            // 3. Converti Direzione in Stringa (UP->BACK, DOWN->FRONT...)
-            String dirString = getDirectionString(dir);
+            int currentFrame = (int) (System.currentTimeMillis() / 80) % frames;
+            String spriteKey = prefix + "_" + state + "_" + dir.name();
 
-            // 4. Costruisci la chiave (Es. "SHOOTER_RUN_FRONT")
-            String key = type.name() + "_" + action + "_" + dirString;
-
-            // 5. Calcola il frame
-            // Recuperiamo il numero di frame totali dallo sprite manager (o hardcoded se preferisci)
-            int totalFrames = 12; // Default RUN
-            if (action.equals("IDLE")) totalFrames = 16;
-            if (action.equals("ATTACK")) totalFrames = 2;
-
-            int animSpeed = Config.ANIMATION_DELAY;
-            // Rallenta l'attacco dello shooter visivamente se serve
-            if (action.equals("ATTACK")) animSpeed = 200;
-
-            int currentFrame = (int) (currentTime / animSpeed) % totalFrames;
-
-            // 6. Ottieni Sprite e Disegna
-            BufferedImage sprite = spriteManager.getSprite(key, currentFrame);
+            BufferedImage sprite = SpriteManager.getInstance().getSprite(spriteKey, currentFrame);
 
             int screenX = (int) (x * Config.TILE_SIZE) + Config.GRID_OFFSET_X;
             int screenY = (int) (y * Config.TILE_SIZE) + Config.GRID_OFFSET_Y;
 
             if (sprite != null) {
-                // Centriamo lo sprite (che è 128px o 64px) nella cella (64px)
-                // Stesso calcolo usato per il player
-                int drawX = screenX + (Config.TILE_SIZE - Config.ENTITY_FRAME_SIZE) / 2; // Frame size 128? Controlla Config
-
-                // Nota: Se i goblin sono 64x64 nel foglio, Config.ENTITY_FRAME_SIZE (128) potrebbe essere troppo grande.
-                // Se nel ResourceLoader hai caricato con 'size = Config.TILE_SIZE' (64), usa 64 qui sotto.
-                // Assumo siano 64x64 come da ResourceLoader modificato sopra.
-                int size = Config.TILE_SIZE;
-
-                // Disegna
-                g2d.drawImage(sprite, screenX, screenY, size, size, null);
-
-                // DEBUG: Se vuoi vedere l'area di collisione reale
-                // g2d.setColor(Color.RED);
-                // g2d.drawRect(screenX, screenY, Config.TILE_SIZE, Config.TILE_SIZE);
-            } else {
-                // Fallback: Rettangolo colorato se l'immagine non carica
-                g2d.setColor(Color.MAGENTA);
-                g2d.fillRect(screenX + 10, screenY + 10, 40, 40);
+                // Disegniamo a 128x128 come sono le tue sprite reali
+                g2d.drawImage(sprite, screenX, screenY, 128, 128, null);
             }
         }
     }

@@ -6,37 +6,48 @@ import utils.EnemyType;
 
 public class ShooterGoblin extends ChasingGoblin {
 
-    private int ammo;
-    private int reloadTimer;
-    private int telegraphTimer;
-    private Direction telegraphDirection; // La mira "bloccata"
+    // =========================================================
+    // 1. DICHIARAZIONE VARIABILI (Devono essere qui!)
+    // =========================================================
+    private int ammo;                     // Colpi nel caricatore
+    private int reloadTimer;              // Contatore per la ricarica
+    private int telegraphTimer;           // Contatore per la mira (prima di sparare)
+    private Direction telegraphDirection; // La direzione in cui sta mirando (ferma)
 
+    // Stati della macchinetta a stati del Goblin
     private enum State { RELOADING, PATROL_OR_CHASE, AIMING }
     private State state;
 
+    // =========================================================
+    // 2. COSTRUTTORE
+    // =========================================================
     public ShooterGoblin(double startX, double startY) {
         super(startX, startY, Config.GOBLIN_COMMON_SPEED, EnemyType.SHOOTER);
         this.ammo = Config.SHOOTER_MAX_AMMO;
         this.state = State.PATROL_OR_CHASE;
         this.telegraphDirection = null;
+        this.reloadTimer = 0;
     }
 
+    // =========================================================
+    // 3. LOGICA COMPORTAMENTALE (Update)
+    // =========================================================
     @Override
     public void updateBehavior() {
         double px = Model.getInstance().xCoordinatePlayer();
         double py = Model.getInstance().yCoordinatePlayer();
 
-        // 1. Controllo Bombe (Priorità ereditata ma critica per interrompere la mira)
+        // A. PRIORITÀ: Scappa dalle bombe (Ereditato da ChasingGoblin ma gestito qui per interrompere la mira)
         Direction safeDir = getSafeDirectionFromBombs();
         if (safeDir != null) {
-            this.telegraphDirection = null; // Interrompe la mira se deve scappare!
+            this.telegraphDirection = null; // Interrompe la mira!
             this.state = State.PATROL_OR_CHASE;
             this.currentDirection = safeDir;
             moveInDirection();
             return;
         }
 
-        // 2. Macchina a Stati
+        // B. MACCHINA A STATI
         switch (state) {
             case RELOADING:
                 handleReloadState(px, py);
@@ -52,39 +63,45 @@ public class ShooterGoblin extends ChasingGoblin {
         }
     }
 
+    // --- GESTIONE STATI ---
+
     private void handleNormalState(double px, double py) {
-        // Se ho colpi e vedo il player -> MIRA
+        // Se ho colpi e vedo il player -> INIZIA A MIRARE
         if (ammo > 0 && hasLineOfSight(px, py)) {
             startAiming(px, py);
         }
-        // Altrimenti uso il cervello da Chaser (ereditato)
+        // Altrimenti mi comporto come un normale inseguitore
         else {
-            this.speed = Config.GOBLIN_COMMON_SPEED; // Velocità normale
-            // Chiama il metodo del padre:
-            // Se "sente" l'odore insegue, altrimenti random.
+            this.speed = Config.GOBLIN_COMMON_SPEED;
             super.updateBehavior();
         }
     }
 
     private void handleAimingState() {
-        this.speed = Config.SHOOTER_SPEED_AIMING; // Si ferma per mirare
+        this.speed = Config.SHOOTER_SPEED_AIMING; // Si ferma (0.0)
         telegraphTimer--;
 
+        // Finito il tempo di mira -> SPARA
         if (telegraphTimer <= 0) {
             shoot();
-            // Dopo lo sparo, se ha ancora colpi torna a cercare, se no ricarica
-            if (ammo > 0) state = State.PATROL_OR_CHASE;
-            else state = State.RELOADING;
+
+            // LOGICA INTERVALLI:
+            if (ammo > 0) {
+                // Se ha ancora colpi, torna a cercare/mirare subito
+                state = State.PATROL_OR_CHASE;
+            } else {
+                // Se ha finito i colpi, entra in ricarica (PAUSA LUNGA)
+                state = State.RELOADING;
+                reloadTimer = Config.SHOOTER_RELOAD_TIME; // <--- FONDAMENTALE: Setta il timer!
+            }
         }
     }
 
     private void handleReloadState(double px, double py) {
         reloadTimer--;
 
-        // Durante la ricarica è aggressivo ma veloce (comportamento da Chaser potenziato)
+        // Mentre ricarica scappa/insegue velocemente (comportamento aggressivo)
         this.speed = Config.SHOOTER_SPEED_CHASE;
-
-        // Uso la logica di inseguimento del padre
         super.updateBehavior();
 
         if (reloadTimer <= 0) {
@@ -94,11 +111,13 @@ public class ShooterGoblin extends ChasingGoblin {
         }
     }
 
+    // --- METODI DI SUPPORTO ---
+
     private void startAiming(double px, double py) {
         state = State.AIMING;
-        telegraphTimer = Config.SHOOTER_TELEGRAPH_TIME;
+        telegraphTimer = Config.SHOOTER_TELEGRAPH_TIME; // Pausa pre-sparo (es. 0.5 sec)
 
-        // Calcola direzione mira (Telegraph)
+        // Calcola la direzione di mira una volta sola e la blocca
         double dx = px - this.x;
         double dy = py - this.y;
         if (Math.abs(dx) > Math.abs(dy))
@@ -107,35 +126,37 @@ public class ShooterGoblin extends ChasingGoblin {
             telegraphDirection = (dy > 0) ? Direction.DOWN : Direction.UP;
     }
 
+    // IL METODO DI SPARO (Ora le variabili esistono!)
     private void shoot() {
-        ammo--;
+        ammo--; // Variabile definita in alto
         System.out.println("Shooter: BANG! Direzione: " + telegraphDirection);
-        // Qui dovrai aggiungere al Model il proiettile:
-         Model.getInstance().addProjectile(new BoneProjectile(this.x, this.y, telegraphDirection));
 
-        telegraphDirection = null; // Rimuovi il mirino rosso
+        // Crea il proiettile
+        Model.getInstance().addProjectile(new BoneProjectile(this.x, this.y, telegraphDirection));
+
+        telegraphDirection = null; // Rimuove il mirino
     }
 
-    // Verifica Line of Sight (Vista retta)
+    // --- VISTA E OVERRIDE ---
+
+    // Verifica se la strada è libera (niente muri)
     private boolean hasLineOfSight(double px, double py) {
-        int cx = (int) this.x;
-        int cy = (int) this.y;
-        int tx = (int) px;
-        int ty = (int) py;
+        int cx = (int) (this.x + 0.5); // Centro nemico
+        int cy = (int) (this.y + 0.5);
+        int tx = (int) (px + 0.5);     // Centro target
+        int ty = (int) (py + 0.5);
 
-        if (cx != tx && cy != ty) return false; // Non allineati
+        if (cx != tx && cy != ty) return false; // Non allineati sugli assi
 
-        // Verifica ostacoli sulla linea
         return checkPathClear(cx, cy, tx, ty);
     }
 
     private boolean checkPathClear(int x1, int y1, int x2, int y2) {
-        int[][] map = Model.getInstance().getGameAreaArray();
-
-        if (x1 == x2) { // Verticale
+        // Controllo semplice sulla riga o colonna
+        if (x1 == x2) {
             for (int r = Math.min(y1, y2) + 1; r < Math.max(y1, y2); r++)
                 if (!Model.getInstance().isWalkable(x1, r)) return false;
-        } else { // Orizzontale
+        } else {
             for (int c = Math.min(x1, x2) + 1; c < Math.max(x1, x2); c++)
                 if (!Model.getInstance().isWalkable(c, y1)) return false;
         }
@@ -144,6 +165,6 @@ public class ShooterGoblin extends ChasingGoblin {
 
     @Override
     public Direction getTelegraphDirection() {
-        return this.telegraphDirection;
+        return this.telegraphDirection; // Serve alla View per disegnare il mirino/attacco
     }
 }

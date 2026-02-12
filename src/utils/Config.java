@@ -22,7 +22,7 @@ public class Config {
 
 
     // --- LOGICA NEMICI (GOBLIN) ---
-    public static final double GOBLIN_COMMON_SPEED = 0.03;    // Velocità del Goblin base
+    public static final double GOBLIN_COMMON_SPEED = 0.02;    // Velocità del Goblin base
     // HITBOX GOBLIN (Leggermente più piccoli della cella per non incastrarsi)
     public static final double GOBLIN_HITBOX_WIDTH = 0.8; // BOSS
     public static final double GOBLIN_HITBOX_HEIGHT = 0.8; //BOSS
@@ -55,65 +55,61 @@ public class Config {
     public static final String PLAYER1_SHEET = "/wizardmale.png";
     public static final int ENTITY_FRAME_SIZE = 128;
     public static final String MAIN_SHEET = "/MapItems.png"; // Il tuo file unico
-    public static final String SHOOTERGOBLIN_SHEET = "ShooterGoblin/.png";
-    public static final String CHASING_GOBLIN_SHEET = "ChasingrGoblin/.png";
-    public static final String COMMON_GOBLIN = "CommonGoblin/.png";
+    public static final String SHOOTERGOBLIN_SHEET = "/ShooterGoblin.png";
+    public static final String CHASING_GOBLIN_SHEET = "/ChasingGoblin.png";
+    public static final String COMMON_GOBLIN = "/CommonGoblin.png";
 
 
 
-
-    // --- CONFIGURAZIONE ANIMAZIONE CHASING GOBLIN (HUNTER) ---
-// Numero di frame per tipo di azione
-    public static final int GOBLIN_IDLE_FRAMES = 16;
-    public static final int GOBLIN_RUN_FRAMES  = 12;
-
-    // Indici di partenza calcolati linearmente (senza buchi)
-// BACK (Su)
-    public static final int CHASING_IDLE_BACK_START  = 0;                               // 0
-    public static final int CHASING_RUN_BACK_START   = CHASING_IDLE_BACK_START + 16;      // 16
-
-    // FRONT (Giù)
-    public static final int CHASING_IDLE_FRONT_START = CHASING_RUN_BACK_START + 12;      // 28
-    public static final int CHASING_RUN_FRONT_START  = CHASING_IDLE_FRONT_START + 16;     // 44
-
-    // LEFT (Sinistra)
-    public static final int CHASING_IDLE_LEFT_START  = CHASING_RUN_FRONT_START + 12;     // 56
-    public static final int CHASING_RUN_LEFT_START   = CHASING_IDLE_LEFT_START + 16;     // 72
-
-    // RIGHT (Destra)
-    public static final int CHASING_IDLE_RIGHT_START = CHASING_RUN_LEFT_START + 12;      // 84
-    public static final int CHASING_RUN_RIGHT_START  = CHASING_IDLE_RIGHT_START + 16;     // 100
-
-
-    // Indici di partenza calcolati linearmente
-// Indici Lineari (Passo di 12)
+    // --- 1. COMMON GOBLIN (File: common.png) ---
+// Parte da 0
     public static final int COMMON_RUN_BACK_START   = 0;
     public static final int COMMON_RUN_FRONT_START  = 12;
     public static final int COMMON_RUN_LEFT_START   = 24;
     public static final int COMMON_RUN_RIGHT_START  = 36;
+// Totale usato: 48 frame. Fine del file.
 
-//SHOOTER
-// 1. BACK (Su) - Inizia a 0
-    public static final  int SHOOTER_ATTACK_FRAMES = 2;
+    // --- 2. CHASING GOBLIN (File: chasing.png) ---
+// ATTENZIONE: Parte da 0, NON da 48! È un file nuovo!
+    public static final int CHASING_IDLE_BACK_START  = 0;  // Era 48 -> Diventa 0
+    public static final int CHASING_RUN_BACK_START   = 16; // 0 + 16
+
+    public static final int CHASING_IDLE_FRONT_START = 28; // 16 + 12
+    public static final int CHASING_RUN_FRONT_START  = 44;
+
+    public static final int CHASING_IDLE_LEFT_START  = 56;
+    public static final int CHASING_RUN_LEFT_START   = 72;
+
+    public static final int CHASING_IDLE_RIGHT_START = 84;
+    public static final int CHASING_RUN_RIGHT_START  = 100;
+
+    // --- 3. SHOOTER GOBLIN (File: shooter.png) ---
+// ATTENZIONE: Parte da 0, NON da 160!
+// Struttura riga: 2 (Attack) + 16 (Idle) + 12 (Run) = 30 frame.
+    public static final int SHOOTER_ROW_WIDTH = 30; // Fondamentale per il calcolo riga
+    // 1. NUMERO DI FRAME PER AZIONE (Le variabili richieste)
+    public static final int SHOOTER_ATTACK_FRAMES = 2;
+    public static final int GOBLIN_IDLE_FRAMES   = 16;
+    public static final int GOBLIN_RUN_FRAMES    = 12;
+    // Riga 0 (Back) -> Indice 0
     public static final int SHOOTER_ATTACK_BACK_START = 0;
-    public static final int SHOOTER_IDLE_BACK_START   = SHOOTER_ATTACK_BACK_START + 2;   // 2
-    public static final int SHOOTER_RUN_BACK_START    = SHOOTER_IDLE_BACK_START + 16;    // 18
+    public static final int SHOOTER_IDLE_BACK_START   = 2;
+    public static final int SHOOTER_RUN_BACK_START    = 18;
 
-    // 2. FRONT (Giù) - Inizia a 30 (18 + 12)
+    // Riga 1 (Front) -> Indice 30 (inizio riga successiva)
     public static final int SHOOTER_ATTACK_FRONT_START = 30;
-    public static final int SHOOTER_IDLE_FRONT_START   = SHOOTER_ATTACK_FRONT_START + 2;  // 32
-    public static final int SHOOTER_RUN_FRONT_START    = SHOOTER_IDLE_FRONT_START + 16;   // 48
+    public static final int SHOOTER_IDLE_FRONT_START   = 32;
+    public static final int SHOOTER_RUN_FRONT_START    = 48;
 
-    // 3. LEFT (Sinistra) - Inizia a 60 (48 + 12)
+    // Riga 2 (Left) -> Indice 60
     public static final int SHOOTER_ATTACK_LEFT_START  = 60;
-    public static final int SHOOTER_IDLE_LEFT_START    = SHOOTER_ATTACK_LEFT_START + 2;   // 62
-    public static final int SHOOTER_RUN_LEFT_START     = SHOOTER_IDLE_LEFT_START + 16;    // 78
+    public static final int SHOOTER_IDLE_LEFT_START    = 62;
+    public static final int SHOOTER_RUN_LEFT_START     = 78;
 
-    // 4. RIGHT (Destra) - Inizia a 90 (78 + 12)
+    // Riga 3 (Right) -> Indice 90
     public static final int SHOOTER_ATTACK_RIGHT_START = 90;
-    public static final int SHOOTER_IDLE_RIGHT_START   = SHOOTER_ATTACK_RIGHT_START + 2;  // 92
-    public static final int SHOOTER_RUN_RIGHT_START    = SHOOTER_IDLE_RIGHT_START + 16;   // 108
-
+    public static final int SHOOTER_IDLE_RIGHT_START   = 92;
+    public static final int SHOOTER_RUN_RIGHT_START    = 108;
 
     
     public static final int CELL_EMPTY = 0;
@@ -177,7 +173,7 @@ public class Config {
 
     // --- SHOOTER GOBLIN (Estende Chasing) ---
     public static final double SHOOTER_SPEED_AIMING = 0.0; // Fermo quando mira
-    public static final double SHOOTER_SPEED_CHASE = 0.06; // Veloce quando insegue
+    public static final double SHOOTER_SPEED_CHASE = 0.03; // Veloce quando insegue
     public static final int SHOOTER_MAX_AMMO = 2;
     public static final int SHOOTER_RELOAD_TIME = 180;     // 3 secondi
     public static final int SHOOTER_TELEGRAPH_TIME = 30;   // 0.5 secondi pre-sparo

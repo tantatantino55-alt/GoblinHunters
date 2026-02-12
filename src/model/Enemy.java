@@ -34,7 +34,7 @@ public abstract class Enemy extends Entity {
         double nextX = x;
         double nextY = y;
 
-        // Calcolo coordinate future
+        // 1. Calcolo futuro basato sulla velocità (Configurata nel Model)
         switch (currentDirection) {
             case UP:    nextY -= speed; break;
             case DOWN:  nextY += speed; break;
@@ -44,29 +44,23 @@ public abstract class Enemy extends Entity {
 
         IModel model = Model.getInstance();
 
-        // 1. PRIMO CONTROLLO: MURI E BLOCCHI (Indistruttibili E Distruttibili)
-        // Se isWalkable ritorna false, c'è un muro: STOP immediato.
-        if (!model.isWalkable(nextX, nextY)) {
-            changeDirection();
+        // 2. CONTROLLO COLLISIONI (Muri e Mappa)
+        // Usiamo un piccolo offset (margine) per non farli camminare "dentro" i muri
+        double margin = 0.2;
+        if (!model.isWalkable(nextX + margin, nextY + margin) ||
+                !model.isWalkable(nextX + 1 - margin, nextY + 1 - margin)) {
+            changeDirection(); // Se sbatte, cambia strada
             return;
         }
 
-        // 2. SECONDO CONTROLLO: CONFINI MAPPA
-        // Evita che escano dallo schermo (area nera)
-        if (!isInsideMap(nextX, nextY)) {
-            changeDirection();
-            return;
-        }
-
-        // 3. TERZO CONTROLLO: COLLISIONE TRA NEMICI
-        // Se la cella è libera da muri ma c'è un altro goblin, STOP.
+        // 3. COLLISIONE CON ALTRI NEMICI
+        // Questo evita che si ammassino tutti in un unico punto rosa/sdoppiato
         if (model.isAreaOccupiedByOtherEnemy(nextX, nextY, this)) {
-            // Opzionale: Se sbatte contro un amico, può provare a cambiare direzione subito
-            changeDirection();
+            // Se la strada è bloccata da un compagno, rallenta o cambia direzione
             return;
         }
 
-        // SE TUTTI I CONTROLLI PASSANO: Aggiorna la posizione
+        // 4. AGGIORNAMENTO POSIZIONE
         this.x = nextX;
         this.y = nextY;
     }

@@ -99,7 +99,7 @@ public class ResourceLoader {
     }
     private void loadShooterGoblinAnimations(SpriteManager sm) {
         String sheet = Config.SHOOTERGOBLIN_SHEET;
-        int size = 64;
+        int size = Config.ENTITY_FRAME_SIZE;
 
         // --- BACK (SU) ---
         sm.loadAnimation("SHOOTER_ATTACK_UP",   sheet, Config.SHOOTER_ATTACK_BACK_START, Config.SHOOTER_ATTACK_FRAMES, size);
@@ -123,7 +123,7 @@ public class ResourceLoader {
     }
     private void loadCommonGoblinAnimations(SpriteManager sm) {
         String sheet = Config.COMMON_GOBLIN;
-        int size = 64;
+        int size = Config.ENTITY_FRAME_SIZE;
         int runFrames = Config.GOBLIN_RUN_FRAMES;
 
         // --- BACK ---
@@ -145,7 +145,7 @@ public class ResourceLoader {
 
     private void loadChasingGoblinAnimations(SpriteManager sm) {
         String sheet = Config.CHASING_GOBLIN_SHEET;
-        int size = 64;
+        int size = Config.ENTITY_FRAME_SIZE;
         int idleFrames = Config.GOBLIN_IDLE_FRAMES;
         int runFrames = Config.GOBLIN_RUN_FRAMES;
 

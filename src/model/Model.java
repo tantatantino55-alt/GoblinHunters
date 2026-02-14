@@ -91,14 +91,12 @@ public class Model implements IModel {
         double deltaX = player.getDeltaX();
         double deltaY = player.getDeltaY();
 
-        // 1. Aggiorna l'animazione e gestisci l'IDLE
         updatePlayerAction(deltaX, deltaY);
-
-        // 2. Esci se fermo
         if (deltaX == 0 && deltaY == 0) return;
 
-        // Velocità di "scivolamento" e allineamento (circa il 150% della velocità normale)
-        double alignSpeed = Config.ENTITY_LOGICAL_SPEED * 1.5;
+        // Velocità di allineamento RADDOPPIATA per togliere ogni effetto "scivoloso" in campo aperto
+        double alignSpeed = Config.ENTITY_LOGICAL_SPEED * 2.0;
+        double CORNER_TOLERANCE = 0.40; // Tolleranza leggermente alzata per compensare la fisica più severa
 
         // -------------------------------------------------
         // ASSE X (Movimento Orizzontale)
@@ -106,38 +104,37 @@ public class Model implements IModel {
         if (deltaX != 0) {
             double nextX = currentX + deltaX;
 
-            // CASO A: Il percorso davanti è libero
-            if (isWalkable(nextX, currentY) && !isOccupiedByEnemies(nextX, currentY)) {
+            // Uso la collisione SEVERA per i blocchi, ma mantengo la vecchia per non incastrarmi nei nemici
+            if (isStrictWalkable(nextX, currentY) && !isOccupiedByEnemies(nextX, currentY)) {
                 player.setXCoordinate(Math.max(Config.MIN_LOGICAL_X, Math.min(Config.MAX_LOGICAL_X, nextX)));
 
-                // -> LANE CENTERING: Mi allineo dolcemente al centro della riga mentre cammino
                 double idealY = Math.round(currentY);
                 double diffY = currentY - idealY;
-                if (Math.abs(diffY) > 0.01) {
-                    // Lo fa solo se anche il centro esatto è libero
-                    if (isWalkable(nextX, idealY) && !isOccupiedByEnemies(nextX, idealY)) {
+
+                // Centramento Istantaneo
+                if (Math.abs(diffY) > 0.001) {
+                    if (isStrictWalkable(currentX, idealY) && !isOccupiedByEnemies(currentX, idealY)) {
                         double step = Math.min(alignSpeed, Math.abs(diffY));
                         if (diffY > 0) player.setYCoordinate(currentY - step);
                         else player.setYCoordinate(currentY + step);
                     }
                 }
             }
-            // CASO B: Sbatto contro un muro -> CORNER SLIDING
+            // CASO B: CORNER SLIDING
             else {
                 double targetY_Up = Math.floor(currentY);
                 double targetY_Down = targetY_Up + 1.0;
 
-                boolean canGoUp = isWalkable(nextX, targetY_Up) && !isOccupiedByEnemies(nextX, targetY_Up);
-                boolean canGoDown = isWalkable(nextX, targetY_Down) && !isOccupiedByEnemies(nextX, targetY_Down);
+                boolean canGoUp = isStrictWalkable(nextX, targetY_Up) && !isOccupiedByEnemies(nextX, targetY_Up);
+                boolean canGoDown = isStrictWalkable(nextX, targetY_Down) && !isOccupiedByEnemies(nextX, targetY_Down);
 
                 double distUp = Math.abs(currentY - targetY_Up);
                 double distDown = Math.abs(currentY - targetY_Down);
 
-                // Scivola verso l'apertura più vicina
-                if (canGoUp && (!canGoDown || distUp < distDown)) {
+                if (canGoUp && distUp < CORNER_TOLERANCE && (!canGoDown || distUp < distDown)) {
                     player.setYCoordinate(currentY - alignSpeed);
                 }
-                else if (canGoDown && (!canGoUp || distDown < distUp)) {
+                else if (canGoDown && distDown < CORNER_TOLERANCE && (!canGoUp || distDown < distUp)) {
                     player.setYCoordinate(currentY + alignSpeed);
                 }
             }
@@ -146,43 +143,42 @@ public class Model implements IModel {
         // -------------------------------------------------
         // ASSE Y (Movimento Verticale)
         // -------------------------------------------------
-        // Aggiorniamo le variabili correnti prima dell'asse Y (per i movimenti in diagonale/scivolamento)
         currentX = player.getXCoordinate();
         currentY = player.getYCoordinate();
 
         if (deltaY != 0) {
             double nextY = currentY + deltaY;
 
-            // CASO A: Il percorso davanti è libero
-            if (isWalkable(currentX, nextY) && !isOccupiedByEnemies(currentX, nextY)) {
+            if (isStrictWalkable(currentX, nextY) && !isOccupiedByEnemies(currentX, nextY)) {
                 player.setYCoordinate(Math.max(Config.MIN_LOGICAL_Y, Math.min(Config.MAX_LOGICAL_Y, nextY)));
 
-                // -> LANE CENTERING: Mi allineo dolcemente al centro della colonna mentre cammino
                 double idealX = Math.round(currentX);
                 double diffX = currentX - idealX;
-                if (Math.abs(diffX) > 0.01) {
-                    if (isWalkable(idealX, nextY) && !isOccupiedByEnemies(idealX, nextY)) {
+
+                // Centramento Istantaneo
+                if (Math.abs(diffX) > 0.001) {
+                    if (isStrictWalkable(idealX, currentY) && !isOccupiedByEnemies(idealX, currentY)) {
                         double step = Math.min(alignSpeed, Math.abs(diffX));
                         if (diffX > 0) player.setXCoordinate(currentX - step);
                         else player.setXCoordinate(currentX + step);
                     }
                 }
             }
-            // CASO B: Sbatto contro un muro -> CORNER SLIDING
+            // CASO B: CORNER SLIDING
             else {
                 double targetX_Left = Math.floor(currentX);
                 double targetX_Right = targetX_Left + 1.0;
 
-                boolean canGoLeft = isWalkable(targetX_Left, nextY) && !isOccupiedByEnemies(targetX_Left, nextY);
-                boolean canGoRight = isWalkable(targetX_Right, nextY) && !isOccupiedByEnemies(targetX_Right, nextY);
+                boolean canGoLeft = isStrictWalkable(targetX_Left, nextY) && !isOccupiedByEnemies(targetX_Left, nextY);
+                boolean canGoRight = isStrictWalkable(targetX_Right, nextY) && !isOccupiedByEnemies(targetX_Right, nextY);
 
                 double distLeft = Math.abs(currentX - targetX_Left);
                 double distRight = Math.abs(currentX - targetX_Right);
 
-                if (canGoLeft && (!canGoRight || distLeft < distRight)) {
+                if (canGoLeft && distLeft < CORNER_TOLERANCE && (!canGoRight || distLeft < distRight)) {
                     player.setXCoordinate(currentX - alignSpeed);
                 }
-                else if (canGoRight && (!canGoLeft || distRight < distLeft)) {
+                else if (canGoRight && distRight < CORNER_TOLERANCE && (!canGoLeft || distRight < distLeft)) {
                     player.setXCoordinate(currentX + alignSpeed);
                 }
             }
@@ -220,6 +216,37 @@ public class Model implements IModel {
                 }
 
                 // 2. Bombe (le attraversiamo solo se ci siamo appena nati sopra)
+                if (getBombAt(r, c) != null && !isPlayerCurrentlyInside(r, c)) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    // --- NUOVO METODO: Collisione severa per forzare i binari (Zero Tolleranza) ---
+    private boolean isStrictWalkable(double nextX, double nextY) {
+        double margin = 0.05; // Margine microscopico per evitare bug di arrotondamento
+        double left = nextX + margin;
+        double right = nextX + 1.0 - margin;
+        double top = nextY + margin;
+        double bottom = nextY + 1.0 - margin;
+
+        int startCol = (int) Math.floor(left);
+        int endCol = (int) Math.floor(right);
+        int startRow = (int) Math.floor(top);
+        int endRow = (int) Math.floor(bottom);
+
+        if (startCol < 0 || endCol >= Config.GRID_WIDTH || startRow < 0 || endRow >= Config.GRID_HEIGHT) {
+            return false;
+        }
+
+        for (int r = startRow; r <= endRow; r++) {
+            for (int c = startCol; c <= endCol; c++) {
+                if (gameAreaArray[r][c] == Config.CELL_INDESTRUCTIBLE_BLOCK ||
+                        gameAreaArray[r][c] == Config.CELL_DESTRUCTIBLE_BLOCK) {
+                    return false;
+                }
                 if (getBombAt(r, c) != null && !isPlayerCurrentlyInside(r, c)) {
                     return false;
                 }
@@ -865,19 +892,14 @@ public class Model implements IModel {
 
     @Override
     public boolean isAreaOccupiedByOtherEnemy(double nextX, double nextY, Enemy self) {
-        double w = Config.GOBLIN_HITBOX_WIDTH;
-        double h = Config.GOBLIN_HITBOX_HEIGHT;
-        double epsilon = 0.05;
-
+        // Usiamo una hitbox di collisione interna molto piccola (es. 0.3)
+        // Così i goblin possono quasi sovrapporsi visivamente senza "incastrarsi"
+        double size = 0.3;
         for (Enemy other : enemies) {
             if (other == self) continue;
-
-            boolean collisionX = (nextX + epsilon) < (other.getX() + w - epsilon) &&
-                    (nextX + w - epsilon) > (other.getX() + epsilon);
-            boolean collisionY = (nextY + epsilon) < (other.getY() + h - epsilon) &&
-                    (nextY + h - epsilon) > (other.getY() + epsilon);
-
-            if (collisionX && collisionY) return true;
+            if (Math.abs(nextX - other.getX()) < size && Math.abs(nextY - other.getY()) < size) {
+                return true;
+            }
         }
         return false;
     }

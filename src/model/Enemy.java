@@ -1,6 +1,5 @@
 package model;
 
-import utils.Config;
 import utils.Direction;
 import utils.EnemyType;
 
@@ -32,51 +31,45 @@ public abstract class Enemy extends Entity {
 
     // In src/model/Enemy.java
 // In src/model/Enemy.java - Sostituisci moveInDirection
+    // Sostituisci questo metodo in Enemy.java
     protected void moveInDirection() {
-        double currentX = x;
-        double currentY = y;
+        IModel model = Model.getInstance();
         double nextX = x;
         double nextY = y;
 
-        // 1. CALCOLO POSIZIONE TEORICA
+        // 1. Calcola la posizione teorica successiva
         switch (currentDirection) {
-            case UP -> nextY -= speed;
-            case DOWN -> nextY += speed;
-            case LEFT -> nextX -= speed;
+            case UP ->    nextY -= speed;
+            case DOWN ->  nextY += speed;
+            case LEFT ->  nextX -= speed;
             case RIGHT -> nextX += speed;
         }
 
-        // 2. CORREZIONE BINARI (Lane Centering)
-        // Se mi muovo in verticale, mi allineo al centro della colonna X
-        if (currentDirection == Direction.UP || currentDirection == Direction.DOWN) {
-            double idealX = Math.round(currentX);
-            double diffX = currentX - idealX;
-            if (Math.abs(diffX) < Config.MAGNET_TOLERANCE) {
-                this.x = idealX; // Snap al centro
-                nextX = idealX;
-            }
-        } else { // Se mi muovo in orizzontale, mi allineo al centro della riga Y
-            double idealY = Math.round(currentY);
-            double diffY = currentY - idealY;
-            if (Math.abs(diffY) < Config.MAGNET_TOLERANCE) {
-                this.y = idealY; // Snap al centro
-                nextY = idealY;
-            }
-        }
-
-        // 3. CONTROLLO COLLISIONI (Muri e Altri Nemici)
-        IModel model = Model.getInstance();
+        // 2. CONTROLLO COLLISIONE REALE
+        // Usiamo una hitbox leggermente ridotta (0.8) per non incastrarsi negli spigoli visivi
         if (model.isWalkable(nextX, nextY) && !model.isAreaOccupiedByOtherEnemy(nextX, nextY, this)) {
             this.x = nextX;
             this.y = nextY;
+
+            // 3. LANE CENTERING (solo dopo essersi mossi, per mantenere i binari)
+            applyLaneCentering();
         } else {
-            handleWallCollision(); // Cambia direzione se bloccato
+            // Se non può camminare, forza il cambio direzione immediato
+            changeDirection();
         }
     }
-    // Controllo rigoroso per l'area nera
-    private boolean isInsideMap(double nx, double ny) {
-        return nx >= 0 && nx <= (Config.GRID_WIDTH - 1) &&
-                ny >= 0 && ny <= (Config.GRID_HEIGHT - 1);
+
+    private void applyLaneCentering() {
+        // Se mi muovo in verticale, correggo dolcemente la X verso il centro del tile
+        if (currentDirection == Direction.UP || currentDirection == Direction.DOWN) {
+            double idealX = Math.round(x);
+            if (Math.abs(x - idealX) < 0.2) this.x = idealX;
+        }
+        // Se mi muovo in orizzontale, correggo la Y
+        else {
+            double idealY = Math.round(y);
+            if (Math.abs(y - idealY) < 0.2) this.y = idealY;
+        }
     }
 
     protected void changeDirection() {

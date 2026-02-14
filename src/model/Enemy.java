@@ -32,45 +32,86 @@ public abstract class Enemy extends Entity {
 
     // In src/model/Enemy.java
     // In src/model/Enemy.java
+// src/model/Enemy.java
+
     protected void moveInDirection() {
-        double nextX = x;
-        double nextY = y;
+        // Logica Lane Centering anche per i nemici
+        double currentX = x;
+        double currentY = y;
 
-        // SNAP-TO-GRID: Allinea al centro della cella sull'asse opposto al movimento
-        // Questo impedisce di sbattere sugli spigoli
+        // Variabili per la nuova posizione
+        double nextX = currentX;
+        double nextY = currentY;
+
+        boolean aligned = false;
+
+        // --- MOVIMENTO VERTICALE (UP / DOWN) ---
         if (currentDirection == Direction.UP || currentDirection == Direction.DOWN) {
-            nextX = Math.round(x);
-        } else {
-            nextY = Math.round(y);
-        }
+            double idealX = Math.round(currentX);
+            double diffX = currentX - idealX;
 
-        switch (currentDirection) {
-            case UP:    nextY -= speed; break;
-            case DOWN:  nextY += speed; break;
-            case LEFT:  nextX -= speed; break;
-            case RIGHT: nextX += speed; break;
-        }
+            if (Math.abs(diffX) < Config.CENTER_TOLERANCE) {
+                // Sono allineato: Snap e calcolo movimento avanti
+                this.x = idealX;
+                nextX = idealX; // Confermo X centrata
 
-        IModel model = Model.getInstance();
+                if (currentDirection == Direction.UP) nextY -= speed;
+                else nextY += speed;
 
-        // 1. Controllo Muri (usa isWalkable a griglia)
-        if (!model.isWalkable(nextX, nextY)) {
-            // Se sbatte:
-            if (this.type == EnemyType.COMMON) {
-                changeDirection(); // I comuni cambiano a caso
+                aligned = true;
+            } else if (Math.abs(diffX) < Config.MAGNET_TOLERANCE) {
+                // Non sono allineato: Correggo X invece di avanzare in Y
+                double fix = Config.CORNER_CORRECTION_SPEED; // Usa velocità fissa o this.speed
+                if (diffX > 0) this.x -= fix;
+                else this.x += fix;
+
+                return; // FINE TURNO: Ho usato il movimento per allinearmi
             }
-            // Gli inseguitori si fermano (l'IA deciderà al prossimo frame)
-            return;
+        }
+        // --- MOVIMENTO ORIZZONTALE (LEFT / RIGHT) ---
+        else {
+            double idealY = Math.round(currentY);
+            double diffY = currentY - idealY;
+
+            if (Math.abs(diffY) < Config.CENTER_TOLERANCE) {
+                // Sono allineato
+                this.y = idealY;
+                nextY = idealY; // Confermo Y centrata
+
+                if (currentDirection == Direction.LEFT) nextX -= speed;
+                else nextX += speed;
+
+                aligned = true;
+            } else if (Math.abs(diffY) < Config.MAGNET_TOLERANCE) {
+                // Correzione asse Y
+                double fix = Config.CORNER_CORRECTION_SPEED;
+                if (diffY > 0) this.y -= fix;
+                else this.y += fix;
+
+                return; // FINE TURNO
+            }
         }
 
-        // 2. Controllo Altri Nemici (Evita sovrapposizioni)
-        if (model.isAreaOccupiedByOtherEnemy(nextX, nextY, this)) {
-            if (this.type == EnemyType.COMMON) changeDirection();
-            return;
-        }
+        // Se sono arrivato qui, significa che sono allineato e sto provando ad avanzare
+        if (aligned) {
+            IModel model = Model.getInstance();
 
-        this.x = nextX;
-        this.y = nextY;
+            // 1. Controllo Muri
+            if (!model.isWalkable(nextX, nextY)) {
+                handleWallCollision(); // Gestito dalle sottoclassi (cambia direzione o aspetta)
+                return;
+            }
+
+            // 2. Controllo altri nemici
+            if (model.isAreaOccupiedByOtherEnemy(nextX, nextY, this)) {
+                if (this.type == EnemyType.COMMON) changeDirection();
+                return;
+            }
+
+            // Applica movimento
+            this.x = nextX;
+            this.y = nextY;
+        }
     }
     // Controllo rigoroso per l'area nera
     private boolean isInsideMap(double nx, double ny) {

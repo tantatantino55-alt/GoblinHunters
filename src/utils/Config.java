@@ -24,7 +24,17 @@ public class Config {
     public static final int SHOOTER_TELEGRAPH_TIME = 60;  // Tempo di mira (tick)
     public static final double MIN_SPAWN_DISTANCE = 5.0;
 
-    public static final double ALIGNMENT_TOLERANCE = 0.55;
+// src/utils/Config.java
+
+    // --- LANE CENTERING / CORNER CORRECTION ---
+// Quanto vicino al centro (0.0) deve essere l'asse opposto per permettere il movimento (es. 0.05 = 5% di pixel)
+    public static final double CENTER_TOLERANCE = 0.05;
+
+    // Entro quale distanza l'entità viene "attratta" dal centro della corsia (0.45 = quasi mezza cella)
+    public static final double MAGNET_TOLERANCE = 0.45;
+
+    // Velocità di correzione automatica (spesso uguale o leggermente superiore alla velocità di movimento)
+    public static final double CORNER_CORRECTION_SPEED = 0.05;
 
     // --- LOGICA NEMICI (GOBLIN) ---
     public static final double GOBLIN_COMMON_SPEED = 0.02;    // Velocità del Goblin base

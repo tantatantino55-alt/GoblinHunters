@@ -83,70 +83,75 @@ public class Model implements IModel {
     // In src/model/Model.java
 
     // --- A. LOGICA DI MOVIMENTO RIGIDO (BOMBERMAN STYLE) ---
+    // src/model/Model.java
+
     private void updatePlayerMovement() {
         double x = player.getXCoordinate();
         double y = player.getYCoordinate();
         double dx = player.getDeltaX();
         double dy = player.getDeltaY();
-        double speed = player.getSpeed();
+        double speed = player.getSpeed(); // Usa la velocità del player
 
-        // 1. Gestione Animazione: Se non premo nulla, sono fermo.
+        // 1. Reset stato movimento
         if (dx == 0 && dy == 0) {
             player.setMoving(false);
             return;
         }
         player.setMoving(true);
 
-        // 2. Gestione Direzione Animazione (importante per non rimanere in FRONT_IDLE)
+        // 2. Imposta direzione animazione
         if (dy < 0) player.setDirection(Direction.UP);
         else if (dy > 0) player.setDirection(Direction.DOWN);
         else if (dx < 0) player.setDirection(Direction.LEFT);
         else if (dx > 0) player.setDirection(Direction.RIGHT);
 
-        // 3. Logica Movimento Rigido (Bomberman)
-        // Se mi muovo in orizzontale, devo essere allineato verticalmente
+        // 3. LOGICA LANE CENTERING (BOMBERMAN STYLE)
+
+        // --- CASO A: MOVIMENTO ORIZZONTALE (Voglio andare a DX/SX) ---
         if (dx != 0) {
-            double distY = y - Math.round(y); // Quanto sono lontano dal centro riga?
+            // Calcolo quanto sono distante dal centro della riga (intero più vicino)
+            double idealY = Math.round(y);
+            double diffY = y - idealY;
 
-            if (Math.abs(distY) < 0.1) {
-                // SONO ALLINEATO: Mi muovo su X
-                player.setYCoordinate(Math.round(y)); // Snap perfetto al centro
+            // Se sono abbastanza vicino al centro (es. < 0.05) -> SCATTO AL CENTRO E MI MUOVO
+            if (Math.abs(diffY) < Config.CENTER_TOLERANCE) {
+                player.setYCoordinate(idealY); // Snap perfetto
+
                 double nextX = x + dx;
-
-                if (isWalkable(nextX, y)) {
-                    // Controllo collisione nemici (Morte)
-                    if (isAreaOccupiedByOtherEnemy(nextX, y, null)) {
-                        player.setState(PlayerState.DEAD);
-                    } else {
-                        player.setXCoordinate(nextX);
-                    }
+                // Controllo collisione futuro
+                if (isWalkable(nextX, idealY) && !isAreaOccupiedByOtherEnemy(nextX, idealY, null)) {
+                    player.setXCoordinate(nextX);
                 }
-            } else {
-                // NON ALLINEATO: Correggo Y invece di muovere X (Auto-Align)
-                double fixSpeed = (distY > 0) ? -speed : speed;
-                player.setYCoordinate(y + fixSpeed);
             }
+            // Se non sono al centro, ma sono nel raggio di "attrazione" -> MI ALLINEO
+            else if (Math.abs(diffY) < Config.MAGNET_TOLERANCE) {
+                // Non muovo X, muovo SOLO Y verso il centro
+                double fixSpeed = Config.CORNER_CORRECTION_SPEED;
+                if (diffY > 0) player.setYCoordinate(y - fixSpeed); // Sono sotto, vado su
+                else player.setYCoordinate(y + fixSpeed);           // Sono sopra, vado giù
+            }
+            // Se sono troppo lontano (> MAGNET_TOLERANCE), sono bloccato (es. tra due righe)
         }
-        // Se mi muovo in verticale, devo essere allineato orizzontalmente
+
+        // --- CASO B: MOVIMENTO VERTICALE (Voglio andare SU/GIÙ) ---
         else if (dy != 0) {
-            double distX = x - Math.round(x); // Quanto sono lontano dal centro colonna?
+            // Calcolo quanto sono distante dal centro della colonna
+            double idealX = Math.round(x);
+            double diffX = x - idealX;
 
-            if (Math.abs(distX) < 0.1) {
-                // SONO ALLINEATO: Mi muovo su Y
-                player.setXCoordinate(Math.round(x)); // Snap perfetto al centro
+            if (Math.abs(diffX) < Config.CENTER_TOLERANCE) {
+                player.setXCoordinate(idealX); // Snap perfetto
+
                 double nextY = y + dy;
-
-                if (isWalkable(x, nextY)) {
-                    if (isAreaOccupiedByOtherEnemy(x, nextY, null)) {
-                        player.setState(PlayerState.DEAD);
-                    } else {
-                        player.setYCoordinate(nextY);
-                    }
+                if (isWalkable(idealX, nextY) && !isAreaOccupiedByOtherEnemy(idealX, nextY, null)) {
+                    player.setYCoordinate(nextY);
                 }
-            } else {
-                // NON ALLINEATO: Correggo X invece di muovere Y
-                double fixSpeed = (distX > 0) ? -speed : speed;
-                player.setXCoordinate(x + fixSpeed);
+            }
+            else if (Math.abs(diffX) < Config.MAGNET_TOLERANCE) {
+                // Non muovo Y, muovo SOLO X verso il centro
+                double fixSpeed = Config.CORNER_CORRECTION_SPEED;
+                if (diffX > 0) player.setXCoordinate(x - fixSpeed); // A destra, vado a sinistra
+                else player.setXCoordinate(x + fixSpeed);           // A sinistra, vado a destra
             }
         }
     }

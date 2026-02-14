@@ -22,14 +22,14 @@ public class ConcreteDrawer extends AbstractDrawer {
     public void draw(Graphics g) {
         Graphics2D g2d = (Graphics2D) g;
 
-        // 1. Sfondo Base (Nero di sicurezza)
+        // 1. Sfondo Base (Nero di sicurezza per tutto lo schermo)
         g2d.setColor(Color.BLACK);
         g2d.fillRect(0, 0, getDrawingWidth(), getDrawingHeight());
 
         // 2. Disegna la Mappa (Pavimento + Muri)
         drawMap(g2d);
         drawDestructions(g2d);
-        drawFire(g2d); // Disegna il fuoco sopra la mappa ma sotto le entità
+        drawFire(g2d);
 
         // 3. Disegna le Entità
         drawBombs(g2d);
@@ -40,9 +40,7 @@ public class ConcreteDrawer extends AbstractDrawer {
         // 4. Debug Griglia (Disegna linee sopra tutto per controllo)
         drawDebugGrid(g2d);
 
-        // Sfondo Base (Nero di sicurezza) per HUD
-        g2d.setColor(Color.BLACK);
-        g2d.fillRect(0, 0, getDrawingWidth(), getDrawingHeight());
+        // 5. Disegna l'HUD (Senza ridisegnare il rettangolo nero!)
         drawHUD(g2d);
     }
 

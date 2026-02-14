@@ -20,69 +20,45 @@ public class ChasingGoblin extends Enemy {
         double px = Model.getInstance().xCoordinatePlayer();
         double py = Model.getInstance().yCoordinatePlayer();
 
-        // 1. PRIORITÀ ASSOLUTA: Scappare dalle bombe (Self Preservation)
-        Direction safeDir = getSafeDirectionFromBombs();
-        if (safeDir != null) {
-            this.currentDirection = safeDir;
-            moveInDirection();
-            return;
-        }
+        // Distanza Manhattan
+        double dist = Math.abs(this.x - px) + Math.abs(this.y - py);
 
-        // 2. LOGICA OLFATTO (Manhattan + Muri)
-        double perceivedDistance = calculateSmellDistance(px, py);
-
-        if (perceivedDistance <= Config.SMELL_THRESHOLD_DISTANCE) {
-            // Ti ha "fiutato": Insegue
-            moveTowards(px, py);
+        // Insegue SOLO se vicino (6 celle) E vede il player
+        // (Aggiungi hasClearPath se vuoi, per ora semplifichiamo sulla distanza)
+        if (dist <= 6) {
+            moveTowardsSmart(px, py);
         } else {
-            // Troppo lontano o nascosto: Movimento casuale
+            if (random.nextInt(100) < 5) changeDirection();
             moveInDirection();
         }
     }
 
-    // In src/model/ChasingGoblin.java
-    protected void moveTowards(double targetX, double targetY) {
-        double dx = targetX - this.x;
-        double dy = targetY - this.y;
+    private void moveTowardsSmart(double tx, double ty) {
+        double dx = tx - this.x;
+        double dy = ty - this.y;
+        Direction best, slide;
 
-        Direction primary, secondary;
-
-        // Determiniamo la direzione principale basandoci sulla distanza maggiore
         if (Math.abs(dx) > Math.abs(dy)) {
-            primary = (dx > 0) ? Direction.RIGHT : Direction.LEFT;
-            secondary = (dy > 0) ? Direction.DOWN : Direction.UP;
+            best = (dx > 0) ? Direction.RIGHT : Direction.LEFT;
+            slide = (dy > 0) ? Direction.DOWN : Direction.UP;
         } else {
-            primary = (dy > 0) ? Direction.DOWN : Direction.UP;
-            secondary = (dx > 0) ? Direction.RIGHT : Direction.LEFT;
+            best = (dy > 0) ? Direction.DOWN : Direction.UP;
+            slide = (dx > 0) ? Direction.RIGHT : Direction.LEFT;
         }
 
-        // LOGICA DI MOVIMENTO INTELLIGENTE
-        if (canMove(primary)) {
-            this.currentDirection = primary;
-        }
-        else if (canMove(secondary)) {
-            // SCIVOLAMENTO: Se la via diretta è bloccata, prova a girare l'angolo
-            this.currentDirection = secondary;
-        }
-        else {
-            // Se tutto è bloccato, il goblin aspetta senza impazzire
-            return;
-        }
+        // Prova direzione migliore, se bloccata prova l'altra (Sliding)
+        if (canMove(best)) this.currentDirection = best;
+        else if (canMove(slide)) this.currentDirection = slide;
 
         moveInDirection();
     }
 
-    private boolean canMove(Direction dir) {
-        double nx = x;
-        double ny = y;
-        switch(dir) {
-            case UP -> ny -= speed;
-            case DOWN -> ny += speed;
-            case LEFT -> nx -= speed;
-            case RIGHT -> nx += speed;
+    private boolean canMove(Direction d) {
+        double tx = x, ty = y;
+        switch(d) {
+            case UP->ty--; case DOWN->ty++; case LEFT->tx--; case RIGHT->tx++;
         }
-        // Verifica se la posizione futura è calpestabile per il sistema di gioco
-        return Model.getInstance().isWalkable(nx, ny);
+        return Model.getInstance().isWalkable(tx, ty);
     }
 
 

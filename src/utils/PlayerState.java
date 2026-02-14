@@ -26,5 +26,6 @@ public enum PlayerState {
         HURT_RIGHT,
 
         // --- STATI SPECIALI ---
-        DYING
+        DYING,
+        DEAD;
 }

@@ -88,84 +88,74 @@ public class Model implements IModel {
         double y = player.getYCoordinate();
         double dx = player.getDeltaX();
         double dy = player.getDeltaY();
-        double speed = player.getSpeed(); // Assicurati che Player abbia getSpeed(), altrimenti usa Config.PLAYER_SPEED
+        double speed = player.getSpeed();
 
-        // Se non premi nulla, esci
-        if (dx == 0 && dy == 0) return;
-
-        // Se premi due tasti insieme (diagonale), diamo priorità all'asse già allineato o all'ultimo premuto.
-        // Per semplicità qui annulliamo il movimento diagonale dando priorità a X se ci stiamo già muovendo in X.
-        if (dx != 0 && dy != 0) {
-            // Logica semplice: Priorità all'asse su cui siamo meno allineati per "sbloccarci" o scelta fissa.
-            // Qui scelgo: se mi muovo, blocco l'altro asse.
-            if (Math.abs(x - Math.round(x)) < Math.abs(y - Math.round(y))) {
-                dx = 0; // Sono allineato su X, quindi mi muovo in Y? No, gestiamo sotto.
-            } else {
-                dy = 0;
-            }
+        // 1. Gestione Animazione: Se non premo nulla, sono fermo.
+        if (dx == 0 && dy == 0) {
+            player.setMoving(false);
+            return;
         }
+        player.setMoving(true);
 
-        // 1. MOVIMENTO ORIZZONTALE (Voglio andare a Destra/Sinistra)
+        // 2. Gestione Direzione Animazione (importante per non rimanere in FRONT_IDLE)
+        if (dy < 0) player.setDirection(Direction.UP);
+        else if (dy > 0) player.setDirection(Direction.DOWN);
+        else if (dx < 0) player.setDirection(Direction.LEFT);
+        else if (dx > 0) player.setDirection(Direction.RIGHT);
+
+        // 3. Logica Movimento Rigido (Bomberman)
+        // Se mi muovo in orizzontale, devo essere allineato verticalmente
         if (dx != 0) {
-            // Controllo se sono allineato verticalmente (Y è intero?)
-            double distY = y - Math.round(y);
+            double distY = y - Math.round(y); // Quanto sono lontano dal centro riga?
 
-            if (Math.abs(distY) < 0.05) {
-                // SONO ALLINEATO: Posso muovermi in X
-                player.setYCoordinate(Math.round(y)); // Fix imperfezioni decimali (Snap perfetto)
-
+            if (Math.abs(distY) < 0.1) {
+                // SONO ALLINEATO: Mi muovo su X
+                player.setYCoordinate(Math.round(y)); // Snap perfetto al centro
                 double nextX = x + dx;
-                // Controllo collisione cella futura
-                if (isWalkable(nextX, y) && !isOccupiedByEnemies(nextX, y)) {
-                    player.setXCoordinate(nextX);
+
+                if (isWalkable(nextX, y)) {
+                    // Controllo collisione nemici (Morte)
+                    if (isAreaOccupiedByOtherEnemy(nextX, y, null)) {
+                        player.setState(PlayerState.DEAD);
+                    } else {
+                        player.setXCoordinate(nextX);
+                    }
                 }
-            } else if (Math.abs(distY) < Config.ALIGNMENT_TOLERANCE) {
-                // NON SONO ALLINEATO, MA SONO VICINO: Auto-Correggo la Y invece di muovere la X
-                // Questo crea l'effetto "scivolamento nell'imboccatura"
-                double fixSpeed = Math.min(Math.abs(distY), speed);
-                player.setYCoordinate(y + (distY < 0 ? fixSpeed : -fixSpeed));
+            } else {
+                // NON ALLINEATO: Correggo Y invece di muovere X (Auto-Align)
+                double fixSpeed = (distY > 0) ? -speed : speed;
+                player.setYCoordinate(y + fixSpeed);
             }
-            // Se sono troppo lontano dal centro, il comando viene ignorato (sembra che ti blocchi,
-            // finché non ti centri meglio).
         }
-
-        // 2. MOVIMENTO VERTICALE (Voglio andare Su/Giù)
+        // Se mi muovo in verticale, devo essere allineato orizzontalmente
         else if (dy != 0) {
-            // Controllo se sono allineato orizzontalmente (X è intero?)
-            double distX = x - Math.round(x);
+            double distX = x - Math.round(x); // Quanto sono lontano dal centro colonna?
 
-            if (Math.abs(distX) < 0.05) {
-                // SONO ALLINEATO: Posso muovermi in Y
-                player.setXCoordinate(Math.round(x)); // Fix imperfezioni decimali (Snap perfetto)
-
+            if (Math.abs(distX) < 0.1) {
+                // SONO ALLINEATO: Mi muovo su Y
+                player.setXCoordinate(Math.round(x)); // Snap perfetto al centro
                 double nextY = y + dy;
-                // Controllo collisione cella futura
-                if (isWalkable(x, nextY) && !isOccupiedByEnemies(x, nextY)) {
-                    player.setYCoordinate(nextY);
+
+                if (isWalkable(x, nextY)) {
+                    if (isAreaOccupiedByOtherEnemy(x, nextY, null)) {
+                        player.setState(PlayerState.DEAD);
+                    } else {
+                        player.setYCoordinate(nextY);
+                    }
                 }
-            } else if (Math.abs(distX) < Config.ALIGNMENT_TOLERANCE) {
-                // NON SONO ALLINEATO: Auto-Correggo la X
-                double fixSpeed = Math.min(Math.abs(distX), speed);
-                player.setXCoordinate(x + (distX < 0 ? fixSpeed : -fixSpeed));
+            } else {
+                // NON ALLINEATO: Correggo X invece di muovere Y
+                double fixSpeed = (distX > 0) ? -speed : speed;
+                player.setXCoordinate(x + fixSpeed);
             }
         }
     }
 
-    // --- B. COLLISIONI A GRIGLIA PERFETTA ---
     @Override
     public boolean isWalkable(double x, double y) {
-        // Arrotondiamo per capire qual è la "cella obiettivo"
-        // Usiamo Math.round per prendere la cella più vicina al centro del corpo
         int c = (int) Math.round(x);
         int r = (int) Math.round(y);
-
-        // Fuori mappa
-        if (c < 0 || c >= Config.GRID_WIDTH || r < 0 || r >= Config.GRID_HEIGHT) {
-            return false;
-        }
-
-        // Controllo se la cella è un muro o una bomba
-        // ATTENZIONE: Qui controlliamo ESATTAMENTE la cella di destinazione.
+        if (c < 0 || c >= Config.GRID_WIDTH || r < 0 || r >= Config.GRID_HEIGHT) return false;
         return gameAreaArray[r][c] == Config.CELL_EMPTY;
     }
 
@@ -779,10 +769,25 @@ public class Model implements IModel {
         return data;
     }
 
-    @Override
-    public boolean isAreaOccupiedByOtherEnemy(double nextX, double nextY, Enemy enemy) {
-        return false;
-    }
+        @Override
+        public boolean isAreaOccupiedByOtherEnemy(double nextX, double nextY, Enemy self) {
+            // 1. Calcoliamo la casella "obiettivo" arrotondando le coordinate
+            int targetCol = (int) Math.round(nextX);
+            int targetRow = (int) Math.round(nextY);
+
+            for (Enemy other : enemies) {
+                // Ignoriamo noi stessi
+                if (other == self) continue;
+
+                // 2. Se anche l'altro nemico si trova (arrotondato) nella stessa casella...
+                if ((int) Math.round(other.getX()) == targetCol &&
+                        (int) Math.round(other.getY()) == targetRow) {
+
+                    return true; // ...allora la cella è occupata!
+                }
+            }
+            return false; // Cella libera
+        }
 
 
     private Bomb getBombAt(int r, int c) {

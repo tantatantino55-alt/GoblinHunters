@@ -36,6 +36,14 @@ public abstract class Enemy extends Entity {
         double nextX = x;
         double nextY = y;
 
+        // SNAP-TO-GRID: Allinea al centro della cella sull'asse opposto al movimento
+        // Questo impedisce di sbattere sugli spigoli
+        if (currentDirection == Direction.UP || currentDirection == Direction.DOWN) {
+            nextX = Math.round(x);
+        } else {
+            nextY = Math.round(y);
+        }
+
         switch (currentDirection) {
             case UP:    nextY -= speed; break;
             case DOWN:  nextY += speed; break;
@@ -43,19 +51,20 @@ public abstract class Enemy extends Entity {
             case RIGHT: nextX += speed; break;
         }
 
-        // 1. Usa la stessa logica di collisione del Player
-        if (!Model.getInstance().isWalkable(nextX, nextY)) {
-            // Solo il Goblin BASE (Common) cambia direzione a caso se sbatte
+        IModel model = Model.getInstance();
+
+        // 1. Controllo Muri (usa isWalkable a griglia)
+        if (!model.isWalkable(nextX, nextY)) {
+            // Se sbatte:
             if (this.type == EnemyType.COMMON) {
-                changeDirection();
+                changeDirection(); // I comuni cambiano a caso
             }
-            // I cacciatori (Hunter/Shooter) si fermano e lasciano che l'IA
-            // scelga una nuova via nel prossimo frame
+            // Gli inseguitori si fermano (l'IA deciderà al prossimo frame)
             return;
         }
 
-        // 2. Collisione tra nemici per evitare sovrapposizioni
-        if (Model.getInstance().isAreaOccupiedByOtherEnemy(nextX, nextY, this)) {
+        // 2. Controllo Altri Nemici (Evita sovrapposizioni)
+        if (model.isAreaOccupiedByOtherEnemy(nextX, nextY, this)) {
             if (this.type == EnemyType.COMMON) changeDirection();
             return;
         }

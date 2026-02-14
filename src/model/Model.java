@@ -90,90 +90,152 @@ public class Model implements IModel {
         double y = player.getYCoordinate();
         double dx = player.getDeltaX();
         double dy = player.getDeltaY();
-        double speed = player.getSpeed(); // Usa la velocità del player
 
-        // 1. Reset stato movimento
-        if (dx == 0 && dy == 0) {
-            player.setMoving(false);
-            return;
-        }
-        player.setMoving(true);
+        if (dx == 0 && dy == 0) return;
 
-        // 2. Imposta direzione animazione
-        if (dy < 0) player.setDirection(Direction.UP);
-        else if (dy > 0) player.setDirection(Direction.DOWN);
-        else if (dx < 0) player.setDirection(Direction.LEFT);
-        else if (dx > 0) player.setDirection(Direction.RIGHT);
+        updatePlayerAction(dx, dy);
 
-        // 3. LOGICA LANE CENTERING (BOMBERMAN STYLE)
+        // Tolleranze per il centramento (regolano la "forza" dei binari)
+        double CENTER_TOLERANCE = 0.15;
+        double MAGNET_TOLERANCE = 0.40;
+        double CORNER_SPEED = Config.ENTITY_LOGICAL_SPEED * 1.5;
 
-        // --- CASO A: MOVIMENTO ORIZZONTALE (Voglio andare a DX/SX) ---
+        // --- CASO A: MOVIMENTO ORIZZONTALE ---
         if (dx != 0) {
-            // Calcolo quanto sono distante dal centro della riga (intero più vicino)
             double idealY = Math.round(y);
             double diffY = y - idealY;
 
-            // Se sono abbastanza vicino al centro (es. < 0.05) -> SCATTO AL CENTRO E MI MUOVO
-            if (Math.abs(diffY) < Config.CENTER_TOLERANCE) {
-                player.setYCoordinate(idealY); // Snap perfetto
+            if (Math.abs(diffY) <= CENTER_TOLERANCE) {
+                // Snap perfetto al centro
+                player.setYCoordinate(idealY);
+                double nextX = x + dx;
+
+                if (isWalkable(nextX, idealY) && !isOccupiedByEnemies(nextX, idealY)) {
+                    player.setXCoordinate(nextX);
+                }
+            } else if (Math.abs(diffY) <= MAGNET_TOLERANCE) {
+                // Scivolamento diagonale verso il centro per imboccare la corsia
+                if (diffY > 0) player.setYCoordinate(y - CORNER_SPEED);
+                else player.setYCoordinate(y + CORNER_SPEED);
 
                 double nextX = x + dx;
-                // Controllo collisione futuro
-                if (isWalkable(nextX, idealY) && !isAreaOccupiedByOtherEnemy(nextX, idealY, null)) {
+                if (isWalkable(nextX, y) && !isOccupiedByEnemies(nextX, y)) {
+                    player.setXCoordinate(nextX);
+                }
+            } else {
+                // Movimento libero se molto lontani dal centro (evita blocchi permanenti)
+                double nextX = x + dx;
+                if (isWalkable(nextX, y) && !isOccupiedByEnemies(nextX, y)) {
                     player.setXCoordinate(nextX);
                 }
             }
-            // Se non sono al centro, ma sono nel raggio di "attrazione" -> MI ALLINEO
-            else if (Math.abs(diffY) < Config.MAGNET_TOLERANCE) {
-                // Non muovo X, muovo SOLO Y verso il centro
-                double fixSpeed = Config.CORNER_CORRECTION_SPEED;
-                if (diffY > 0) player.setYCoordinate(y - fixSpeed); // Sono sotto, vado su
-                else player.setYCoordinate(y + fixSpeed);           // Sono sopra, vado giù
-            }
-            // Se sono troppo lontano (> MAGNET_TOLERANCE), sono bloccato (es. tra due righe)
         }
 
-        // --- CASO B: MOVIMENTO VERTICALE (Voglio andare SU/GIÙ) ---
+        // --- CASO B: MOVIMENTO VERTICALE ---
         else if (dy != 0) {
-            // Calcolo quanto sono distante dal centro della colonna
             double idealX = Math.round(x);
             double diffX = x - idealX;
 
-            if (Math.abs(diffX) < Config.CENTER_TOLERANCE) {
-                player.setXCoordinate(idealX); // Snap perfetto
-
+            if (Math.abs(diffX) <= CENTER_TOLERANCE) {
+                // Snap perfetto al centro
+                player.setXCoordinate(idealX);
                 double nextY = y + dy;
-                if (isWalkable(idealX, nextY) && !isAreaOccupiedByOtherEnemy(idealX, nextY, null)) {
+
+                if (isWalkable(idealX, nextY) && !isOccupiedByEnemies(idealX, nextY)) {
                     player.setYCoordinate(nextY);
                 }
-            }
-            else if (Math.abs(diffX) < Config.MAGNET_TOLERANCE) {
-                // Non muovo Y, muovo SOLO X verso il centro
-                double fixSpeed = Config.CORNER_CORRECTION_SPEED;
-                if (diffX > 0) player.setXCoordinate(x - fixSpeed); // A destra, vado a sinistra
-                else player.setXCoordinate(x + fixSpeed);           // A sinistra, vado a destra
+            } else if (Math.abs(diffX) <= MAGNET_TOLERANCE) {
+                // Scivolamento diagonale verso il centro
+                if (diffX > 0) player.setXCoordinate(x - CORNER_SPEED);
+                else player.setXCoordinate(x + CORNER_SPEED);
+
+                double nextY = y + dy;
+                if (isWalkable(x, nextY) && !isOccupiedByEnemies(x, nextY)) {
+                    player.setYCoordinate(nextY);
+                }
+            } else {
+                double nextY = y + dy;
+                if (isWalkable(x, nextY) && !isOccupiedByEnemies(x, nextY)) {
+                    player.setYCoordinate(nextY);
+                }
             }
         }
     }
 
     @Override
-    public boolean isWalkable(double x, double y) {
-        int c = (int) Math.round(x);
-        int r = (int) Math.round(y);
-        if (c < 0 || c >= Config.GRID_WIDTH || r < 0 || r >= Config.GRID_HEIGHT) return false;
-        return gameAreaArray[r][c] == Config.CELL_EMPTY;
+    public boolean isWalkable(double nextX, double nextY) {
+        double hbW = Config.ENTITY_LOGICAL_HITBOX_WIDTH;
+        double hbH = Config.ENTITY_LOGICAL_HITBOX_HEIGHT;
+
+        // Calcoliamo i bordi esatti della hitbox
+        double left = nextX + (1.0 - hbW) / 2.0;
+        double right = left + hbW - 0.01;
+        double yOffset = 0.4;
+        double bottom = nextY + 1.0 - yOffset;
+        double top = bottom - hbH;
+
+        int startCol = (int) Math.floor(left);
+        int endCol = (int) Math.floor(right);
+        int startRow = (int) Math.floor(top);
+        int endRow = (int) Math.floor(bottom);
+
+        // Controllo limiti mappa
+        if (startCol < 0 || endCol >= Config.GRID_WIDTH || startRow < 0 || endRow >= Config.GRID_HEIGHT) {
+            return false;
+        }
+
+        for (int r = startRow; r <= endRow; r++) {
+            for (int c = startCol; c <= endCol; c++) {
+                // 1. Muri fissi
+                if (gameAreaArray[r][c] == Config.CELL_INDESTRUCTIBLE_BLOCK ||
+                        gameAreaArray[r][c] == Config.CELL_DESTRUCTIBLE_BLOCK) {
+                    return false;
+                }
+
+                // 2. Bombe (le attraversiamo solo se ci siamo appena nati sopra)
+                if (getBombAt(r, c) != null && !isPlayerCurrentlyInside(r, c)) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
-    // Metodo helper per i nemici (da usare anche in updatePlayerMovement)
-    private boolean isOccupiedByEnemies(double x, double y) {
-        // Controllo semplice: nessun nemico nella cella target arrotondata
-        int tx = (int) Math.round(x);
-        int ty = (int) Math.round(y);
+    // Helper per permettere l'uscita dalla bomba appena piazzata
+    private boolean isPlayerCurrentlyInside(int r, int c) {
+        double pX = player.getXCoordinate();
+        double pY = player.getYCoordinate();
+        double hbW = Config.ENTITY_LOGICAL_HITBOX_WIDTH;
+        double hbH = Config.ENTITY_LOGICAL_HITBOX_HEIGHT;
+
+        double pLeft = pX + (1.0 - hbW) / 2.0;
+        double pRight = pLeft + hbW;
+        double pBottom = pY + 1.0 - 0.4;
+        double pTop = pBottom - hbH;
+
+        return pRight > c && pLeft < (c + 1.0) && pBottom > r && pTop < (r + 1.0);
+    }
+
+    private boolean isOccupiedByEnemies(double nextX, double nextY) {
+        double margin = 0.15;
+        double pHW = Config.ENTITY_LOGICAL_HITBOX_WIDTH;
+        double pHH = Config.ENTITY_LOGICAL_HITBOX_HEIGHT;
+
         for (Enemy e : enemies) {
-            if ((int)Math.round(e.getX()) == tx && (int)Math.round(e.getY()) == ty) return true;
+            double eX = e.getX();
+            double eY = e.getY();
+
+            boolean overlapX = (nextX + margin) < (eX + Config.GOBLIN_HITBOX_WIDTH - margin) &&
+                    (nextX + pHW - margin) > (eX + margin);
+            boolean overlapY = (nextY + margin) < (eY + Config.GOBLIN_HITBOX_HEIGHT - margin) &&
+                    (nextY + pHH - margin) > (eY + margin);
+
+            if (overlapX && overlapY) return true;
         }
         return false;
     }
+
+
 
     @Override
     public void setPlayerDelta(double dx, double dy) {
@@ -774,25 +836,25 @@ public class Model implements IModel {
         return data;
     }
 
-        @Override
-        public boolean isAreaOccupiedByOtherEnemy(double nextX, double nextY, Enemy self) {
-            // 1. Calcoliamo la casella "obiettivo" arrotondando le coordinate
-            int targetCol = (int) Math.round(nextX);
-            int targetRow = (int) Math.round(nextY);
+    @Override
+    public boolean isAreaOccupiedByOtherEnemy(double nextX, double nextY, Enemy self) {
+        double w = Config.GOBLIN_HITBOX_WIDTH;
+        double h = Config.GOBLIN_HITBOX_HEIGHT;
+        double epsilon = 0.05;
 
-            for (Enemy other : enemies) {
-                // Ignoriamo noi stessi
-                if (other == self) continue;
+        for (Enemy other : enemies) {
+            if (other == self) continue;
 
-                // 2. Se anche l'altro nemico si trova (arrotondato) nella stessa casella...
-                if ((int) Math.round(other.getX()) == targetCol &&
-                        (int) Math.round(other.getY()) == targetRow) {
+            boolean collisionX = (nextX + epsilon) < (other.getX() + w - epsilon) &&
+                    (nextX + w - epsilon) > (other.getX() + epsilon);
+            boolean collisionY = (nextY + epsilon) < (other.getY() + h - epsilon) &&
+                    (nextY + h - epsilon) > (other.getY() + epsilon);
 
-                    return true; // ...allora la cella è occupata!
-                }
-            }
-            return false; // Cella libera
+            if (collisionX && collisionY) return true;
         }
+        return false;
+    }
+
 
 
     private Bomb getBombAt(int r, int c) {

@@ -174,7 +174,7 @@ public class Config {
     public static final int FLICKER_DELAY_MS = 100;       // Velocità del lampeggio visivo
 
     // --- LOGICA BOMBE ---
-    public static final int BOMB_DETONATION_TICKS = 180; // 3 secondi a 60 FPS
+    public static final int BOMB_DETONATION_TICKS = 60; // 3 secondi a 60 FPS
     public static final int INITIAL_MAX_BOMBS = 1;       // Numero di bombe iniziali
     public static final int DEFAULT_BOMB_RADIUS = 1;    // Raggio iniziale (1 cella in croce)
     public static final int ANIMATION_DELAY = 50;

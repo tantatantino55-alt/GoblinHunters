@@ -113,17 +113,23 @@ public class ShooterGoblin extends ChasingGoblin {
 
     // --- METODI DI SUPPORTO ---
 
+// In ShooterGoblin.java
+
     private void startAiming(double px, double py) {
         state = State.AIMING;
-        telegraphTimer = Config.SHOOTER_TELEGRAPH_TIME; // Pausa pre-sparo (es. 0.5 sec)
+        telegraphTimer = Config.SHOOTER_TELEGRAPH_TIME;
 
-        // Calcola la direzione di mira una volta sola e la blocca
         double dx = px - this.x;
         double dy = py - this.y;
+
+        // Calcola direzione mira
         if (Math.abs(dx) > Math.abs(dy))
             telegraphDirection = (dx > 0) ? Direction.RIGHT : Direction.LEFT;
         else
             telegraphDirection = (dy > 0) ? Direction.DOWN : Direction.UP;
+
+        // --- FIX: Gira il corpo del goblin verso dove sta mirando ---
+        this.currentDirection = telegraphDirection;
     }
 
     // IL METODO DI SPARO (Ora le variabili esistono!)

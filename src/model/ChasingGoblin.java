@@ -65,12 +65,6 @@ public class ChasingGoblin extends Enemy {
 
     // --- ALGORITMI DI PERCEZIONE ---
 
-    // Calcola la distanza percepita (Reale + Penalità Muri)
-    protected double calculateSmellDistance(double px, double py) {
-        double manhattanDist = Math.abs(this.x - px) + Math.abs(this.y - py);
-        int obstacles = countObstacles(this.x, this.y, px, py);
-        return manhattanDist + (obstacles * Config.SMELL_BLOCK_PENALTY);
-    }
 
     // Conta i blocchi distruttibili nel rettangolo tra nemico e player
     protected int countObstacles(double x1, double y1, double x2, double y2) {

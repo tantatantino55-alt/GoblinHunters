@@ -40,46 +40,52 @@ public class ChasingGoblin extends Enemy {
         }
     }
 
-    // --- LOGICA DI MOVIMENTO INTELLIGENTE ---
+    // In src/model/ChasingGoblin.java
     protected void moveTowards(double targetX, double targetY) {
         double dx = targetX - this.x;
         double dy = targetY - this.y;
 
-        // Sceglie l'asse dove la distanza è maggiore per avvicinarsi prima
+        Direction primary, secondary;
+
+        // Determiniamo la direzione principale basandoci sulla distanza maggiore
         if (Math.abs(dx) > Math.abs(dy)) {
-            // Prova orizzontale
-            Direction newDir = (dx > 0) ? Direction.RIGHT : Direction.LEFT;
-            if (canMove(newDir)) {
-                this.currentDirection = newDir;
-            } else {
-                // Se bloccato orizzontalmente, prova verticale
-                this.currentDirection = (dy > 0) ? Direction.DOWN : Direction.UP;
-            }
+            primary = (dx > 0) ? Direction.RIGHT : Direction.LEFT;
+            secondary = (dy > 0) ? Direction.DOWN : Direction.UP;
         } else {
-            // Prova verticale
-            Direction newDir = (dy > 0) ? Direction.DOWN : Direction.UP;
-            if (canMove(newDir)) {
-                this.currentDirection = newDir;
-            } else {
-                // Se bloccato verticalmente, prova orizzontale
-                this.currentDirection = (dx > 0) ? Direction.RIGHT : Direction.LEFT;
-            }
+            primary = (dy > 0) ? Direction.DOWN : Direction.UP;
+            secondary = (dx > 0) ? Direction.RIGHT : Direction.LEFT;
         }
+
+        // LOGICA DI MOVIMENTO INTELLIGENTE
+        if (canMove(primary)) {
+            this.currentDirection = primary;
+        }
+        else if (canMove(secondary)) {
+            // SCIVOLAMENTO: Se la via diretta è bloccata, prova a girare l'angolo
+            this.currentDirection = secondary;
+        }
+        else {
+            // Se tutto è bloccato, il goblin aspetta senza impazzire
+            return;
+        }
+
         moveInDirection();
     }
 
-    // Helper per verificare se una direzione è libera senza muoversi
     private boolean canMove(Direction dir) {
         double nx = x;
         double ny = y;
         switch(dir) {
-            case UP: ny -= speed; break;
-            case DOWN: ny += speed; break;
-            case LEFT: nx -= speed; break;
-            case RIGHT: nx += speed; break;
+            case UP -> ny -= speed;
+            case DOWN -> ny += speed;
+            case LEFT -> nx -= speed;
+            case RIGHT -> nx += speed;
         }
+        // Verifica se la posizione futura è calpestabile per il sistema di gioco
         return Model.getInstance().isWalkable(nx, ny);
     }
+
+
 
     // --- ALGORITMI DI PERCEZIONE ---
 

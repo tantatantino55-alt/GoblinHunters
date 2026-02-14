@@ -31,6 +31,7 @@ public abstract class Enemy extends Entity {
 // --- DA INSERIRE IN Enemy.java (sovrascrive il metodo precedente) ---
 
     // In src/model/Enemy.java
+    // In src/model/Enemy.java
     protected void moveInDirection() {
         double nextX = x;
         double nextY = y;
@@ -42,22 +43,20 @@ public abstract class Enemy extends Entity {
             case RIGHT: nextX += speed; break;
         }
 
-        IModel model = Model.getInstance();
-
-        // Riduciamo il margine per evitare che si incastrino vicino agli angoli
-        double margin = 0.1;
-        if (!model.isWalkable(nextX + margin, nextY + margin) ||
-                !model.isWalkable(nextX + 1 - margin, nextY + 1 - margin)) {
-
-            // Se è un inseguitore, NON chiamiamo changeDirection() casuale.
-            // Lasciamo che la sua updateBehavior() scelga la mossa successiva.
+        // 1. Usa la stessa logica di collisione del Player
+        if (!Model.getInstance().isWalkable(nextX, nextY)) {
+            // Solo il Goblin BASE (Common) cambia direzione a caso se sbatte
             if (this.type == EnemyType.COMMON) {
                 changeDirection();
             }
+            // I cacciatori (Hunter/Shooter) si fermano e lasciano che l'IA
+            // scelga una nuova via nel prossimo frame
             return;
         }
 
-        if (model.isAreaOccupiedByOtherEnemy(nextX, nextY, this)) {
+        // 2. Collisione tra nemici per evitare sovrapposizioni
+        if (Model.getInstance().isAreaOccupiedByOtherEnemy(nextX, nextY, this)) {
+            if (this.type == EnemyType.COMMON) changeDirection();
             return;
         }
 

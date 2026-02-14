@@ -34,18 +34,18 @@ public class Model implements IModel {
     // Lista per il fuoco: int[]{row, col, type, timestamp}
 
 
-   private static final int[][] testMap = {
-            {0, 0, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 2}, // Riga 0: Start Safe (0,0)
-            {0, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 2}, // Riga 1: Pilastri fissi
-            {0, 2, 0, 2, 0, 0, 0, 2, 2, 2, 0, 2, 0}, // Riga 2: Misto
-            {2, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 0}, // Riga 3: Pilastri
-            {2, 2, 0, 2, 2, 2, 0, 0, 0, 2, 2, 0, 2}, // Riga 4: Spazi aperti (Arena)
-            {0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0}, // Riga 5: Linea centrale
-            {2, 2, 2, 2, 2, 0, 0, 0, 2, 2, 2, 2, 2}, // Riga 6: Muro di casse
-            {0, 1, 2, 1, 2, 1, 2, 1, 0, 1, 2, 1, 0}, // Riga 7: Pilastri
-            {2, 2, 0, 2, 0, 2, 2, 2, 0, 0, 0, 2, 0}, // Riga 8: Labirinto
-            {0, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 2}, // Riga 9: Pilastri
-            {2, 2, 0, 0, 0, 2, 0, 2, 0, 2, 2, 2, 2}  // Riga 10: Fondo
+    private static final int[][] testMap = {
+            {0, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 0, 0}, // Riga 0: Angolo player sicuro
+            {0, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 0}, // Riga 1: Pilastri e casse
+            {2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2}, // Riga 2: Corridoio libero
+            {2, 1, 0, 1, 2, 1, 2, 1, 2, 1, 0, 1, 2}, // Riga 3
+            {0, 0, 0, 2, 0, 0, 0, 0, 0, 2, 0, 0, 0}, // Riga 4: Arena centrale
+            {2, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 2}, // Riga 5: Pilastri centrali
+            {0, 0, 0, 2, 0, 0, 0, 0, 0, 2, 0, 0, 0}, // Riga 6: Arena centrale
+            {2, 1, 0, 1, 2, 1, 2, 1, 2, 1, 0, 1, 2}, // Riga 7
+            {2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2}, // Riga 8
+            {0, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 0}, // Riga 9
+            {0, 0, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 0}  // Riga 10
     };
    // 0 = Vuoto
    // 1 = Muro Indistruttibile (Test Sliding)
@@ -570,33 +570,54 @@ public class Model implements IModel {
         }
     }
     // In Model.java, aggiorna il metodo spawnEnemy
+
+    // In src/model/Model.java
+
     private void spawnEnemy() {
         int r, c;
         int attempts = 0;
-        boolean validPosition = false;
+        boolean spawned = false;
 
-        while (!validPosition && attempts < 100) { // Aumenta i tentativi
-            r = randomGenerator.nextInt(Config.GRID_HEIGHT);
+        // Aumentiamo i tentativi a 100 per essere sicuri di trovare spazio
+        while (!spawned && attempts < 100) {
             c = randomGenerator.nextInt(Config.GRID_WIDTH);
+            r = randomGenerator.nextInt(Config.GRID_HEIGHT);
 
-            // Verifica che la cella sia vuota E che l'entità possa starci fisicamente
-            if (isValidSpawnPoint(c, r) && isWalkable(c, r)) {
-                validPosition = true;
-                // ... logica di creazione esistente ...
+            if (isValidSpawnPoint(c, r)) {
+                // Scegliamo il tipo in base a quanti nemici ci sono già
+                int typeIndex = enemies.size() % 3;
+                Enemy newEnemy;
+
+                switch (typeIndex) {
+                    case 1 -> newEnemy = new ChasingGoblin(c, r);
+                    case 2 -> newEnemy = new ShooterGoblin(c, r);
+                    default -> newEnemy = new CommonGoblin(c, r);
+                }
+
+                enemies.add(newEnemy);
+                spawned = true;
+                lastSpawnTime = System.currentTimeMillis(); // Reset del timer solo se nasce
+                System.out.println("Model: Generato " + newEnemy.getType() + " in (" + c + ", " + r + ")");
             }
             attempts++;
         }
     }
-    private boolean isValidSpawnPoint(int col, int row) {
-        // 1. Deve essere dentro i confini reali (evita zona nera)
-        if (col < 0 || col >= Config.GRID_WIDTH || row < 0 || row >= Config.GRID_HEIGHT) return false;
 
-        // 2. Deve essere SOLO una cella vuota (Config.CELL_EMPTY = 0)
+    private boolean isValidSpawnPoint(int col, int row) {
+        // 1. Limiti severi per evitare la zona nera (Margine di 1 cella)
+        if (col < 1 || col >= Config.GRID_WIDTH - 1 || row < 1 || row >= Config.GRID_HEIGHT - 1) return false;
+
+        // 2. La cella deve essere vuota
         if (gameAreaArray[row][col] != Config.CELL_EMPTY) return false;
 
-        // 3. Distanza dal player (usa le costanti corrette)
+        // 3. Distanza minima dal player (usa la costante di Config)
         double dist = Math.sqrt(Math.pow(col - player.getXCoordinate(), 2) + Math.pow(row - player.getYCoordinate(), 2));
         if (dist < Config.MIN_SPAWN_DISTANCE) return false;
+
+        // 4. CONTROLLO SOVRAPPOSIZIONE: Non spawnare se c'è già un nemico vicino (raggio 0.8)
+        for (Enemy e : enemies) {
+            if (Math.abs(e.getX() - col) < 0.8 && Math.abs(e.getY() - row) < 0.8) return false;
+        }
 
         return true;
     }

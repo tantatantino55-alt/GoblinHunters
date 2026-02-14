@@ -37,4 +37,9 @@ public interface IControllerForView {
     List<int[]> getFireData();
 
     public boolean isPlayerInvincible();
+
+    //-----------------------
+    public int getPlayerLives();
+    public int getElapsedTimeInSeconds();
+    //------------------------
 }

@@ -114,6 +114,16 @@ public class ControllerForView implements IControllerForView {
         return Model.getInstance().isPlayerInvincible();
     }
 
+    @Override
+    public int getPlayerLives() {
+        return Model.getInstance().getPlayerLives();
+    }
+
+    @Override
+    public int getElapsedTimeInSeconds() {
+        return Model.getInstance().getElapsedTimeInSeconds();
+    }
+
     public static IControllerForView getInstance() {
         if (instance == null) instance = new ControllerForView();
         return instance;

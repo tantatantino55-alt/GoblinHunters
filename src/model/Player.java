@@ -8,6 +8,7 @@ public class Player extends Entity {
     private double yCoordinate;
     private double deltaX = 0;
     private double deltaY = 0;
+    private double speed;
 
     // STATO LOGICO (Sostituisce le stringhe e i numeri di frame)
     private PlayerState currentState;
@@ -26,6 +27,7 @@ public class Player extends Entity {
 
         this.currentState = PlayerState.IDLE_FRONT;
         this.lives = Config.INITIAL_LIVES;
+        this.speed = Config.ENTITY_LOGICAL_SPEED;
     }
     // --- GESTIONE STATO (Sostituisce setAction) ---
 
@@ -70,4 +72,8 @@ public class Player extends Entity {
     public void setMaxBombs(int maxBombs) { this.maxBombs = maxBombs; }
     public int getBombRadius() { return bombRadius; }
     public void setBombRadius(int radius) { this.bombRadius = radius; }
+
+    public double getSpeed() {
+        return speed;
+    }
 }

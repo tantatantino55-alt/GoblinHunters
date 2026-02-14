@@ -19,7 +19,12 @@ public class Config {
     public static final double ENTITY_LOGICAL_HITBOX_WIDTH = 0.5;
     public static final double ENTITY_LOGICAL_HITBOX_HEIGHT = 0.3;
 
+    // --- NUOVE COSTANTI DA AGGIUNGERE ---
+    public static final int SMELL_THRESHOLD_DISTANCE = 6; // Distanza massima inseguimento
+    public static final int SHOOTER_TELEGRAPH_TIME = 60;  // Tempo di mira (tick)
+    public static final double MIN_SPAWN_DISTANCE = 5.0;
 
+    public static final double ALIGNMENT_TOLERANCE = 0.55;
 
     // --- LOGICA NEMICI (GOBLIN) ---
     public static final double GOBLIN_COMMON_SPEED = 0.02;    // Velocità del Goblin base
@@ -166,17 +171,14 @@ public class Config {
 
 
     // --- AI & PERCEZIONE (ChasingGoblin) ---
-    public static final int SMELL_THRESHOLD_DISTANCE = 6; // Raggio olfatto
     public static final int SMELL_BLOCK_PENALTY = 3;      // Quanto i muri bloccano l'odore
     public static final int SAFE_DISTANCE_FROM_BOMB = 2;  // Raggio fuga bombe
-    public static final int MIN_SPAWN_DISTANCE = 5;       // Spawn sicuro
 
     // --- SHOOTER GOBLIN (Estende Chasing) ---
     public static final double SHOOTER_SPEED_AIMING = 0.0; // Fermo quando mira
     public static final double SHOOTER_SPEED_CHASE = 0.03; // Veloce quando insegue
     public static final int SHOOTER_MAX_AMMO = 2;
     public static final int SHOOTER_RELOAD_TIME = 180;     // 3 secondi
-    public static final int SHOOTER_TELEGRAPH_TIME = 30;   // 0.5 secondi pre-sparo
 
     // Villaggio in rovina
     // Coordinate (Colonna, Riga) nello sheet

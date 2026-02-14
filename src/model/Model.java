@@ -16,6 +16,9 @@ public class Model implements IModel {
     private final int[][] gameAreaArray;
     private Player player;
 
+    // Variabile per il cronometro
+    private int elapsedTicks = 0;
+
 
     //Attributi per gli enemies
     private List<Enemy> enemies;
@@ -64,173 +67,117 @@ public class Model implements IModel {
 
         this.enemies = new ArrayList<>();
     }
-    public boolean isWalkable(double nextX, double nextY) {
-        double hbW = Config.ENTITY_LOGICAL_HITBOX_WIDTH;
-        double hbH = Config.ENTITY_LOGICAL_HITBOX_HEIGHT;
+    // In src/model/Model.java
 
-        // --- 1. CALCOLO HITBOX CORRETTO ---
-        // Centriamo la hitbox orizzontalmente
-        double left = nextX + (1.0 - hbW) / 2.0;
-        double right = left + hbW - 0.01;
+    // Sostituisci il vecchio isWalkable con questo basato su GRIGLIA RIGIDA
+    // In src/model/Model.java
 
-        // Calibrazione Verticale: "Piedi" piantati a terra, altezza a salire
-        // (Questo corregge anche il problema dell'invasione verso l'alto)
-        double yOffset = 0.4; // Margine per dare profondità 2.5D
-        double bottom = nextY + 1.0 - yOffset;
-        double top = bottom - hbH;
+    // Sostituisci il vecchio isWalkable
+    // In src/model/Model.java
 
-        int startCol = (int) Math.floor(left);
-        int endCol = (int) Math.floor(right);
-        int startRow = (int) Math.floor(top);
-        int endRow = (int) Math.floor(bottom);
 
-        // Controllo Limiti Mappa
-        if (startCol < 0 || endCol >= Config.GRID_WIDTH || startRow < 0 || endRow >= Config.GRID_HEIGHT) {
-            return false;
-        }
 
-        // --- 2. CONTROLLO COLLISIONI ---
-        for (int r = startRow; r <= endRow; r++) {
-            for (int c = startCol; c <= endCol; c++) {
-
-                // A. MURI E CASSE (Sempre Solidi)
-                if (gameAreaArray[r][c] == Config.CELL_INDESTRUCTIBLE_BLOCK ||
-                        gameAreaArray[r][c] == Config.CELL_DESTRUCTIBLE_BLOCK) {
-                    return false;
-                }
-
-                // B. BOMBE (Solide, ma con eccezione)
-                if (isBombAt(r, c)) {
-                    // Se c'è una bomba, è un muro...
-                    // ...TRANNE SE il player ci è attualmente "dentro" (appena piazzata)
-                    if (!isPlayerCurrentlyInside(r, c)) {
-                        return false;
-                    }
-                    // Se siamo dentro, isWalkable ritorna TRUE per questa cella,
-                    // permettendoci di camminare per uscire dalla bomba.
-                }
-            }
-        }
-        return true;
-    }
-
-    // --- HELPER 1: C'è una bomba qui? ---
-    private boolean isBombAt(int r, int c) {
-        for (Bomb b : activeBombs) {
-            if (b.getRow() == r && b.getCol() == c) return true;
-        }
-        return false;
-    }
-
-    // --- HELPER 2: Sono dentro la bomba? (SENZA MARGINI) ---
-    private boolean isPlayerCurrentlyInside(int r, int c) {
-        // Coordinate attuali del Player (prima del movimento)
-        double pX = player.getXCoordinate();
-        double pY = player.getYCoordinate();
-        double hbW = Config.ENTITY_LOGICAL_HITBOX_WIDTH;
-        double hbH = Config.ENTITY_LOGICAL_HITBOX_HEIGHT;
-
-        // Calcoliamo i bordi esatti della hitbox attuale
-        double pLeft = pX + (1.0 - hbW) / 2.0;
-        double pRight = pLeft + hbW;
-
-        // Usiamo lo stesso calcolo verticale di isWalkable per coerenza
-        double yOffset = 0.4;
-        double pBottom = pY + 1.0 - yOffset;
-        double pTop = pBottom - hbH;
-
-        // Coordinate della Cella Bomba (Intera cella 1x1)
-        double cellLeft = c;
-        double cellRight = c + 1.0;
-        double cellTop = r;
-        double cellBottom = r + 1.0;
-
-        // CONTROLLO INTERSEZIONE SEMPLICE (Nessun margine "sicuro")
-        // Se le due aree si sovrappongono anche minimamente, ritorna true.
-        boolean overlapX = pRight > cellLeft && pLeft < cellRight;
-        boolean overlapY = pBottom > cellTop && pTop < cellBottom;
-
-        return overlapX && overlapY;
-    }
 
 // In src/model/Model.java
 
+    // In src/model/Model.java
+
+    // --- A. LOGICA DI MOVIMENTO RIGIDO (BOMBERMAN STYLE) ---
     private void updatePlayerMovement() {
-        double currentX = player.getXCoordinate();
-        double currentY = player.getYCoordinate();
-        double deltaX = player.getDeltaX();
-        double deltaY = player.getDeltaY();
+        double x = player.getXCoordinate();
+        double y = player.getYCoordinate();
+        double dx = player.getDeltaX();
+        double dy = player.getDeltaY();
+        double speed = player.getSpeed(); // Assicurati che Player abbia getSpeed(), altrimenti usa Config.PLAYER_SPEED
 
-        updatePlayerAction(deltaX, deltaY);
+        // Se non premi nulla, esci
+        if (dx == 0 && dy == 0) return;
 
-        if (deltaX == 0 && deltaY == 0) return;
-
-        // -------------------------------------------------
-        // MOVIMENTO ASSE X (Sliding Verticale - Su/Giù)
-        // -------------------------------------------------
-        double nextX = currentX + deltaX;
-
-        // 1. Provo il movimento diretto
-        if (isWalkable(nextX, currentY) && !isOccupiedByEnemies(nextX, currentY)) {
-            player.setXCoordinate(Math.max(Config.MIN_LOGICAL_X, Math.min(Config.MAX_LOGICAL_X, nextX)));
-        }
-        // 2. Se bloccato, cerco un "vicino" libero in alto o in basso
-        else if (deltaX != 0) {
-            // Coordinate intere candidate (Sopra e Sotto)
-            double targetY_Up = Math.floor(currentY);
-            double targetY_Down = targetY_Up + 1.0;
-
-            // Verifico quali sono libere
-            boolean canGoUp = isWalkable(nextX, targetY_Up) && !isOccupiedByEnemies(nextX, targetY_Up);
-            boolean canGoDown = isWalkable(nextX, targetY_Down) && !isOccupiedByEnemies(nextX, targetY_Down);
-
-            // Distanza attuale dai target
-            double distUp = Math.abs(currentY - targetY_Up);
-            double distDown = Math.abs(currentY - targetY_Down);
-
-            // LOGICA DI SCELTA: Vai verso il buco libero. Se entrambi liberi, vai al più vicino.
-            if (canGoUp && (!canGoDown || distUp < distDown)) {
-                player.setYCoordinate(currentY - Config.CORNER_ALIGN_SPEED);
-            }
-            else if (canGoDown && (!canGoUp || distDown < distUp)) {
-                player.setYCoordinate(currentY + Config.CORNER_ALIGN_SPEED);
+        // Se premi due tasti insieme (diagonale), diamo priorità all'asse già allineato o all'ultimo premuto.
+        // Per semplicità qui annulliamo il movimento diagonale dando priorità a X se ci stiamo già muovendo in X.
+        if (dx != 0 && dy != 0) {
+            // Logica semplice: Priorità all'asse su cui siamo meno allineati per "sbloccarci" o scelta fissa.
+            // Qui scelgo: se mi muovo, blocco l'altro asse.
+            if (Math.abs(x - Math.round(x)) < Math.abs(y - Math.round(y))) {
+                dx = 0; // Sono allineato su X, quindi mi muovo in Y? No, gestiamo sotto.
+            } else {
+                dy = 0;
             }
         }
 
-        currentY = player.getYCoordinate(); // Aggiorno Y post-sliding
+        // 1. MOVIMENTO ORIZZONTALE (Voglio andare a Destra/Sinistra)
+        if (dx != 0) {
+            // Controllo se sono allineato verticalmente (Y è intero?)
+            double distY = y - Math.round(y);
 
-        // -------------------------------------------------
-        // MOVIMENTO ASSE Y (Sliding Orizzontale - Destra/Sinistra)
-        // -------------------------------------------------
-        double nextY = currentY + deltaY;
+            if (Math.abs(distY) < 0.05) {
+                // SONO ALLINEATO: Posso muovermi in X
+                player.setYCoordinate(Math.round(y)); // Fix imperfezioni decimali (Snap perfetto)
 
-        // 1. Provo il movimento diretto
-        if (isWalkable(currentX, nextY) && !isOccupiedByEnemies(currentX, nextY)) {
-            player.setYCoordinate(Math.max(Config.MIN_LOGICAL_Y, Math.min(Config.MAX_LOGICAL_Y, nextY)));
-        }
-        // 2. Se bloccato, cerco un "vicino" libero a sinistra o destra
-        else if (deltaY != 0) {
-            // Coordinate intere candidate (Sinistra e Destra)
-            double targetX_Left = Math.floor(currentX);
-            double targetX_Right = targetX_Left + 1.0;
-
-            // Verifico quali sono libere alla nuova altezza (nextY)
-            // NOTA: Controlliamo se mettendoci ESATTAMENTE su targetX (0.0, 1.0...) passiamo
-            boolean canGoLeft = isWalkable(targetX_Left, nextY) && !isOccupiedByEnemies(targetX_Left, nextY);
-            boolean canGoRight = isWalkable(targetX_Right, nextY) && !isOccupiedByEnemies(targetX_Right, nextY);
-
-            // Distanza dai target
-            double distLeft = Math.abs(currentX - targetX_Left);
-            double distRight = Math.abs(currentX - targetX_Right);
-
-            // LOGICA DI SCELTA
-            if (canGoLeft && (!canGoRight || distLeft < distRight)) {
-                player.setXCoordinate(currentX - Config.CORNER_ALIGN_SPEED);
+                double nextX = x + dx;
+                // Controllo collisione cella futura
+                if (isWalkable(nextX, y) && !isOccupiedByEnemies(nextX, y)) {
+                    player.setXCoordinate(nextX);
+                }
+            } else if (Math.abs(distY) < Config.ALIGNMENT_TOLERANCE) {
+                // NON SONO ALLINEATO, MA SONO VICINO: Auto-Correggo la Y invece di muovere la X
+                // Questo crea l'effetto "scivolamento nell'imboccatura"
+                double fixSpeed = Math.min(Math.abs(distY), speed);
+                player.setYCoordinate(y + (distY < 0 ? fixSpeed : -fixSpeed));
             }
-            else if (canGoRight && (!canGoLeft || distRight < distLeft)) {
-                player.setXCoordinate(currentX + Config.CORNER_ALIGN_SPEED);
+            // Se sono troppo lontano dal centro, il comando viene ignorato (sembra che ti blocchi,
+            // finché non ti centri meglio).
+        }
+
+        // 2. MOVIMENTO VERTICALE (Voglio andare Su/Giù)
+        else if (dy != 0) {
+            // Controllo se sono allineato orizzontalmente (X è intero?)
+            double distX = x - Math.round(x);
+
+            if (Math.abs(distX) < 0.05) {
+                // SONO ALLINEATO: Posso muovermi in Y
+                player.setXCoordinate(Math.round(x)); // Fix imperfezioni decimali (Snap perfetto)
+
+                double nextY = y + dy;
+                // Controllo collisione cella futura
+                if (isWalkable(x, nextY) && !isOccupiedByEnemies(x, nextY)) {
+                    player.setYCoordinate(nextY);
+                }
+            } else if (Math.abs(distX) < Config.ALIGNMENT_TOLERANCE) {
+                // NON SONO ALLINEATO: Auto-Correggo la X
+                double fixSpeed = Math.min(Math.abs(distX), speed);
+                player.setXCoordinate(x + (distX < 0 ? fixSpeed : -fixSpeed));
             }
         }
+    }
+
+    // --- B. COLLISIONI A GRIGLIA PERFETTA ---
+    @Override
+    public boolean isWalkable(double x, double y) {
+        // Arrotondiamo per capire qual è la "cella obiettivo"
+        // Usiamo Math.round per prendere la cella più vicina al centro del corpo
+        int c = (int) Math.round(x);
+        int r = (int) Math.round(y);
+
+        // Fuori mappa
+        if (c < 0 || c >= Config.GRID_WIDTH || r < 0 || r >= Config.GRID_HEIGHT) {
+            return false;
+        }
+
+        // Controllo se la cella è un muro o una bomba
+        // ATTENZIONE: Qui controlliamo ESATTAMENTE la cella di destinazione.
+        return gameAreaArray[r][c] == Config.CELL_EMPTY;
+    }
+
+    // Metodo helper per i nemici (da usare anche in updatePlayerMovement)
+    private boolean isOccupiedByEnemies(double x, double y) {
+        // Controllo semplice: nessun nemico nella cella target arrotondata
+        int tx = (int) Math.round(x);
+        int ty = (int) Math.round(y);
+        for (Enemy e : enemies) {
+            if ((int)Math.round(e.getX()) == tx && (int)Math.round(e.getY()) == ty) return true;
+        }
+        return false;
     }
 
     @Override
@@ -290,33 +237,6 @@ public class Model implements IModel {
      * Controlla se la posizione futura (nextX, nextY) è occupata fisicamente da un nemico.
      * Usa un margine per rendere la collisione fisica leggermente più piccola della hitbox di danno.
      */
-    private boolean isOccupiedByEnemies(double nextX, double nextY) {
-        double pHW = Config.ENTITY_LOGICAL_HITBOX_WIDTH;
-        double pHH = Config.ENTITY_LOGICAL_HITBOX_HEIGHT;
-
-        // Il margine serve a bloccare il player un attimo DOPO che le hitbox di danno si sono toccate.
-        // In questo modo il contatto (e la perdita di vita) avviene sicuramente.
-        double margin = 0.15;
-
-        for (Enemy e : enemies) {
-            double eX = e.getX();
-            double eY = e.getY();
-            double eW = Config.GOBLIN_HITBOX_WIDTH;
-            double eH = Config.GOBLIN_HITBOX_HEIGHT;
-
-            // Verifica sovrapposizione AABB con margine
-            boolean overlapX = (nextX + margin) < (eX + eW - margin) &&
-                    (nextX + pHW - margin) > (eX + margin);
-
-            boolean overlapY = (nextY + margin) < (eY + eH - margin) &&
-                    (nextY + pHH - margin) > (eY + margin);
-
-            if (overlapX && overlapY) {
-                return true; // Spazio occupato da un nemico
-            }
-        }
-        return false; // Spazio libero
-    }
 
 
     @Override
@@ -531,6 +451,17 @@ public class Model implements IModel {
         return player.isInvincible(); // Chiama il metodo che controlla il timestamp
     }
 
+    @Override
+    public int getPlayerLives() {
+        return player.getLives();
+    }
+
+    @Override
+    public int getElapsedTimeInSeconds() {
+        // Divide i tick per gli FPS per ottenere i secondi reali
+        return elapsedTicks / Config.FPS;
+    }
+
 
 // In src/model/Model.java
 
@@ -623,36 +554,6 @@ public class Model implements IModel {
     }
     // --- DA INSERIRE IN Model.java ---
 
-    /**
-     * Verifica se la posizione futura (nextX, nextY) è occupata da un altro nemico.
-     * Impedisce la sovrapposizione delle sprite.
-     */
-    public boolean isAreaOccupiedByOtherEnemy(double nextX, double nextY, Enemy self) {
-        // Usiamo la hitbox definita specificamente per i Goblin (0.8 solitamente)
-        double w = Config.GOBLIN_HITBOX_WIDTH;
-        double h = Config.GOBLIN_HITBOX_HEIGHT;
-
-        // Margine di tolleranza per evitare "tremolii" quando sono vicini
-        double epsilon = 0.05;
-
-        for (Enemy other : enemies) {
-            // Non controlliamo la collisione con noi stessi
-            if (other == self) continue;
-
-            double otherX = other.getX();
-            double otherY = other.getY();
-
-            // Calcolo collisione AABB (Axis-Aligned Bounding Box)
-            // Aggiungiamo epsilon per rendere la collisione più "solida"
-            boolean collisionX = (nextX + epsilon) < (otherX + w - epsilon) && (nextX + w - epsilon) > (otherX + epsilon);
-            boolean collisionY = (nextY + epsilon) < (otherY + h - epsilon) && (nextY + h - epsilon) > (otherY + epsilon);
-
-            if (collisionX && collisionY) {
-                return true; // C'è collisione con un altro nemico
-            }
-        }
-        return false; // Via libera
-    }
 
     @Override
     public List<int[]> getFireData() {
@@ -712,6 +613,8 @@ public class Model implements IModel {
     }
     @Override
     public void updateGameLogic() {
+        elapsedTicks++; // Aumenta di 1 ogni frame (60 volte al secondo)
+
         // 1. Prima muovi tutti
         updatePlayerMovement(); // Può restare private!
         updateEnemies();        // private
@@ -876,6 +779,11 @@ public class Model implements IModel {
         return data;
     }
 
+    @Override
+    public boolean isAreaOccupiedByOtherEnemy(double nextX, double nextY, Enemy enemy) {
+        return false;
+    }
+
 
     private Bomb getBombAt(int r, int c) {
         for (Bomb b : activeBombs) {
@@ -885,6 +793,9 @@ public class Model implements IModel {
         }
         return null;
     }
+
+
+
 
 
 

@@ -39,6 +39,33 @@ public class ConcreteDrawer extends AbstractDrawer {
 
         // 4. Debug Griglia (Disegna linee sopra tutto per controllo)
         drawDebugGrid(g2d);
+
+        // Sfondo Base (Nero di sicurezza) per HUD
+        g2d.setColor(Color.BLACK);
+        g2d.fillRect(0, 0, getDrawingWidth(), getDrawingHeight());
+        drawHUD(g2d);
+    }
+
+    private void drawHUD(Graphics2D g2d) {
+        // 1. Recupero Dati
+        int lives = ControllerForView.getInstance().getPlayerLives();
+        int totalSeconds = ControllerForView.getInstance().getElapsedTimeInSeconds();
+
+        // Calcolo minuti e secondi formattati (es. 01:05)
+        int minutes = totalSeconds / 60;
+        int seconds = totalSeconds % 60;
+        String timeString = String.format("%02d:%02d", minutes, seconds);
+
+        // 2. Impostazione Stile Testo
+        g2d.setColor(Color.WHITE);
+        // Usa un font base in grassetto, grandezza 20
+        g2d.setFont(new Font("Arial", Font.BOLD, 20));
+
+        // 3. Disegno a Schermo (A sinistra, nella zona di offset)
+        int startX = 20; // 20 pixel dal bordo sinistro della finestra
+
+        g2d.drawString("VITE: " + lives, startX, 100);
+        g2d.drawString("TEMPO: " + timeString, startX, 150);
     }
 
     /**

@@ -41,4 +41,9 @@ public interface IModel {
 
     public boolean isPlayerInvincible();
 
+    //-----------------------
+    public int getPlayerLives();
+    public int getElapsedTimeInSeconds();
+    //------------------------
+
 }

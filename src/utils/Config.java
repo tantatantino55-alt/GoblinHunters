@@ -28,16 +28,13 @@ public class Config {
 
     // --- LANE CENTERING / CORNER CORRECTION ---
 // Quanto vicino al centro (0.0) deve essere l'asse opposto per permettere il movimento (es. 0.05 = 5% di pixel)
-    public static final double CENTER_TOLERANCE = 0.05;
 
     // Entro quale distanza l'entità viene "attratta" dal centro della corsia (0.45 = quasi mezza cella)
-    public static final double MAGNET_TOLERANCE = 0.45;
 
     // Velocità di correzione automatica (spesso uguale o leggermente superiore alla velocità di movimento)
     public static final double CORNER_CORRECTION_SPEED = 0.05;
 
     // --- LOGICA NEMICI (GOBLIN) ---
-    public static final double GOBLIN_COMMON_SPEED = 0.02;    // Velocità del Goblin base
     // HITBOX GOBLIN (Leggermente più piccoli della cella per non incastrarsi)
     public static final double GOBLIN_HITBOX_WIDTH = 0.8; // BOSS
     public static final double GOBLIN_HITBOX_HEIGHT = 0.8; //BOSS
@@ -198,7 +195,10 @@ public class Config {
     public static final int TILE_WALL_IND_ROW =0;
     public static final int TILE_WALL_DEST_COL = 2;
     public static final int TILE_WALL_DEST_ROW = 0;
-
+    // In src/utils/Config.java
+    public static final double MAGNET_TOLERANCE = 0.40; // Più alto = più facile imboccare i corridoi
+    public static final double GOBLIN_COMMON_SPEED = 0.03; // Leggermente più veloce per fluidità
+    public static final double CENTER_TOLERANCE = 0.1;
     // In src/utils/Config.java
 
 // ... (altre costanti)

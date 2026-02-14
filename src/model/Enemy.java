@@ -31,86 +31,46 @@ public abstract class Enemy extends Entity {
 // --- DA INSERIRE IN Enemy.java (sovrascrive il metodo precedente) ---
 
     // In src/model/Enemy.java
-    // In src/model/Enemy.java
-// src/model/Enemy.java
-
+// In src/model/Enemy.java - Sostituisci moveInDirection
     protected void moveInDirection() {
-        // Logica Lane Centering anche per i nemici
         double currentX = x;
         double currentY = y;
+        double nextX = x;
+        double nextY = y;
 
-        // Variabili per la nuova posizione
-        double nextX = currentX;
-        double nextY = currentY;
+        // 1. CALCOLO POSIZIONE TEORICA
+        switch (currentDirection) {
+            case UP -> nextY -= speed;
+            case DOWN -> nextY += speed;
+            case LEFT -> nextX -= speed;
+            case RIGHT -> nextX += speed;
+        }
 
-        boolean aligned = false;
-
-        // --- MOVIMENTO VERTICALE (UP / DOWN) ---
+        // 2. CORREZIONE BINARI (Lane Centering)
+        // Se mi muovo in verticale, mi allineo al centro della colonna X
         if (currentDirection == Direction.UP || currentDirection == Direction.DOWN) {
             double idealX = Math.round(currentX);
             double diffX = currentX - idealX;
-
-            if (Math.abs(diffX) < Config.CENTER_TOLERANCE) {
-                // Sono allineato: Snap e calcolo movimento avanti
-                this.x = idealX;
-                nextX = idealX; // Confermo X centrata
-
-                if (currentDirection == Direction.UP) nextY -= speed;
-                else nextY += speed;
-
-                aligned = true;
-            } else if (Math.abs(diffX) < Config.MAGNET_TOLERANCE) {
-                // Non sono allineato: Correggo X invece di avanzare in Y
-                double fix = Config.CORNER_CORRECTION_SPEED; // Usa velocità fissa o this.speed
-                if (diffX > 0) this.x -= fix;
-                else this.x += fix;
-
-                return; // FINE TURNO: Ho usato il movimento per allinearmi
+            if (Math.abs(diffX) < Config.MAGNET_TOLERANCE) {
+                this.x = idealX; // Snap al centro
+                nextX = idealX;
             }
-        }
-        // --- MOVIMENTO ORIZZONTALE (LEFT / RIGHT) ---
-        else {
+        } else { // Se mi muovo in orizzontale, mi allineo al centro della riga Y
             double idealY = Math.round(currentY);
             double diffY = currentY - idealY;
-
-            if (Math.abs(diffY) < Config.CENTER_TOLERANCE) {
-                // Sono allineato
-                this.y = idealY;
-                nextY = idealY; // Confermo Y centrata
-
-                if (currentDirection == Direction.LEFT) nextX -= speed;
-                else nextX += speed;
-
-                aligned = true;
-            } else if (Math.abs(diffY) < Config.MAGNET_TOLERANCE) {
-                // Correzione asse Y
-                double fix = Config.CORNER_CORRECTION_SPEED;
-                if (diffY > 0) this.y -= fix;
-                else this.y += fix;
-
-                return; // FINE TURNO
+            if (Math.abs(diffY) < Config.MAGNET_TOLERANCE) {
+                this.y = idealY; // Snap al centro
+                nextY = idealY;
             }
         }
 
-        // Se sono arrivato qui, significa che sono allineato e sto provando ad avanzare
-        if (aligned) {
-            IModel model = Model.getInstance();
-
-            // 1. Controllo Muri
-            if (!model.isWalkable(nextX, nextY)) {
-                handleWallCollision(); // Gestito dalle sottoclassi (cambia direzione o aspetta)
-                return;
-            }
-
-            // 2. Controllo altri nemici
-            if (model.isAreaOccupiedByOtherEnemy(nextX, nextY, this)) {
-                if (this.type == EnemyType.COMMON) changeDirection();
-                return;
-            }
-
-            // Applica movimento
+        // 3. CONTROLLO COLLISIONI (Muri e Altri Nemici)
+        IModel model = Model.getInstance();
+        if (model.isWalkable(nextX, nextY) && !model.isAreaOccupiedByOtherEnemy(nextX, nextY, this)) {
             this.x = nextX;
             this.y = nextY;
+        } else {
+            handleWallCollision(); // Cambia direzione se bloccato
         }
     }
     // Controllo rigoroso per l'area nera

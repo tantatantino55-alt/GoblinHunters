@@ -33,34 +33,44 @@ public class ChasingGoblin extends Enemy {
         }
     }
 
+    // In src/model/ChasingGoblin.java - Algoritmo di movimento "Smart"
     private void moveTowardsSmart(double tx, double ty) {
         double dx = tx - this.x;
         double dy = ty - this.y;
-        Direction best, slide;
+        Direction primary, secondary;
 
+        // Determina le direzioni preferite basate sulla distanza maggiore
         if (Math.abs(dx) > Math.abs(dy)) {
-            best = (dx > 0) ? Direction.RIGHT : Direction.LEFT;
-            slide = (dy > 0) ? Direction.DOWN : Direction.UP;
+            primary = (dx > 0) ? Direction.RIGHT : Direction.LEFT;
+            secondary = (dy > 0) ? Direction.DOWN : Direction.UP;
         } else {
-            best = (dy > 0) ? Direction.DOWN : Direction.UP;
-            slide = (dx > 0) ? Direction.RIGHT : Direction.LEFT;
+            primary = (dy > 0) ? Direction.DOWN : Direction.UP;
+            secondary = (dx > 0) ? Direction.RIGHT : Direction.LEFT;
         }
 
-        // Prova direzione migliore, se bloccata prova l'altra (Sliding)
-        if (canMove(best)) this.currentDirection = best;
-        else if (canMove(slide)) this.currentDirection = slide;
+        // Prova la direzione migliore, se bloccata prova quella secondaria (aggiramento)
+        if (canMove(primary)) {
+            this.currentDirection = primary;
+        } else if (canMove(secondary)) {
+            this.currentDirection = secondary;
+        } else {
+            // Se totalmente bloccato, prova a cambiare direzione casualmente per sbloccarsi
+            if (random.nextInt(100) < 10) changeDirection();
+        }
 
         moveInDirection();
     }
 
     private boolean canMove(Direction d) {
-        double tx = x, ty = y;
+        double nx = x, ny = y;
+        double step = 0.5; // Controlla mezzo blocco avanti
         switch(d) {
-            case UP->ty--; case DOWN->ty++; case LEFT->tx--; case RIGHT->tx++;
+            case UP -> ny -= step; case DOWN -> ny += step;
+            case LEFT -> nx -= step; case RIGHT -> nx += step;
         }
-        return Model.getInstance().isWalkable(tx, ty);
+        return Model.getInstance().isWalkable(nx, ny) &&
+                !Model.getInstance().isAreaOccupiedByOtherEnemy(nx, ny, this);
     }
-
 
 
     // --- ALGORITMI DI PERCEZIONE ---

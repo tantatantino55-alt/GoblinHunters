@@ -86,77 +86,104 @@ public class Model implements IModel {
     // src/model/Model.java
 
     private void updatePlayerMovement() {
-        double x = player.getXCoordinate();
-        double y = player.getYCoordinate();
-        double dx = player.getDeltaX();
-        double dy = player.getDeltaY();
+        double currentX = player.getXCoordinate();
+        double currentY = player.getYCoordinate();
+        double deltaX = player.getDeltaX();
+        double deltaY = player.getDeltaY();
 
-        if (dx == 0 && dy == 0) return;
+        // 1. Aggiorna l'animazione e gestisci l'IDLE
+        updatePlayerAction(deltaX, deltaY);
 
-        updatePlayerAction(dx, dy);
+        // 2. Esci se fermo
+        if (deltaX == 0 && deltaY == 0) return;
 
-        // Tolleranze per il centramento (regolano la "forza" dei binari)
-        double CENTER_TOLERANCE = 0.15;
-        double MAGNET_TOLERANCE = 0.40;
-        double CORNER_SPEED = Config.ENTITY_LOGICAL_SPEED * 1.5;
+        // Velocità di "scivolamento" e allineamento (circa il 150% della velocità normale)
+        double alignSpeed = Config.ENTITY_LOGICAL_SPEED * 1.5;
 
-        // --- CASO A: MOVIMENTO ORIZZONTALE ---
-        if (dx != 0) {
-            double idealY = Math.round(y);
-            double diffY = y - idealY;
+        // -------------------------------------------------
+        // ASSE X (Movimento Orizzontale)
+        // -------------------------------------------------
+        if (deltaX != 0) {
+            double nextX = currentX + deltaX;
 
-            if (Math.abs(diffY) <= CENTER_TOLERANCE) {
-                // Snap perfetto al centro
-                player.setYCoordinate(idealY);
-                double nextX = x + dx;
+            // CASO A: Il percorso davanti è libero
+            if (isWalkable(nextX, currentY) && !isOccupiedByEnemies(nextX, currentY)) {
+                player.setXCoordinate(Math.max(Config.MIN_LOGICAL_X, Math.min(Config.MAX_LOGICAL_X, nextX)));
 
-                if (isWalkable(nextX, idealY) && !isOccupiedByEnemies(nextX, idealY)) {
-                    player.setXCoordinate(nextX);
+                // -> LANE CENTERING: Mi allineo dolcemente al centro della riga mentre cammino
+                double idealY = Math.round(currentY);
+                double diffY = currentY - idealY;
+                if (Math.abs(diffY) > 0.01) {
+                    // Lo fa solo se anche il centro esatto è libero
+                    if (isWalkable(nextX, idealY) && !isOccupiedByEnemies(nextX, idealY)) {
+                        double step = Math.min(alignSpeed, Math.abs(diffY));
+                        if (diffY > 0) player.setYCoordinate(currentY - step);
+                        else player.setYCoordinate(currentY + step);
+                    }
                 }
-            } else if (Math.abs(diffY) <= MAGNET_TOLERANCE) {
-                // Scivolamento diagonale verso il centro per imboccare la corsia
-                if (diffY > 0) player.setYCoordinate(y - CORNER_SPEED);
-                else player.setYCoordinate(y + CORNER_SPEED);
+            }
+            // CASO B: Sbatto contro un muro -> CORNER SLIDING
+            else {
+                double targetY_Up = Math.floor(currentY);
+                double targetY_Down = targetY_Up + 1.0;
 
-                double nextX = x + dx;
-                if (isWalkable(nextX, y) && !isOccupiedByEnemies(nextX, y)) {
-                    player.setXCoordinate(nextX);
+                boolean canGoUp = isWalkable(nextX, targetY_Up) && !isOccupiedByEnemies(nextX, targetY_Up);
+                boolean canGoDown = isWalkable(nextX, targetY_Down) && !isOccupiedByEnemies(nextX, targetY_Down);
+
+                double distUp = Math.abs(currentY - targetY_Up);
+                double distDown = Math.abs(currentY - targetY_Down);
+
+                // Scivola verso l'apertura più vicina
+                if (canGoUp && (!canGoDown || distUp < distDown)) {
+                    player.setYCoordinate(currentY - alignSpeed);
                 }
-            } else {
-                // Movimento libero se molto lontani dal centro (evita blocchi permanenti)
-                double nextX = x + dx;
-                if (isWalkable(nextX, y) && !isOccupiedByEnemies(nextX, y)) {
-                    player.setXCoordinate(nextX);
+                else if (canGoDown && (!canGoUp || distDown < distUp)) {
+                    player.setYCoordinate(currentY + alignSpeed);
                 }
             }
         }
 
-        // --- CASO B: MOVIMENTO VERTICALE ---
-        else if (dy != 0) {
-            double idealX = Math.round(x);
-            double diffX = x - idealX;
+        // -------------------------------------------------
+        // ASSE Y (Movimento Verticale)
+        // -------------------------------------------------
+        // Aggiorniamo le variabili correnti prima dell'asse Y (per i movimenti in diagonale/scivolamento)
+        currentX = player.getXCoordinate();
+        currentY = player.getYCoordinate();
 
-            if (Math.abs(diffX) <= CENTER_TOLERANCE) {
-                // Snap perfetto al centro
-                player.setXCoordinate(idealX);
-                double nextY = y + dy;
+        if (deltaY != 0) {
+            double nextY = currentY + deltaY;
 
-                if (isWalkable(idealX, nextY) && !isOccupiedByEnemies(idealX, nextY)) {
-                    player.setYCoordinate(nextY);
+            // CASO A: Il percorso davanti è libero
+            if (isWalkable(currentX, nextY) && !isOccupiedByEnemies(currentX, nextY)) {
+                player.setYCoordinate(Math.max(Config.MIN_LOGICAL_Y, Math.min(Config.MAX_LOGICAL_Y, nextY)));
+
+                // -> LANE CENTERING: Mi allineo dolcemente al centro della colonna mentre cammino
+                double idealX = Math.round(currentX);
+                double diffX = currentX - idealX;
+                if (Math.abs(diffX) > 0.01) {
+                    if (isWalkable(idealX, nextY) && !isOccupiedByEnemies(idealX, nextY)) {
+                        double step = Math.min(alignSpeed, Math.abs(diffX));
+                        if (diffX > 0) player.setXCoordinate(currentX - step);
+                        else player.setXCoordinate(currentX + step);
+                    }
                 }
-            } else if (Math.abs(diffX) <= MAGNET_TOLERANCE) {
-                // Scivolamento diagonale verso il centro
-                if (diffX > 0) player.setXCoordinate(x - CORNER_SPEED);
-                else player.setXCoordinate(x + CORNER_SPEED);
+            }
+            // CASO B: Sbatto contro un muro -> CORNER SLIDING
+            else {
+                double targetX_Left = Math.floor(currentX);
+                double targetX_Right = targetX_Left + 1.0;
 
-                double nextY = y + dy;
-                if (isWalkable(x, nextY) && !isOccupiedByEnemies(x, nextY)) {
-                    player.setYCoordinate(nextY);
+                boolean canGoLeft = isWalkable(targetX_Left, nextY) && !isOccupiedByEnemies(targetX_Left, nextY);
+                boolean canGoRight = isWalkable(targetX_Right, nextY) && !isOccupiedByEnemies(targetX_Right, nextY);
+
+                double distLeft = Math.abs(currentX - targetX_Left);
+                double distRight = Math.abs(currentX - targetX_Right);
+
+                if (canGoLeft && (!canGoRight || distLeft < distRight)) {
+                    player.setXCoordinate(currentX - alignSpeed);
                 }
-            } else {
-                double nextY = y + dy;
-                if (isWalkable(x, nextY) && !isOccupiedByEnemies(x, nextY)) {
-                    player.setYCoordinate(nextY);
+                else if (canGoRight && (!canGoLeft || distRight < distLeft)) {
+                    player.setXCoordinate(currentX + alignSpeed);
                 }
             }
         }

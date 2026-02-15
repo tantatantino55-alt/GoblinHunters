@@ -10,14 +10,23 @@ public class CommonGoblin extends Enemy {
         super(startX, startY, Config.GOBLIN_COMMON_SPEED, EnemyType.COMMON);
     }
 
+
+// In CommonGoblin.java o ChasingGoblin.java
+    
+
     @Override
     public void updateBehavior() {
-        // Controlla se il goblin è vicino al centro di un tile (punto di decisione)
-        boolean atIntersection = Math.abs(x - Math.round(x)) < 0.05 && Math.abs(y - Math.round(y)) < 0.05;
+        // Calcoliamo quanto siamo lontani dal centro della cella
+        double diffX = Math.abs(x - Math.round(x));
+        double diffY = Math.abs(y - Math.round(y));
 
-        // Cambia direzione casualmente SOLO se è a un incrocio, non a metà corridoio!
-        if (atIntersection) {
-            if (random.nextInt(100) < 5) { // 5% di probabilità di girare a un incrocio
+        // Possono cambiare direzione solo se sono molto vicini al centro (NODO)
+        if (diffX < speed && diffY < speed) {
+            // Se decidono di girare (es. probabilità 10%)
+            if (random.nextInt(100) < 10) {
+                // Allineamento perfetto prima della rotazione
+                this.x = Math.round(x);
+                this.y = Math.round(y);
                 changeDirection();
             }
         }

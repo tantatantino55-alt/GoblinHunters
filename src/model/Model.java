@@ -50,12 +50,12 @@ public class Model implements IModel {
             {0, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 0}, // Riga 9
             {0, 0, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 0}  // Riga 10
     };
-   // 0 = Vuoto
-   // 1 = Muro Indistruttibile (Test Sliding)
-   // 0 = Vuoto
-   // 1 = Muro Indistruttibile (Test Sliding)
+    // 0 = Vuoto
+    // 1 = Muro Indistruttibile (Test Sliding)
+    // 0 = Vuoto
+    // 1 = Muro Indistruttibile (Test Sliding)
 // 0 = Vuoto
-   // 1 = Muro Indistruttibile (Test Sliding)
+    // 1 = Muro Indistruttibile (Test Sliding)
 
     private Model() {
         this.gameAreaArray = new int[Config.GRID_HEIGHT][Config.GRID_WIDTH];
@@ -76,8 +76,6 @@ public class Model implements IModel {
     // In src/model/Model.java
 
 
-
-
 // In src/model/Model.java
 
     // In src/model/Model.java
@@ -94,48 +92,54 @@ public class Model implements IModel {
         updatePlayerAction(deltaX, deltaY);
         if (deltaX == 0 && deltaY == 0) return;
 
-        // Velocità di allineamento RADDOPPIATA per togliere ogni effetto "scivoloso" in campo aperto
-        double alignSpeed = Config.ENTITY_LOGICAL_SPEED * 2.0;
-        double CORNER_TOLERANCE = 0.40; // Tolleranza leggermente alzata per compensare la fisica più severa
+        double alignSpeed = Config.ENTITY_LOGICAL_SPEED * 1.5;
+        double CORNER_TOLERANCE = 0.40;
 
         // -------------------------------------------------
         // ASSE X (Movimento Orizzontale)
         // -------------------------------------------------
         if (deltaX != 0) {
-            double nextX = currentX + deltaX;
+            double rawNextX = currentX + deltaX;
+            double clampedNextX = rawNextX;
 
-            // Uso la collisione SEVERA per i blocchi, ma mantengo la vecchia per non incastrarmi nei nemici
-            if (isStrictWalkable(nextX, currentY) && !isOccupiedByEnemies(nextX, currentY)) {
-                player.setXCoordinate(Math.max(Config.MIN_LOGICAL_X, Math.min(Config.MAX_LOGICAL_X, nextX)));
+            int r = (int) Math.round(currentY);
+            int c = (int) Math.round(currentX);
 
+            // CLAMPING: Se c'è un muro, ti impedisce matematicamente di uscire dal centro perfetto
+            if (deltaX < 0 && isCellBlocked(r, c - 1)) clampedNextX = Math.max(clampedNextX, c);
+            if (deltaX > 0 && isCellBlocked(r, c + 1)) clampedNextX = Math.min(clampedNextX, c);
+
+            // Sei bloccato se c'è un muro fisico OPPURE se il clamp ti ha fermato
+            boolean isBlocked = !isWalkable(rawNextX, currentY) || isOccupiedByEnemies(rawNextX, currentY) || clampedNextX != rawNextX;
+
+            if (!isBlocked) {
+                player.setXCoordinate(Math.max(Config.MIN_LOGICAL_X, Math.min(Config.MAX_LOGICAL_X, clampedNextX)));
+
+                // Centramento fluido
                 double idealY = Math.round(currentY);
                 double diffY = currentY - idealY;
-
-                // Centramento Istantaneo
-                if (Math.abs(diffY) > 0.001) {
-                    if (isStrictWalkable(currentX, idealY) && !isOccupiedByEnemies(currentX, idealY)) {
+                if (Math.abs(diffY) > 0.01) {
+                    if (isWalkable(clampedNextX, idealY) && !isOccupiedByEnemies(clampedNextX, idealY)) {
                         double step = Math.min(alignSpeed, Math.abs(diffY));
                         if (diffY > 0) player.setYCoordinate(currentY - step);
                         else player.setYCoordinate(currentY + step);
                     }
                 }
-            }
-            // CASO B: CORNER SLIDING
-            else {
+            } else {
+                // SLIDING
                 double targetY_Up = Math.floor(currentY);
                 double targetY_Down = targetY_Up + 1.0;
 
-                boolean canGoUp = isStrictWalkable(nextX, targetY_Up) && !isOccupiedByEnemies(nextX, targetY_Up);
-                boolean canGoDown = isStrictWalkable(nextX, targetY_Down) && !isOccupiedByEnemies(nextX, targetY_Down);
+                boolean canGoUp = isWalkable(rawNextX, targetY_Up) && !isOccupiedByEnemies(rawNextX, targetY_Up);
+                boolean canGoDown = isWalkable(rawNextX, targetY_Down) && !isOccupiedByEnemies(rawNextX, targetY_Down);
 
                 double distUp = Math.abs(currentY - targetY_Up);
                 double distDown = Math.abs(currentY - targetY_Down);
 
                 if (canGoUp && distUp < CORNER_TOLERANCE && (!canGoDown || distUp < distDown)) {
-                    player.setYCoordinate(currentY - alignSpeed);
-                }
-                else if (canGoDown && distDown < CORNER_TOLERANCE && (!canGoUp || distDown < distUp)) {
-                    player.setYCoordinate(currentY + alignSpeed);
+                    if (distUp > 0.01) player.setYCoordinate(currentY - Math.min(alignSpeed, distUp));
+                } else if (canGoDown && distDown < CORNER_TOLERANCE && (!canGoUp || distDown < distUp)) {
+                    if (distDown > 0.01) player.setYCoordinate(currentY + Math.min(alignSpeed, distDown));
                 }
             }
         }
@@ -147,39 +151,46 @@ public class Model implements IModel {
         currentY = player.getYCoordinate();
 
         if (deltaY != 0) {
-            double nextY = currentY + deltaY;
+            double rawNextY = currentY + deltaY;
+            double clampedNextY = rawNextY;
 
-            if (isStrictWalkable(currentX, nextY) && !isOccupiedByEnemies(currentX, nextY)) {
-                player.setYCoordinate(Math.max(Config.MIN_LOGICAL_Y, Math.min(Config.MAX_LOGICAL_Y, nextY)));
+            int r2 = (int) Math.round(currentY);
+            int c2 = (int) Math.round(currentX);
 
+            // CLAMPING
+            if (deltaY < 0 && isCellBlocked(r2 - 1, c2)) clampedNextY = Math.max(clampedNextY, r2);
+            if (deltaY > 0 && isCellBlocked(r2 + 1, c2)) clampedNextY = Math.min(clampedNextY, r2);
+
+            boolean isBlocked = !isWalkable(currentX, rawNextY) || isOccupiedByEnemies(currentX, rawNextY) || clampedNextY != rawNextY;
+
+            if (!isBlocked) {
+                player.setYCoordinate(Math.max(Config.MIN_LOGICAL_Y, Math.min(Config.MAX_LOGICAL_Y, clampedNextY)));
+
+                // Centramento fluido
                 double idealX = Math.round(currentX);
                 double diffX = currentX - idealX;
-
-                // Centramento Istantaneo
-                if (Math.abs(diffX) > 0.001) {
-                    if (isStrictWalkable(idealX, currentY) && !isOccupiedByEnemies(idealX, currentY)) {
+                if (Math.abs(diffX) > 0.01) {
+                    if (isWalkable(idealX, clampedNextY) && !isOccupiedByEnemies(idealX, clampedNextY)) {
                         double step = Math.min(alignSpeed, Math.abs(diffX));
                         if (diffX > 0) player.setXCoordinate(currentX - step);
                         else player.setXCoordinate(currentX + step);
                     }
                 }
-            }
-            // CASO B: CORNER SLIDING
-            else {
+            } else {
+                // SLIDING
                 double targetX_Left = Math.floor(currentX);
                 double targetX_Right = targetX_Left + 1.0;
 
-                boolean canGoLeft = isStrictWalkable(targetX_Left, nextY) && !isOccupiedByEnemies(targetX_Left, nextY);
-                boolean canGoRight = isStrictWalkable(targetX_Right, nextY) && !isOccupiedByEnemies(targetX_Right, nextY);
+                boolean canGoLeft = isWalkable(targetX_Left, rawNextY) && !isOccupiedByEnemies(targetX_Left, rawNextY);
+                boolean canGoRight = isWalkable(targetX_Right, rawNextY) && !isOccupiedByEnemies(targetX_Right, rawNextY);
 
                 double distLeft = Math.abs(currentX - targetX_Left);
                 double distRight = Math.abs(currentX - targetX_Right);
 
                 if (canGoLeft && distLeft < CORNER_TOLERANCE && (!canGoRight || distLeft < distRight)) {
-                    player.setXCoordinate(currentX - alignSpeed);
-                }
-                else if (canGoRight && distRight < CORNER_TOLERANCE && (!canGoLeft || distRight < distLeft)) {
-                    player.setXCoordinate(currentX + alignSpeed);
+                    if (distLeft > 0.01) player.setXCoordinate(currentX - Math.min(alignSpeed, distLeft));
+                } else if (canGoRight && distRight < CORNER_TOLERANCE && (!canGoLeft || distRight < distLeft)) {
+                    if (distRight > 0.01) player.setXCoordinate(currentX + Math.min(alignSpeed, distRight));
                 }
             }
         }
@@ -190,7 +201,6 @@ public class Model implements IModel {
         double hbW = Config.ENTITY_LOGICAL_HITBOX_WIDTH;
         double hbH = Config.ENTITY_LOGICAL_HITBOX_HEIGHT;
 
-        // Calcoliamo i bordi esatti della hitbox
         double left = nextX + (1.0 - hbW) / 2.0;
         double right = left + hbW - 0.01;
         double yOffset = 0.4;
@@ -202,44 +212,7 @@ public class Model implements IModel {
         int startRow = (int) Math.floor(top);
         int endRow = (int) Math.floor(bottom);
 
-        // Controllo limiti mappa
-        if (startCol < 0 || endCol >= Config.GRID_WIDTH || startRow < 0 || endRow >= Config.GRID_HEIGHT) {
-            return false;
-        }
-
-        for (int r = startRow; r <= endRow; r++) {
-            for (int c = startCol; c <= endCol; c++) {
-                // 1. Muri fissi
-                if (gameAreaArray[r][c] == Config.CELL_INDESTRUCTIBLE_BLOCK ||
-                        gameAreaArray[r][c] == Config.CELL_DESTRUCTIBLE_BLOCK) {
-                    return false;
-                }
-
-                // 2. Bombe (le attraversiamo solo se ci siamo appena nati sopra)
-                if (getBombAt(r, c) != null && !isPlayerCurrentlyInside(r, c)) {
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
-
-    // --- NUOVO METODO: Collisione severa per forzare i binari (Zero Tolleranza) ---
-    private boolean isStrictWalkable(double nextX, double nextY) {
-        double margin = 0.05; // Margine microscopico per evitare bug di arrotondamento
-        double left = nextX + margin;
-        double right = nextX + 1.0 - margin;
-        double top = nextY + margin;
-        double bottom = nextY + 1.0 - margin;
-
-        int startCol = (int) Math.floor(left);
-        int endCol = (int) Math.floor(right);
-        int startRow = (int) Math.floor(top);
-        int endRow = (int) Math.floor(bottom);
-
-        if (startCol < 0 || endCol >= Config.GRID_WIDTH || startRow < 0 || endRow >= Config.GRID_HEIGHT) {
-            return false;
-        }
+        if (startCol < 0 || endCol >= Config.GRID_WIDTH || startRow < 0 || endRow >= Config.GRID_HEIGHT) return false;
 
         for (int r = startRow; r <= endRow; r++) {
             for (int c = startCol; c <= endCol; c++) {
@@ -255,7 +228,7 @@ public class Model implements IModel {
         return true;
     }
 
-    // Helper per permettere l'uscita dalla bomba appena piazzata
+
     private boolean isPlayerCurrentlyInside(int r, int c) {
         double pX = player.getXCoordinate();
         double pY = player.getYCoordinate();
@@ -268,6 +241,15 @@ public class Model implements IModel {
         double pTop = pBottom - hbH;
 
         return pRight > c && pLeft < (c + 1.0) && pBottom > r && pTop < (r + 1.0);
+    }
+
+    // --- Helper per inchiodare il giocatore ai binari senza rovinare le hitbox ---
+    private boolean isCellBlocked(int r, int c) {
+        if (r < 0 || r >= Config.GRID_HEIGHT || c < 0 || c >= Config.GRID_WIDTH) return true;
+        if (gameAreaArray[r][c] == Config.CELL_INDESTRUCTIBLE_BLOCK ||
+                gameAreaArray[r][c] == Config.CELL_DESTRUCTIBLE_BLOCK) return true;
+        if (getBombAt(r, c) != null && !isPlayerCurrentlyInside(r, c)) return true;
+        return false;
     }
 
     private boolean isOccupiedByEnemies(double nextX, double nextY) {
@@ -290,7 +272,6 @@ public class Model implements IModel {
     }
 
 
-
     @Override
     public void setPlayerDelta(double dx, double dy) {
         // Riceve già valori logici (es. 0.05), li salva direttamente
@@ -298,26 +279,22 @@ public class Model implements IModel {
     }
 
 
-
     private void updatePlayerAction(double dx, double dy) {
         if (dx > 0) {
             player.setState(PlayerState.RUN_RIGHT);
-        }
-        else if (dx < 0) {
+        } else if (dx < 0) {
             player.setState(PlayerState.RUN_LEFT);
-        }
-        else if (dy > 0) {
+        } else if (dy > 0) {
             player.setState(PlayerState.RUN_FRONT);
-        }
-        else if (dy < 0) {
+        } else if (dy < 0) {
             player.setState(PlayerState.RUN_BACK);
-        }
-        else {
+        } else {
             // IL GIOCATORE È FERMO (dx == 0 e dy == 0)
             // Dobbiamo capire in che direzione guardava prima di fermarsi
             updateIdleState();
         }
     }
+
     private void updateIdleState() {
         PlayerState current = player.getState();
 
@@ -344,6 +321,7 @@ public class Model implements IModel {
                 break;
         }
     }
+
     /**
      * Controlla se la posizione futura (nextX, nextY) è occupata fisicamente da un nemico.
      * Usa un margine per rendere la collisione fisica leggermente più piccola della hitbox di danno.
@@ -351,28 +329,43 @@ public class Model implements IModel {
 
 
     @Override
-    public double xCoordinatePlayer() { return player.getXCoordinate(); }
+    public double xCoordinatePlayer() {
+        return player.getXCoordinate();
+    }
 
     @Override
-    public double yCoordinatePlayer() { return player.getYCoordinate(); }
+    public double yCoordinatePlayer() {
+        return player.getYCoordinate();
+    }
 
     @Override
-    public double getPlayerDeltaX() { return player.getDeltaX(); }
+    public double getPlayerDeltaX() {
+        return player.getDeltaX();
+    }
 
     @Override
-    public double getPlayerDeltaY() { return player.getDeltaY(); }
+    public double getPlayerDeltaY() {
+        return player.getDeltaY();
+    }
 
     @Override
-    public int getNumRows() { return gameAreaArray.length; }
+    public int getNumRows() {
+        return gameAreaArray.length;
+    }
 
     @Override
-    public int getNumColumns() { return gameAreaArray[0].length; }
+    public int getNumColumns() {
+        return gameAreaArray[0].length;
+    }
 
     @Override
-    public int[][] getGameAreaArray() { return gameAreaArray; }
+    public int[][] getGameAreaArray() {
+        return gameAreaArray;
+    }
 
 
     //Metodi di gestione bombe
+
     /**
      * Gestisce il ciclo di vita di tutte le bombe attive.
      */
@@ -467,7 +460,6 @@ public class Model implements IModel {
      */
 
     // In src/model/Model.java
-
     @Override
     public void placeBomb() {
         //if (activeBombs.size() >= player.getMaxBombs()) return;
@@ -508,6 +500,7 @@ public class Model implements IModel {
         activeBombs.add(new Bomb(row, col, Config.BOMB_DETONATION_TICKS, player.getBombRadius()));
         System.out.println("Bomba piazzata in [" + row + "," + col + "]");
     }
+
     /**
      * Controlla se ci sono nemici nella cella (row, col) colpita dall'esplosione
      * e li elimina se presenti.
@@ -553,7 +546,6 @@ public class Model implements IModel {
             }
         }
     }
-
 
 
     // 3. (OPZIONALE) Getter per l'interfaccia
@@ -717,11 +709,13 @@ public class Model implements IModel {
     public List<Enemy> getEnemies() {
         return new ArrayList<>(enemies); // Restituisce una copia difensiva (Best Practice)+
     }
+
     private void updateEnemies() {
         for (Enemy enemy : enemies) {
             enemy.updateBehavior();
         }
     }
+
     @Override
     public void updateGameLogic() {
         elapsedTicks++; // Aumenta di 1 ogni frame (60 volte al secondo)
@@ -845,8 +839,6 @@ public class Model implements IModel {
     }
 
 
-
-
     @Override
     public List<double[]> getProjectilesData() {
         List<double[]> data = new ArrayList<>();
@@ -875,6 +867,7 @@ public class Model implements IModel {
     private boolean isValidIndex(int index) {
         return index >= 0 && index < enemies.size();
     }
+
     @Override
     public List<int[]> getDestructionsData() {
         List<int[]> data = new ArrayList<>();
@@ -905,7 +898,6 @@ public class Model implements IModel {
     }
 
 
-
     private Bomb getBombAt(int r, int c) {
         for (Bomb b : activeBombs) {
             if (b.getRow() == r && b.getCol() == c) {
@@ -914,6 +906,45 @@ public class Model implements IModel {
         }
         return null;
     }
+    // In src/model/Model.java
+
+    /**
+     * Metodo specifico per i Goblin: permette un movimento più fluido
+     * e riduce drasticamente la collisione tra nemici per evitare blocchi.
+     */
+// In Model.java
+    // In src/model/Model.java
+
+    public boolean isWalkableForGoblin(double nextX, double nextY, Enemy self) {
+        // 1. Coordinate arrotondate per i binari
+        int col = (int) Math.round(nextX);
+        int row = (int) Math.round(nextY);
+
+        // 2. Controllo muri e bordi (utilizzando le costanti di Config)
+        if (col < 0 || col >= Config.GRID_WIDTH || row < 0 || row >= Config.GRID_HEIGHT) return false;
+        int cellType = gameAreaArray[row][col];
+        if (cellType == Config.CELL_INDESTRUCTIBLE_BLOCK || cellType == Config.CELL_DESTRUCTIBLE_BLOCK) return false;
+        if (getBombAt(row, col) != null) return false;
+
+        // 3. LOGICA DI CESSIONE DEL PASSO (Precedenza)
+        for (Enemy other : enemies) {
+            if (other == self) continue;
+
+            // Calcoliamo la distanza tra i centri
+            double dist = Math.abs(nextX - other.getX()) + Math.abs(nextY - other.getY());
+
+            // Se sono troppo vicini (collisione imminente)
+            if (dist < 0.8) {
+                // Confrontiamo le identità degli oggetti.
+                // Quello con l'hash più piccolo cede il passo (restituisce false e si ferma)
+                if (System.identityHashCode(self) < System.identityHashCode(other)) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
 
 
 

@@ -6,7 +6,6 @@ import utils.PlayerState;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.util.List;
 
 public class ConcreteDrawer extends AbstractDrawer {
 

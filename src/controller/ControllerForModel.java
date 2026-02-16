@@ -41,44 +41,41 @@ public class ControllerForModel implements IControllerForModel, Runnable {
     // IL VERO CUORE DEL GIOCO: Il Game Loop perfetto
     @Override
     public void run() {
-        // Usiamo i nano-secondi per una precisione assoluta
         long lastTime = System.nanoTime();
-        double amountOfTicks = Config.FPS;
-        double ns = 1000000000 / amountOfTicks;
+        double nsPerTick = 1000000000.0 / Config.FPS;
         double delta = 0;
 
         while (running) {
             long now = System.nanoTime();
-            delta += (now - lastTime) / ns;
+            delta += (now - lastTime) / nsPerTick;
             lastTime = now;
 
-            // --- IL VERO TAPPO ANTI-SCATTO ---
-            // Se c'è un lag di sistema (es. Garbage Collector), il delta si accumula.
-            // Lo limitiamo a 2. Questo impedisce matematicamente alle entità
-            // di fare "scatti in avanti" a velocità moltiplicata!
-            if (delta > 2) {
-                delta = 2;
+            // Tappo anti-lag: impedisce accelerazioni innaturali in caso di blocchi di sistema
+            if (delta > 3) {
+                delta = 1;
             }
 
-            boolean shouldRender = false;
+            boolean updated = false;
 
-            // Aggiorna la logica ESATTAMENTE il numero di volte necessario
+            // 1. FASE LOGICA: Aggiorna il gioco (es. movimento, collisioni)
             while (delta >= 1) {
                 updateGame();
                 delta--;
-                shouldRender = true;
+                updated = true;
             }
 
-            // Disegna a schermo solo se c'è stato un aggiornamento logico
-            if (shouldRender) {
+            // 2. FASE GRAFICA: Disegna a schermo
+            if (updated) {
                 ControllerForView.getInstance().requestRepaint();
-            } else {
-                // Se ha finito in anticipo, fa riposare la CPU per 1 millisecondo
-                try {
-                    Thread.sleep(1);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+            }
+
+            // 3. FASE DI SINCRONIZZAZIONE (Il segreto della fluidità universale)
+            // Invece di usare il problematico Thread.sleep(), continuiamo a controllare
+            // l'orologio ad altissima precisione (nanoTime) finché non è il momento
+            // esatto di far partire il frame successivo.
+            // Thread.yield() evita che il processore si surriscaldi durante l'attesa.
+            while (System.nanoTime() - lastTime < nsPerTick) {
+                Thread.yield();
             }
         }
     }

@@ -45,7 +45,7 @@ public interface IModel {
     public int getPlayerLives();
     public int getElapsedTimeInSeconds();
 
-    boolean isWalkableForGoblin(int logX, int logY, Enemy enemy);
+    //boolean isWalkableForGoblin(int logX, int logY, Enemy enemy);
 
     //------------------------
 

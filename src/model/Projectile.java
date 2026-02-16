@@ -9,6 +9,7 @@ public abstract class Projectile extends Entity {
     protected double speed;
     protected boolean active; // Se false, il Model lo rimuove
     protected boolean isEnemyProjectile; // Per sapere chi colpire (Player o Nemici)
+    protected long creationTime;
 
     public Projectile(double startX, double startY, Direction dir, double speedMult, boolean isEnemy) {
         this.x = startX;

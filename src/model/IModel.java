@@ -19,34 +19,46 @@ public interface IModel {
     public void placeBomb();
     public void updateGameLogic();
     public List<Enemy> getEnemies();
-    public int[][] getActiveBombsData();
+
     PlayerState getPlayerState();
-    int getEnemyCount();                  // 1. Quanti sono?
-    double getEnemyX(int index);          // 2. Coordinata X dell'i-esimo nemico
-    double getEnemyY(int index);          // 3. Coordinata Y dell'i-esimo nemico
-    Direction getEnemyDirection(int index); // 4. Dove guarda?
-    EnemyType getEnemyType(int index);    // 5. Che cos'è? (Common, Hunter...)
     long getPlayerStateStartTime();
 
-    void addProjectile(Projectile projectile);
-    // Restituisce la direzione di mira (o null) dell'i-esimo nemico
+    int getEnemyCount();
+    double getEnemyX(int index);
+    double getEnemyY(int index);
+    Direction getEnemyDirection(int index);
+    EnemyType getEnemyType(int index);
     Direction getEnemyTelegraph(int index);
 
-    // Restituisce una lista di "dati grezzi" dei proiettili
-    // Ogni double[] contiene: { x, y, tipo, direzione }
-    List<double[]> getProjectilesData();
-    List<int[]> getDestructionsData();
+    void addProjectile(Projectile projectile);
     public boolean isAreaOccupiedByOtherEnemy(double nextX, double nextY, Enemy enemy);
-    List<int[]> getFireData();
-
     public boolean isPlayerInvincible();
-
-    //-----------------------
     public int getPlayerLives();
     public int getElapsedTimeInSeconds();
 
-    //boolean isWalkableForGoblin(int logX, int logY, Enemy enemy);
+    // --- NUOVI METODI A INDICE (Sostituiscono le allocazioni) ---
+    // BOMBE
+    int getBombCount();
+    int getBombRow(int index);
+    int getBombCol(int index);
+    int getBombElapsedTime(int index);
 
-    //------------------------
+    // PROIETTILI
+    int getProjectileCount();
+    double getProjectileX(int index);
+    double getProjectileY(int index);
+    boolean isProjectileEnemy(int index);
+    int getProjectileDirection(int index);
 
+    // EFFETTI DISTRUZIONE CASSE
+    int getDestructionCount();
+    int getDestructionRow(int index);
+    int getDestructionCol(int index);
+    int getDestructionElapsedTime(int index);
+
+    // FUOCO
+    int getFireCount();
+    int getFireRow(int index);
+    int getFireCol(int index);
+    int getFireType(int index);
 }

@@ -575,23 +575,6 @@ public class Model implements IModel {
 
 // In src/model/Model.java
 
-    @Override
-    public int[][] getActiveBombsData() {
-        // Matrice Nx3: [Row, Col, ElapsedTime]
-        int[][] data = new int[activeBombs.size()][3];
-        long currentTime = System.currentTimeMillis();
-
-        for (int i = 0; i < activeBombs.size(); i++) {
-            Bomb b = activeBombs.get(i);
-            data[i][0] = b.getRow();
-            data[i][1] = b.getCol();
-
-            // Calcoliamo quanto tempo è passato (in ms) da quando esiste
-            // Cast a int è sicuro perché una bomba dura pochi secondi
-            data[i][2] = (int) (currentTime - b.getCreationTime());
-        }
-        return data;
-    }
 
     @Override
     public PlayerState getPlayerState() {
@@ -664,11 +647,6 @@ public class Model implements IModel {
     }
     // --- DA INSERIRE IN Model.java ---
 
-
-    @Override
-    public List<int[]> getFireData() {
-        return new ArrayList<>(activeFire);
-    }
 
     // Metodo interno per gestire le collisioni (Player vs Nemici)
     private void checkCollisions() {
@@ -846,28 +824,6 @@ public class Model implements IModel {
     }
 
 
-    @Override
-    public List<double[]> getProjectilesData() {
-        List<double[]> data = new ArrayList<>();
-
-        for (Projectile p : projectiles) {
-            // Convertiamo l'oggetto Projectile in un array di 4 numeri
-            double[] info = new double[4];
-
-            info[0] = p.getX(); // Coordinata X
-            info[1] = p.getY(); // Coordinata Y
-
-            // Tipo: 0.0 = Proiettile Nemico (Osso), 1.0 = Proiettile Player (Aura)
-            info[2] = p.isEnemyProjectile() ? 0.0 : 1.0;
-
-            // Direzione: La convertiamo in numero per semplicità (opzionale, se vuoi ruotare lo sprite)
-            // 0=UP, 1=DOWN, 2=LEFT, 3=RIGHT
-            info[3] = (double) p.getDirection().ordinal();
-
-            data.add(info);
-        }
-        return data;
-    }
 
 
     // Helper privato per evitare crash se la View chiede un indice che non esiste più
@@ -875,20 +831,6 @@ public class Model implements IModel {
         return index >= 0 && index < enemies.size();
     }
 
-    @Override
-    public List<int[]> getDestructionsData() {
-        List<int[]> data = new ArrayList<>();
-        long currentTime = System.currentTimeMillis();
-
-        for (BlockDestruction bd : destructionEffects) {
-            int[] info = new int[3];
-            info[0] = bd.getRow();
-            info[1] = bd.getCol();
-            info[2] = (int) (currentTime - bd.getCreationTime()); // Tempo trascorso in ms
-            data.add(info);
-        }
-        return data;
-    }
 
     @Override
     public boolean isAreaOccupiedByOtherEnemy(double nextX, double nextY, Enemy self) {
@@ -932,44 +874,100 @@ public class Model implements IModel {
      * e riduce drasticamente la collisione tra nemici per evitare blocchi.
      */
 // In Model.java
-    // In src/model/Model.java
 
-    public boolean isWalkableForGoblin(double nextX, double nextY, Enemy self) {
-        // 1. Coordinate arrotondate per i binari
-        int col = (int) Math.round(nextX);
-        int row = (int) Math.round(nextY);
 
-        // 2. Controllo muri e bordi (utilizzando le costanti di Config)
-        if (col < 0 || col >= Config.GRID_WIDTH || row < 0 || row >= Config.GRID_HEIGHT) return false;
-        int cellType = gameAreaArray[row][col];
-        if (cellType == Config.CELL_INDESTRUCTIBLE_BLOCK || cellType == Config.CELL_DESTRUCTIBLE_BLOCK) return false;
-        if (getBombAt(row, col) != null) return false;
+    // ==========================================================
+    // METODI AD INDICE PER AZZERARE L'USO DEL GARBAGE COLLECTOR
+    // ==========================================================
 
-        // 3. LOGICA DI CESSIONE DEL PASSO (Precedenza)
-        for (Enemy other : enemies) {
-            if (other == self) continue;
+    // --- BOMBE ---
+    @Override public int getBombCount() { return activeBombs.size(); }
 
-            // Calcoliamo la distanza tra i centri
-            double dist = Math.abs(nextX - other.getX()) + Math.abs(nextY - other.getY());
-
-            // Se sono troppo vicini (collisione imminente)
-            if (dist < 0.8) {
-                // Confrontiamo le identità degli oggetti.
-                // Quello con l'hash più piccolo cede il passo (restituisce false e si ferma)
-                if (System.identityHashCode(self) < System.identityHashCode(other)) {
-                    return false;
-                }
-            }
-        }
-        return true;
+    @Override public int getBombRow(int index) {
+        return isValidBombIndex(index) ? activeBombs.get(index).getRow() : 0;
     }
 
+    @Override public int getBombCol(int index) {
+        return isValidBombIndex(index) ? activeBombs.get(index).getCol() : 0;
+    }
 
+    @Override public int getBombElapsedTime(int index) {
+        if (!isValidBombIndex(index)) return 0;
+        return (int) (System.currentTimeMillis() - activeBombs.get(index).getCreationTime());
+    }
 
+    private boolean isValidBombIndex(int index) { return index >= 0 && index < activeBombs.size(); }
 
+    // --- PROIETTILI ---
+    @Override public int getProjectileCount() { return projectiles.size(); }
 
+    @Override public double getProjectileX(int index) {
+        return isValidProjIndex(index) ? projectiles.get(index).getX() : 0;
+    }
 
+    @Override public double getProjectileY(int index) {
+        return isValidProjIndex(index) ? projectiles.get(index).getY() : 0;
+    }
 
+    @Override public boolean isProjectileEnemy(int index) {
+        return isValidProjIndex(index) && projectiles.get(index).isEnemyProjectile();
+    }
+
+    @Override public int getProjectileDirection(int index) {
+        return isValidProjIndex(index) ? projectiles.get(index).getDirection().ordinal() : 0;
+    }
+
+    private boolean isValidProjIndex(int index) { return index >= 0 && index < projectiles.size(); }
+
+    // --- DISTRUZIONI (Casse) ---
+    @Override public int getDestructionCount() { return destructionEffects.size(); }
+
+    @Override public int getDestructionRow(int index) {
+        return isValidDestIndex(index) ? destructionEffects.get(index).getRow() : 0;
+    }
+
+    @Override public int getDestructionCol(int index) {
+        return isValidDestIndex(index) ? destructionEffects.get(index).getCol() : 0;
+    }
+
+    @Override public int getDestructionElapsedTime(int index) {
+        if (!isValidDestIndex(index)) return 0;
+        return (int) (System.currentTimeMillis() - destructionEffects.get(index).getCreationTime());
+    }
+
+    private boolean isValidDestIndex(int index) { return index >= 0 && index < destructionEffects.size(); }
+
+    // --- FUOCO ---
+    @Override public int getFireCount() { return activeFire.size(); }
+
+    @Override public int getFireRow(int index) {
+        return isValidFireIndex(index) ? activeFire.get(index)[0] : 0;
+    }
+
+    @Override public int getFireCol(int index) {
+        return isValidFireIndex(index) ? activeFire.get(index)[1] : 0;
+    }
+
+    @Override public int getFireType(int index) {
+        return isValidFireIndex(index) ? activeFire.get(index)[2] : 0;
+    }
+
+    private boolean isValidFireIndex(int index) { return index >= 0 && index < activeFire.size(); }
+    public void playerShoot() {
+        // Opzionale: Controllo cooldown (se l'hai messo nel Player)
+        // if (!player.canAttack()) return;
+
+        double startX = player.getXCoordinate();
+        double startY = player.getYCoordinate();
+        Direction dir = player.getDirection();
+
+        // Crea Aura (Velocità 4x, Non è nemico)
+        Projectile aura = new AuraProjectile(startX, startY, dir);
+        addProjectile(aura);
+
+        // player.recordAttack(); // Se usi il cooldown
+        System.out.println("SPARO: Aura creata verso " + dir);
+    }
 
     public static IModel getInstance() {
         if (instance == null) instance = new Model();

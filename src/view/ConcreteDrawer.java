@@ -207,33 +207,6 @@ public class ConcreteDrawer extends AbstractDrawer {
     }
 
 
-// In src/view/ConcreteDrawer.java
-
-    private void drawBombs(Graphics2D g2d) {
-        // [0]=Row, [1]=Col, [2]=Elapsed Time (ms)
-        int[][] bombsData = ControllerForView.getInstance().getActiveBombsData();
-
-        for (int[] bombInfo : bombsData) {
-            int row = bombInfo[0];
-            int col = bombInfo[1];
-            int elapsedTime = bombInfo[2]; // Tempo trascorso in ms
-
-            // --- CALCOLO FRAME LATO VIEW (Puro MVC) ---
-            // 1. Dividiamo il tempo totale per la durata di un singolo frame
-            // 2. Usiamo il modulo (%) per ciclare (0,1,2...7, 0,1...)
-            int currentFrame = (elapsedTime / Config.BOMB_ANIM_FRAME_DURATION) % Config.BOMB_FRAMES;
-
-            int screenX = Config.GRID_OFFSET_X + col * Config.TILE_SIZE;
-            int screenY = Config.GRID_OFFSET_Y + row * Config.TILE_SIZE;
-
-            // Chiediamo allo SpriteManager il frame calcolato
-            BufferedImage sprite = SpriteManager.getInstance().getSprite("BOMB_ANIM", currentFrame);
-
-            if (sprite != null) {
-                g2d.drawImage(sprite, screenX, screenY, null);
-            }
-        }
-    }
 
     // Metodo di debug puro: disegna solo le linee della griglia
     private void drawDebugGrid(Graphics2D g2d) {
@@ -251,85 +224,88 @@ public class ConcreteDrawer extends AbstractDrawer {
             g2d.drawLine(Config.GRID_OFFSET_X, y, Config.GRID_OFFSET_X + (Config.GRID_WIDTH * Config.TILE_SIZE), y);
         }
     }
+
+    private void drawBombs(Graphics2D g2d) {
+        int count = ControllerForView.getInstance().getBombCount();
+
+        for (int i = 0; i < count; i++) {
+            int row = ControllerForView.getInstance().getBombRow(i);
+            int col = ControllerForView.getInstance().getBombCol(i);
+            int elapsedTime = ControllerForView.getInstance().getBombElapsedTime(i);
+
+            int currentFrame = (elapsedTime / Config.BOMB_ANIM_FRAME_DURATION) % Config.BOMB_FRAMES;
+            int screenX = Config.GRID_OFFSET_X + col * Config.TILE_SIZE;
+            int screenY = Config.GRID_OFFSET_Y + row * Config.TILE_SIZE;
+
+            BufferedImage sprite = SpriteManager.getInstance().getSprite("BOMB_ANIM", currentFrame);
+            if (sprite != null) {
+                g2d.drawImage(sprite, screenX, screenY, null);
+            }
+        }
+    }
+
     private void drawDestructions(Graphics2D g2d) {
-        // Supponendo che il controller restituisca una lista di int[] {row, col, elapsedTime}
-        List<int[]> destructions = ControllerForView.getInstance().getDestructionsData();
+        int count = ControllerForView.getInstance().getDestructionCount();
 
-        for (int[] d : destructions) {
-            int row = d[0];
-            int col = d[1];
-            int elapsed = d[2];
+        for (int i = 0; i < count; i++) {
+            int row = ControllerForView.getInstance().getDestructionRow(i);
+            int col = ControllerForView.getInstance().getDestructionCol(i);
+            int elapsed = ControllerForView.getInstance().getDestructionElapsedTime(i);
 
-            // Calcolo del frame:
-            // Hai definito DESTRUCTION_FRAMES = 3 e DESTRUCTION_FRAME_DURATION = 150 in Config
             int currentFrame = elapsed / Config.DESTRUCTION_FRAME_DURATION;
-
-            // Evita di andare fuori indice se il Model non ha ancora rimosso l'effetto
             if (currentFrame >= Config.DESTRUCTION_FRAMES) currentFrame = Config.DESTRUCTION_FRAMES - 1;
 
             int screenX = Config.GRID_OFFSET_X + col * Config.TILE_SIZE;
             int screenY = Config.GRID_OFFSET_Y + row * Config.TILE_SIZE;
 
-            // Recupera lo sprite caricato con la chiave "CRATE_BREAK" nel ResourceLoader
             BufferedImage sprite = SpriteManager.getInstance().getSprite("CRATE_BREAK", currentFrame);
-
             if (sprite != null) {
                 g2d.drawImage(sprite, screenX, screenY, Config.TILE_SIZE, Config.TILE_SIZE, null);
             }
         }
     }
+
     private void drawFire(Graphics2D g2d) {
-        List<int[]> fireData = ControllerForView.getInstance().getFireData();
+        int count = ControllerForView.getInstance().getFireCount();
 
-        // Se vuoi debuggare se il fuoco esiste
-         if (!fireData.isEmpty()) System.out.println("Disegno " + fireData.size() + " fuochi");
-
-        for (int[] f : fireData) {
-            int r = f[0];
-            int col = f[1];
-            int type = f[2];
-            // f[3] è la vita rimanente, ma non ci serve per l'animazione perché è statica.
-            // Ci serve solo sapere che ESISTE nella lista.
+        for (int i = 0; i < count; i++) {
+            int r = ControllerForView.getInstance().getFireRow(i);
+            int col = ControllerForView.getInstance().getFireCol(i);
+            int type = ControllerForView.getInstance().getFireType(i);
 
             int x = Config.GRID_OFFSET_X + col * Config.TILE_SIZE;
             int y = Config.GRID_OFFSET_Y + r * Config.TILE_SIZE;
 
-            // Chiediamo sempre il frame 0, perché ne abbiamo caricato solo 1
             BufferedImage img = SpriteManager.getInstance().getSprite("FIRE_" + type, 0);
 
             if (img != null) {
                 g2d.drawImage(img, x, y, Config.TILE_SIZE, Config.TILE_SIZE, null);
             } else {
-                // Quadrato rosso SOLO se hai sbagliato gli indici in ResourceLoader
                 g2d.setColor(Color.RED);
                 g2d.drawRect(x, y, Config.TILE_SIZE, Config.TILE_SIZE);
             }
         }
     }
 
-
     private void drawProjectiles(Graphics2D g2d) {
-        // Recupera la lista di DTO dal Controller (Puro MVC)
-        // [0]=x, [1]=y, [2]=type, [3]=dir(Ordinal)
-        List<double[]> projectiles = ControllerForView.getInstance().getProjectilesData();
+        int count = ControllerForView.getInstance().getProjectileCount();
 
-        for (double[] p : projectiles) {
-            double x = p[0];
-            double y = p[1];
-            int type = (int) p[2];      // 0 = Goblin, 1 = Player
-            int dirOrdinal = (int) p[3]; // Enum Direction convertito in int
+        for (int i = 0; i < count; i++) {
+            double x = ControllerForView.getInstance().getProjectileX(i);
+            double y = ControllerForView.getInstance().getProjectileY(i);
+            boolean isEnemy = ControllerForView.getInstance().isProjectileEnemy(i);
+            int dirOrdinal = ControllerForView.getInstance().getProjectileDirection(i);
 
             String key = null;
 
-            // --- SELEZIONE SPRITE ---
-            if (type == 0) { // NEMICO (OSSO)
+            if (isEnemy) {
                 switch (dirOrdinal) {
-                    case 0 -> key = "BONE_UP";    // Direction.UP
-                    case 1 -> key = "BONE_DOWN";  // Direction.DOWN
-                    case 2 -> key = "BONE_LEFT";  // Direction.LEFT
-                    case 3 -> key = "BONE_RIGHT"; // Direction.RIGHT
+                    case 0 -> key = "BONE_UP";
+                    case 1 -> key = "BONE_DOWN";
+                    case 2 -> key = "BONE_LEFT";
+                    case 3 -> key = "BONE_RIGHT";
                 }
-            } else if (type == 1) { // PLAYER (AURA)
+            } else {
                 switch (dirOrdinal) {
                     case 0 -> key = "AURA_UP";
                     case 1 -> key = "AURA_DOWN";
@@ -338,11 +314,9 @@ public class ConcreteDrawer extends AbstractDrawer {
                 }
             }
 
-            // --- DISEGNO ---
             if (key != null) {
                 BufferedImage sprite = SpriteManager.getInstance().getSprite(key, 0);
 
-                // In drawProjectiles, modifica il calcolo della posizione:
                 int screenX = (int)(x * Config.TILE_SIZE) + Config.GRID_OFFSET_X + (Config.TILE_SIZE / 4);
                 int screenY = (int)(y * Config.TILE_SIZE) + Config.GRID_OFFSET_Y + (Config.TILE_SIZE / 4);
 
@@ -352,6 +326,7 @@ public class ConcreteDrawer extends AbstractDrawer {
             }
         }
     }
+
 
     @Override public int getDrawingWidth() { return Config.GRID_OFFSET_X + Config.GAME_PANEL_WIDTH; }
     @Override public int getDrawingHeight() { return Config.GRID_OFFSET_Y + Config.GAME_PANEL_HEIGHT; }

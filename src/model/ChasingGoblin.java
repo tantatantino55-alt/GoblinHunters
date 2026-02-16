@@ -108,14 +108,21 @@ public class ChasingGoblin extends Enemy {
     }
 
     protected Direction getSafeDirectionFromBombs() {
-        int[][] bombs = Model.getInstance().getActiveBombsData();
-        for (int[] b : bombs) {
-            double bdist = Math.abs(b[1] - this.x) + Math.abs(b[0] - this.y);
+        IModel model = Model.getInstance();
+        int bombCount = model.getBombCount();
+
+        for (int i = 0; i < bombCount; i++) {
+            int bombRow = model.getBombRow(i);
+            int bombCol = model.getBombCol(i);
+
+            // Calcola la distanza tra il goblin e la singola bomba
+            double bdist = Math.abs(bombCol - this.x) + Math.abs(bombRow - this.y);
 
             if (bdist < Config.SAFE_DISTANCE_FROM_BOMB) {
-                if (b[1] > this.x) return Direction.LEFT;
-                if (b[1] < this.x) return Direction.RIGHT;
-                if (b[0] > this.y) return Direction.UP;
+                // Scappa nella direzione opposta alla bomba
+                if (bombCol > this.x) return Direction.LEFT;
+                if (bombCol < this.x) return Direction.RIGHT;
+                if (bombRow > this.y) return Direction.UP;
                 return Direction.DOWN;
             }
         }

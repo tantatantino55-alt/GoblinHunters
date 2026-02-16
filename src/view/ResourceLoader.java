@@ -176,8 +176,15 @@ public class ResourceLoader {
         sm.loadAnimation("BONE_UP",    sheet, Config.BONE_UP_INDEX,    1, size);
 
 
+        // 2. AURA (Proiettili Player) - Animazioni a 12 Frame
+        // Carichiamo usando gli START index definiti in Config
+        sm.loadAnimation("AURA_LEFT",  sheet, Config.AURA_LEFT_START,  Config.AURA_FRAMES, size);
+        sm.loadAnimation("AURA_RIGHT", sheet, Config.AURA_RIGHT_START, Config.AURA_FRAMES, size);
+        sm.loadAnimation("AURA_DOWN",  sheet, Config.AURA_DOWN_START,  Config.AURA_FRAMES, size);
+        sm.loadAnimation("AURA_UP",    sheet, Config.AURA_UP_START,    Config.AURA_FRAMES, size);
 
-        System.out.println("ResourceLoader: Proiettili (Ossa) caricati.");
+        System.out.println("ResourceLoader: Proiettili Aura caricati (12 frame).");
+
     }
 
 

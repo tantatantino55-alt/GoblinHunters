@@ -21,9 +21,13 @@ public class GamePanel extends JPanel {
         setupKeyBindings();
     }
 
-    @Override public void paintComponent(Graphics g) {
+    @Override
+    public void paintComponent(Graphics g) {
         super.paintComponent(g);
         drawer.draw(g);
+
+        // Sincronizza il disegno grafico con il refresh del monitor (V-Sync)
+        Toolkit.getDefaultToolkit().sync();
     }
 
     private void setupKeyBindings() {

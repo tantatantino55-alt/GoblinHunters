@@ -200,6 +200,19 @@ public class Config {
     public static final double GOBLIN_COMMON_SPEED = 0.03; // Leggermente più veloce per fluidità
     public static final double CENTER_TOLERANCE = 0.1;
     // In src/utils/Config.java
+    public static final int AURA_FRAMES = 12; // 12 immagini per movimento
+    public static final int AURA_ANIM_SPEED = 50; // Velocità animazione (ms per frame)
+
+    // Indici di partenza (Linear Index = Row * Columns + Col)
+    // Riga 3 (Right) -> 3 * 12 = 36
+    // Riga 4 (Left)  -> 4 * 12 = 48
+    // Riga 5 (Down)  -> 5 * 12 = 60
+    // Riga 6 (Up)    -> 6 * 12 = 72
+
+    public static final int AURA_RIGHT_START = 21;
+    public static final int AURA_LEFT_START  = 33;
+    public static final int AURA_DOWN_START  = 45;
+    public static final int AURA_UP_START    = 57;
 
 // ... (altre costanti)
 

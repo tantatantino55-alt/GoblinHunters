@@ -38,9 +38,9 @@ public class Model implements IModel {
 
 
     private static final int[][] testMap = {
-            {0, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 0, 0}, // Riga 0: Angolo player sicuro
-            {0, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 0}, // Riga 1: Pilastri e casse
-            {2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2}, // Riga 2: Corridoio libero
+            {0, 0, 0, 2, 0, 2, 2, 0, 2, 2, 0, 0, 0}, // Riga 0: Angolo player sicuro
+            {0, 1, 0, 1, 2, 1, 2, 1, 2, 1, 2, 1, 0}, // Riga 1: Pilastri e casse
+            {0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2}, // Riga 2: Corridoio libero
             {2, 1, 0, 1, 2, 1, 2, 1, 2, 1, 0, 1, 2}, // Riga 3
             {0, 0, 0, 2, 0, 0, 0, 0, 0, 2, 0, 0, 0}, // Riga 4: Arena centrale
             {2, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 2}, // Riga 5: Pilastri centrali
@@ -93,7 +93,7 @@ public class Model implements IModel {
         if (deltaX == 0 && deltaY == 0) return;
 
         double alignSpeed = Config.ENTITY_LOGICAL_SPEED * 1.5;
-        double CORNER_TOLERANCE = 0.40;
+        double CORNER_TOLERANCE = 0.60;
 
         // -------------------------------------------------
         // ASSE X (Movimento Orizzontale)
@@ -105,17 +105,14 @@ public class Model implements IModel {
             int r = (int) Math.round(currentY);
             int c = (int) Math.round(currentX);
 
-            // CLAMPING: Se c'è un muro, ti impedisce matematicamente di uscire dal centro perfetto
             if (deltaX < 0 && isCellBlocked(r, c - 1)) clampedNextX = Math.max(clampedNextX, c);
             if (deltaX > 0 && isCellBlocked(r, c + 1)) clampedNextX = Math.min(clampedNextX, c);
 
-            // Sei bloccato se c'è un muro fisico OPPURE se il clamp ti ha fermato
             boolean isBlocked = !isWalkable(rawNextX, currentY) || isOccupiedByEnemies(rawNextX, currentY) || clampedNextX != rawNextX;
 
             if (!isBlocked) {
                 player.setXCoordinate(Math.max(Config.MIN_LOGICAL_X, Math.min(Config.MAX_LOGICAL_X, clampedNextX)));
 
-                // Centramento fluido
                 double idealY = Math.round(currentY);
                 double diffY = currentY - idealY;
                 if (Math.abs(diffY) > 0.01) {
@@ -127,18 +124,24 @@ public class Model implements IModel {
                 }
             } else {
                 // SLIDING
+                int targetCol = deltaX < 0 ? c - 1 : c + 1;
+
                 double targetY_Up = Math.floor(currentY);
                 double targetY_Down = targetY_Up + 1.0;
+                int rUp = (int) Math.round(targetY_Up);
+                int rDown = (int) Math.round(targetY_Down);
 
-                boolean canGoUp = isWalkable(rawNextX, targetY_Up) && !isOccupiedByEnemies(rawNextX, targetY_Up);
-                boolean canGoDown = isWalkable(rawNextX, targetY_Down) && !isOccupiedByEnemies(rawNextX, targetY_Down);
+                // CONTROLLO CRUCIALE: Scivolo SOLO se la cella di destinazione OLTRE l'angolo è libera!
+                boolean canGoUp = !isCellBlocked(rUp, targetCol) && isWalkable(rawNextX, targetY_Up) && !isOccupiedByEnemies(rawNextX, targetY_Up);
+                boolean canGoDown = !isCellBlocked(rDown, targetCol) && isWalkable(rawNextX, targetY_Down) && !isOccupiedByEnemies(rawNextX, targetY_Down);
 
                 double distUp = Math.abs(currentY - targetY_Up);
                 double distDown = Math.abs(currentY - targetY_Down);
 
                 if (canGoUp && distUp < CORNER_TOLERANCE && (!canGoDown || distUp < distDown)) {
                     if (distUp > 0.01) player.setYCoordinate(currentY - Math.min(alignSpeed, distUp));
-                } else if (canGoDown && distDown < CORNER_TOLERANCE && (!canGoUp || distDown < distUp)) {
+                }
+                else if (canGoDown && distDown < CORNER_TOLERANCE && (!canGoUp || distDown < distUp)) {
                     if (distDown > 0.01) player.setYCoordinate(currentY + Math.min(alignSpeed, distDown));
                 }
             }
@@ -157,7 +160,6 @@ public class Model implements IModel {
             int r2 = (int) Math.round(currentY);
             int c2 = (int) Math.round(currentX);
 
-            // CLAMPING
             if (deltaY < 0 && isCellBlocked(r2 - 1, c2)) clampedNextY = Math.max(clampedNextY, r2);
             if (deltaY > 0 && isCellBlocked(r2 + 1, c2)) clampedNextY = Math.min(clampedNextY, r2);
 
@@ -166,7 +168,6 @@ public class Model implements IModel {
             if (!isBlocked) {
                 player.setYCoordinate(Math.max(Config.MIN_LOGICAL_Y, Math.min(Config.MAX_LOGICAL_Y, clampedNextY)));
 
-                // Centramento fluido
                 double idealX = Math.round(currentX);
                 double diffX = currentX - idealX;
                 if (Math.abs(diffX) > 0.01) {
@@ -178,18 +179,24 @@ public class Model implements IModel {
                 }
             } else {
                 // SLIDING
+                int targetRow = deltaY < 0 ? r2 - 1 : r2 + 1;
+
                 double targetX_Left = Math.floor(currentX);
                 double targetX_Right = targetX_Left + 1.0;
+                int cLeft = (int) Math.round(targetX_Left);
+                int cRight = (int) Math.round(targetX_Right);
 
-                boolean canGoLeft = isWalkable(targetX_Left, rawNextY) && !isOccupiedByEnemies(targetX_Left, rawNextY);
-                boolean canGoRight = isWalkable(targetX_Right, rawNextY) && !isOccupiedByEnemies(targetX_Right, rawNextY);
+                // CONTROLLO CRUCIALE: Scivolo SOLO se la cella di destinazione OLTRE l'angolo è libera!
+                boolean canGoLeft = !isCellBlocked(targetRow, cLeft) && isWalkable(targetX_Left, rawNextY) && !isOccupiedByEnemies(targetX_Left, rawNextY);
+                boolean canGoRight = !isCellBlocked(targetRow, cRight) && isWalkable(targetX_Right, rawNextY) && !isOccupiedByEnemies(targetX_Right, rawNextY);
 
                 double distLeft = Math.abs(currentX - targetX_Left);
                 double distRight = Math.abs(currentX - targetX_Right);
 
                 if (canGoLeft && distLeft < CORNER_TOLERANCE && (!canGoRight || distLeft < distRight)) {
                     if (distLeft > 0.01) player.setXCoordinate(currentX - Math.min(alignSpeed, distLeft));
-                } else if (canGoRight && distRight < CORNER_TOLERANCE && (!canGoLeft || distRight < distLeft)) {
+                }
+                else if (canGoRight && distRight < CORNER_TOLERANCE && (!canGoLeft || distRight < distLeft)) {
                     if (distRight > 0.01) player.setXCoordinate(currentX + Math.min(alignSpeed, distRight));
                 }
             }
@@ -885,13 +892,25 @@ public class Model implements IModel {
 
     @Override
     public boolean isAreaOccupiedByOtherEnemy(double nextX, double nextY, Enemy self) {
-        // Usiamo una hitbox di collisione interna molto piccola (es. 0.3)
-        // Così i goblin possono quasi sovrapporsi visivamente senza "incastrarsi"
-        double size = 0.3;
+        double size = 0.55;
+
         for (Enemy other : enemies) {
             if (other == self) continue;
-            if (Math.abs(nextX - other.getX()) < size && Math.abs(nextY - other.getY()) < size) {
-                return true;
+
+            double nextDistX = Math.abs(nextX - other.getX());
+            double nextDistY = Math.abs(nextY - other.getY());
+
+            // I due goblin stanno per collidere visivamente?
+            if (nextDistX < size && nextDistY < size) {
+
+                double currentDistX = Math.abs(self.getX() - other.getX());
+                double currentDistY = Math.abs(self.getY() - other.getY());
+
+                // IL SEGRETO: Bloccali SOLO se stanno tentando di avvicinarsi ulteriormente!
+                if (nextDistX < currentDistX || nextDistY < currentDistY) {
+                    return true;
+                }
+                // Se stanno cercando di allontanarsi, lasciali fare per sbrogliare la sovrapposizione!
             }
         }
         return false;

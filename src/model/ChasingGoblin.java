@@ -6,11 +6,14 @@ import utils.EnemyType;
 
 public class ChasingGoblin extends Enemy {
 
+    // --- LA SOLUZIONE AL LOOP: Memoria dell'ultimo incrocio ---
+    protected int lastDecisionX = -1;
+    protected int lastDecisionY = -1;
+
     public ChasingGoblin(double startX, double startY, double speed, EnemyType type) {
         super(startX, startY, speed, type);
     }
 
-    // Costruttore per default (se istanziato direttamente)
     public ChasingGoblin(double startX, double startY) {
         super(startX, startY, Config.GOBLIN_COMMON_SPEED, EnemyType.HUNTER);
     }
@@ -19,27 +22,42 @@ public class ChasingGoblin extends Enemy {
     public void updateBehavior() {
         double px = Model.getInstance().xCoordinatePlayer();
         double py = Model.getInstance().yCoordinatePlayer();
-
-        // Distanza Manhattan
         double dist = Math.abs(this.x - px) + Math.abs(this.y - py);
 
-        // Insegue SOLO se vicino (6 celle) E vede il player
-        // (Aggiungi hasClearPath se vuoi, per ora semplifichiamo sulla distanza)
-        if (dist <= 6) {
-            moveTowardsSmart(px, py);
-        } else {
-            if (random.nextInt(100) < 5) changeDirection();
-            moveInDirection();
+        int currentGridX = (int) Math.round(x);
+        int currentGridY = (int) Math.round(y);
+
+        double diffX = Math.abs(x - currentGridX);
+        double diffY = Math.abs(y - currentGridY);
+
+        if (diffX < speed && diffY < speed) {
+            if (currentGridX != lastDecisionX || currentGridY != lastDecisionY) {
+
+                this.x = currentGridX;
+                this.y = currentGridY;
+
+                this.lastDecisionX = currentGridX;
+                this.lastDecisionY = currentGridY;
+
+                // LA MAGIA: Se ha appena rimbalzato, NON calcola la rotta per il player,
+                // ma gira a caso per districarsi dall'ingorgo!
+                if (dist <= 6 && !recentlyBounced) {
+                    decideSmartDirection(px, py);
+                } else {
+                    changeDirection();
+                    recentlyBounced = false; // Reset dello stato: dal prossimo incrocio torna a inseguire!
+                }
+            }
         }
+
+        moveInDirection();
     }
 
-    // In src/model/ChasingGoblin.java - Algoritmo di movimento "Smart"
-    private void moveTowardsSmart(double tx, double ty) {
+    private void decideSmartDirection(double tx, double ty) {
         double dx = tx - this.x;
         double dy = ty - this.y;
         Direction primary, secondary;
 
-        // Determina le direzioni preferite basate sulla distanza maggiore
         if (Math.abs(dx) > Math.abs(dy)) {
             primary = (dx > 0) ? Direction.RIGHT : Direction.LEFT;
             secondary = (dy > 0) ? Direction.DOWN : Direction.UP;
@@ -48,35 +66,19 @@ public class ChasingGoblin extends Enemy {
             secondary = (dx > 0) ? Direction.RIGHT : Direction.LEFT;
         }
 
-        // Prova la direzione migliore, se bloccata prova quella secondaria (aggiramento)
-        if (canMove(primary)) {
+        java.util.List<Direction> valid = getValidDirections();
+
+        if (valid.contains(primary)) {
             this.currentDirection = primary;
-        } else if (canMove(secondary)) {
+        } else if (valid.contains(secondary)) {
             this.currentDirection = secondary;
         } else {
-            // Se totalmente bloccato, prova a cambiare direzione casualmente per sbloccarsi
-            if (random.nextInt(100) < 10) changeDirection();
+            changeDirection(); // Se bloccato, cerca l'uscita
         }
-
-        moveInDirection();
     }
 
-    private boolean canMove(Direction d) {
-        double nx = x, ny = y;
-        double step = 0.5; // Controlla mezzo blocco avanti
-        switch(d) {
-            case UP -> ny -= step; case DOWN -> ny += step;
-            case LEFT -> nx -= step; case RIGHT -> nx += step;
-        }
-        return Model.getInstance().isWalkable(nx, ny) &&
-                !Model.getInstance().isAreaOccupiedByOtherEnemy(nx, ny, this);
-    }
+    // --- METODI DI SUPPORTO EREDITATI E BOMB-DODGING ---
 
-
-    // --- ALGORITMI DI PERCEZIONE ---
-
-
-    // Conta i blocchi distruttibili nel rettangolo tra nemico e player
     protected int countObstacles(double x1, double y1, double x2, double y2) {
         int startCol = (int) Math.min(x1, x2);
         int endCol = (int) Math.max(x1, x2);
@@ -88,7 +90,6 @@ public class ChasingGoblin extends Enemy {
 
         for (int r = startRow; r <= endRow; r++) {
             for (int c = startCol; c <= endCol; c++) {
-                // Contiamo solo i blocchi che "assorbono" l'odore
                 if (map[r][c] == Config.CELL_DESTRUCTIBLE_BLOCK) {
                     count++;
                 }
@@ -97,25 +98,27 @@ public class ChasingGoblin extends Enemy {
         return count;
     }
 
-    // Ritorna la direzione di fuga se c'è una bomba vicina
+    @Override
+    protected void resetMemory() {
+        // Dimentica l'ultimo incrocio in cui ha preso una decisione.
+        // In questo modo, quando rimbalza indietro dopo lo scontro,
+        // al prossimo incrocio ricalcolerà immediatamente una nuova rotta per aggirare l'ostacolo!
+        this.lastDecisionX = -1;
+        this.lastDecisionY = -1;
+    }
+
     protected Direction getSafeDirectionFromBombs() {
         int[][] bombs = Model.getInstance().getActiveBombsData();
         for (int[] b : bombs) {
-            double dist = Math.abs(b[1] - this.x) + Math.abs(b[0] - this.y);
+            double bdist = Math.abs(b[1] - this.x) + Math.abs(b[0] - this.y);
 
-            if (dist < Config.SAFE_DISTANCE_FROM_BOMB) {
-                // Scappa nella direzione opposta
-                if (b[1] > this.x) return Direction.LEFT;  // Bomba a destra -> vai a sinistra
-                if (b[1] < this.x) return Direction.RIGHT; // Bomba a sinistra -> vai a destra
-                if (b[0] > this.y) return Direction.UP;    // Bomba sotto -> vai su
-                return Direction.DOWN;                     // Bomba sopra -> vai giù
+            if (bdist < Config.SAFE_DISTANCE_FROM_BOMB) {
+                if (b[1] > this.x) return Direction.LEFT;
+                if (b[1] < this.x) return Direction.RIGHT;
+                if (b[0] > this.y) return Direction.UP;
+                return Direction.DOWN;
             }
         }
-        return null; // Nessun pericolo
-    }
-    @Override
-    protected void handleWallCollision() {
-        // Gli inseguitori non cambiano direzione a caso. Si fermano e
-        // aspettano che moveTowards scelga una nuova direzione nel prossimo frame.
+        return null;
     }
 }

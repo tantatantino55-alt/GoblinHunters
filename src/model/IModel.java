@@ -18,7 +18,6 @@ public interface IModel {
     public boolean isWalkable(double nextX, double nextY);
     public void placeBomb();
     public void updateGameLogic();
-    public List<Enemy> getEnemies();
 
     PlayerState getPlayerState();
     long getPlayerStateStartTime();
@@ -61,4 +60,7 @@ public interface IModel {
     int getFireRow(int index);
     int getFireCol(int index);
     int getFireType(int index);
+    public boolean isEnemyAttacking(int index);
+
+    public boolean isEnemyWaiting(int index);
 }

@@ -40,7 +40,7 @@ public class Config {
     public static final double GOBLIN_HITBOX_HEIGHT = 0.8; //BOSS
     // Altezza logica
     // --- PARAMETRI DI SPAWN ---
-    public static final int MAX_ENEMIES_ON_MAP = 6;           // Requisito: Max 4-6
+    public static final int MAX_ENEMIES_ON_MAP = 1;           // Requisito: Max 4-6
     public static final long SPAWN_INTERVAL_MS = 3000;        // Ogni 3 secondi
     public static final int SPAWN_SAFE_DISTANCE = 2;
 

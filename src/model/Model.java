@@ -219,22 +219,26 @@ public class Model implements IModel {
         int startRow = (int) Math.floor(top);
         int endRow = (int) Math.floor(bottom);
 
+        // Controllo confini mappa
         if (startCol < 0 || endCol >= Config.GRID_WIDTH || startRow < 0 || endRow >= Config.GRID_HEIGHT) return false;
 
         for (int r = startRow; r <= endRow; r++) {
             for (int c = startCol; c <= endCol; c++) {
+
+                // 1. Controllo Muri (Indistruttibili e Distruttibili)
                 if (gameAreaArray[r][c] == Config.CELL_INDESTRUCTIBLE_BLOCK ||
                         gameAreaArray[r][c] == Config.CELL_DESTRUCTIBLE_BLOCK) {
                     return false;
                 }
-                if (getBombAt(r, c) != null && !isPlayerCurrentlyInside(r, c)) {
+
+                // 2. Controllo Bombe (Se c'è una bomba E nessuno ci è ancora sopra, diventa un muro)
+                if (getBombAt(r, c) != null && !isPlayerCurrentlyInside(r, c) && !isAnyEnemyCurrentlyInside(r, c)) {
                     return false;
                 }
             }
         }
         return true;
     }
-
 
     private boolean isPlayerCurrentlyInside(int r, int c) {
         double pX = player.getXCoordinate();
@@ -249,6 +253,25 @@ public class Model implements IModel {
 
         return pRight > c && pLeft < (c + 1.0) && pBottom > r && pTop < (r + 1.0);
     }
+
+    // NUOVO METODO: Permette anche ai goblin di uscire dalle bombe appena piazzate
+    private boolean isAnyEnemyCurrentlyInside(int r, int c) {
+        double hbW = Config.ENTITY_LOGICAL_HITBOX_WIDTH;
+        double hbH = Config.ENTITY_LOGICAL_HITBOX_HEIGHT;
+
+        for (Enemy e : enemies) {
+            double eLeft = e.getX() + (1.0 - hbW) / 2.0;
+            double eRight = eLeft + hbW;
+            double eBottom = e.getY() + 1.0 - 0.4;
+            double eTop = eBottom - hbH;
+
+            if (eRight > c && eLeft < (c + 1.0) && eBottom > r && eTop < (r + 1.0)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 
     // --- Helper per inchiodare il giocatore ai binari senza rovinare le hitbox ---
     private boolean isCellBlocked(int r, int c) {
@@ -584,7 +607,7 @@ public class Model implements IModel {
 
     private void manageSpawning() {
         // Controllo cap massimo (da Config)
-        if (enemies.size() >= Config.MAX_ENEMIES_ON_MAP) return;
+        if (enemies.size() >= Config.MAX_ENEMIES_ON_MAP) return; //HO messo 1 per le prove
 
         long currentTime = System.currentTimeMillis();
         // Controllo intervallo tempo (da Config)
@@ -608,9 +631,13 @@ public class Model implements IModel {
             r = randomGenerator.nextInt(Config.GRID_HEIGHT);
 
             if (isValidSpawnPoint(c, r)) {
+                /*
+                ----versione per generazone casuale------
+
                 // Scegliamo il tipo in base a quanti nemici ci sono già
                 int typeIndex = enemies.size() % 3;
                 Enemy newEnemy;
+
 
                 switch (typeIndex) {
                     case 1 -> newEnemy = new ChasingGoblin(c, r);
@@ -618,10 +645,19 @@ public class Model implements IModel {
                     default -> newEnemy = new CommonGoblin(c, r);
                 }
 
+
                 enemies.add(newEnemy);
                 spawned = true;
                 lastSpawnTime = System.currentTimeMillis(); // Reset del timer solo se nasce
                 System.out.println("Model: Generato " + newEnemy.getType() + " in (" + c + ", " + r + ")");
+                 */
+
+                // TEST: Crea SEMPRE E SOLO uno specifico gobllin
+                Enemy newEnemy = new ShooterGoblin(c, r);
+
+                enemies.add(newEnemy);
+                spawned = true;
+                lastSpawnTime = System.currentTimeMillis();
             }
             attempts++;
         }
@@ -688,11 +724,6 @@ public class Model implements IModel {
         player.setState(PlayerState.IDLE_FRONT); // Reset animazione
 
         System.out.println("RESPAWN: Player riportato all'inizio.");
-    }
-
-    @Override
-    public List<Enemy> getEnemies() {
-        return new ArrayList<>(enemies); // Restituisce una copia difensiva (Best Practice)+
     }
 
     private void updateEnemies() {
@@ -854,6 +885,22 @@ public class Model implements IModel {
                 }
                 // Se stanno cercando di allontanarsi, lasciali fare per sbrogliare la sovrapposizione!
             }
+        }
+        return false;
+    }
+
+    @Override
+    public boolean isEnemyAttacking(int index) {
+        if (isValidIndex(index) && enemies.get(index) instanceof ShooterGoblin) {
+            return ((ShooterGoblin) enemies.get(index)).isActuallyAttacking();
+        }
+        return false;
+    }
+
+    @Override
+    public boolean isEnemyWaiting(int index) {
+        if (isValidIndex(index) && enemies.get(index) instanceof ShooterGoblin) {
+            return ((ShooterGoblin) enemies.get(index)).isWaiting();
         }
         return false;
     }

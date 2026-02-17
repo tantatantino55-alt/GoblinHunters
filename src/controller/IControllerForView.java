@@ -30,6 +30,9 @@ public interface IControllerForView {
     public boolean isPlayerInvincible();
     public int getPlayerLives();
     public int getElapsedTimeInSeconds();
+    public boolean isEnemyAttacking(int index);
+
+
 
     // --- NUOVI METODI A INDICE ---
     int getBombCount();
@@ -52,4 +55,6 @@ public interface IControllerForView {
     int getFireRow(int index);
     int getFireCol(int index);
     int getFireType(int index);
+
+    public boolean isEnemyWaiting(int index);
 }

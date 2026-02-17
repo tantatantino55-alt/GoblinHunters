@@ -122,6 +122,10 @@ public abstract class Enemy extends Entity {
     }
 
     protected void handleWallCollision() {
+        // --- REINSERITO IL MATH.ROUND ---
+        // Ora che i goblin ignorano le bombe sotto ai piedi, questo è sicuro.
+        // Se sbattono, li teletrasporta impercettibilmente al centro della
+        // cella sicura, impedendo del tutto l'incastro sugli angoli!
         this.x = Math.round(this.x);
         this.y = Math.round(this.y);
 
@@ -131,10 +135,11 @@ public abstract class Enemy extends Entity {
         if (!valid.isEmpty()) {
             currentDirection = valid.get(random.nextInt(valid.size()));
         } else {
-            currentDirection = getOppositeDirection(); // Vicolo cieco
+            currentDirection = getOppositeDirection();
         }
 
-        resetMemory(); // Cancella la memoria anche se sbatte su un muro
+        recentlyBounced = true;
+        resetMemory();
     }
 
     protected Direction getOppositeDirection() {

@@ -59,6 +59,16 @@ public class ControllerForView implements IControllerForView {
     @Override public int getFireCol(int index) { return Model.getInstance().getFireCol(index); }
     @Override public int getFireType(int index) { return Model.getInstance().getFireType(index); }
 
+    @Override
+    public boolean isEnemyAttacking(int index){
+        return Model.getInstance().isEnemyAttacking(index);
+    }
+
+    @Override
+    public boolean isEnemyWaiting(int index){
+        return Model.getInstance().isEnemyWaiting(index);
+    }
+
     public static IControllerForView getInstance() {
         if (instance == null) instance = new ControllerForView();
         return instance;

@@ -150,7 +150,7 @@ public class ConcreteDrawer extends AbstractDrawer {
     }
     // In src/view/ConcreteDrawer.java
 
-
+/*versione 1
     private void drawEnemies(Graphics2D g2d) {
         int count = ControllerForView.getInstance().getEnemyCount();
 
@@ -204,8 +204,77 @@ public class ConcreteDrawer extends AbstractDrawer {
             }
         }
     }
+*/
 
+    //versione 2
+    private void drawEnemies(Graphics2D g2d) {
+        int count = ControllerForView.getInstance().getEnemyCount();
 
+        for (int i = 0; i < count; i++) {
+            // 1. Recupero dati logici dal Controller
+            double x = ControllerForView.getInstance().getEnemyX(i);
+            double y = ControllerForView.getInstance().getEnemyY(i);
+            utils.Direction dir = ControllerForView.getInstance().getEnemyDirection(i);
+            utils.EnemyType type = ControllerForView.getInstance().getEnemyType(i);
+
+            // 2. Definizione del prefisso per lo SpriteManager
+            String prefix = switch (type) {
+                case COMMON -> "COMMON";
+                case HUNTER -> "HUNTER";
+                case SHOOTER -> "SHOOTER";
+                default -> "COMMON";
+            };
+
+            // 3. Gestione degli stati e delle animazioni
+            String state = "RUN";
+            int frames = Config.GOBLIN_RUN_FRAMES;
+
+            // --- NUOVA LOGICA ANIMAZIONI SHOOTER ---
+            if (type == utils.EnemyType.SHOOTER) {
+                if (ControllerForView.getInstance().isEnemyAttacking(i)) {
+                    // FASE 2: Attacco vero e proprio (Esegue i 2 frame)
+                    state = "ATTACK";
+                    frames = Config.SHOOTER_ATTACK_FRAMES;
+
+                } else if (ControllerForView.getInstance().getEnemyTelegraph(i) != null ||
+                        ControllerForView.getInstance().isEnemyWaiting(i)) {
+
+                    // FASE 1 (MIRA) o FASE 3 (ATTESA PROIETTILE): Sta fermo in IDLE
+                    state = "IDLE";
+                    frames = 1; // Un solo frame per stare fermo
+                }
+            }
+
+            // Calcolo del frame corrente (velocità 80ms)
+            int currentFrame = (int) (System.currentTimeMillis() / 80) % frames;
+            String spriteKey = prefix + "_" + state + "_" + dir.name();
+
+            // 4. Recupero dello sprite caricato
+            BufferedImage sprite = SpriteManager.getInstance().getSprite(spriteKey, currentFrame);
+
+            // --- FALLBACK DI SICUREZZA ---
+            // Se il gioco prova a cercare "SHOOTER_IDLE_DOWN" ma tu non hai ancora
+            // caricato quella specifica animazione nello SpriteManager,
+            // prende il primo frame della corsa, così sembra fermo in piedi!
+            if (sprite == null && state.equals("IDLE")) {
+                spriteKey = prefix + "_RUN_" + dir.name();
+                sprite = SpriteManager.getInstance().getSprite(spriteKey, 0);
+            }
+
+            if (sprite != null) {
+                // 5. CALCOLO COORDINATE SCHERMO
+                int screenX = (int) (x * Config.TILE_SIZE) + Config.GRID_OFFSET_X;
+                int screenY = (int) (y * Config.TILE_SIZE) + Config.GRID_OFFSET_Y;
+
+                // 6. CENTRAMENTO E ALLINEAMENTO (Sprite 128x128 su Tile 64x64)
+                int drawX = screenX + (Config.TILE_SIZE - 128) / 2;
+                int drawY = screenY + (Config.TILE_SIZE - 128);
+
+                // Disegno finale dello sprite
+                g2d.drawImage(sprite, drawX, drawY, 128, 128, null);
+            }
+        }
+    }
 
     // Metodo di debug puro: disegna solo le linee della griglia
     private void drawDebugGrid(Graphics2D g2d) {
@@ -316,16 +385,18 @@ public class ConcreteDrawer extends AbstractDrawer {
             if (key != null) {
                 BufferedImage sprite = SpriteManager.getInstance().getSprite(key, 0);
 
-                int screenX = (int)(x * Config.TILE_SIZE) + Config.GRID_OFFSET_X + (Config.TILE_SIZE / 4);
-                int screenY = (int)(y * Config.TILE_SIZE) + Config.GRID_OFFSET_Y + (Config.TILE_SIZE / 4);
-
                 if (sprite != null) {
+                    // Poiché l'immagine PNG è già 64x64 con il proiettile centrato,
+                    // calcoliamo solo l'angolo in alto a sinistra della cella.
+                    int screenX = (int)(x * Config.TILE_SIZE) + Config.GRID_OFFSET_X;
+                    int screenY = (int)(y * Config.TILE_SIZE) + Config.GRID_OFFSET_Y;
+
+                    // Disegniamo l'immagine a grandezza naturale (64x64) senza alcun offset!
                     g2d.drawImage(sprite, screenX, screenY, Config.TILE_SIZE, Config.TILE_SIZE, null);
                 }
             }
         }
     }
-
 
     @Override public int getDrawingWidth() { return Config.GRID_OFFSET_X + Config.GAME_PANEL_WIDTH; }
     @Override public int getDrawingHeight() { return Config.GRID_OFFSET_Y + Config.GAME_PANEL_HEIGHT; }

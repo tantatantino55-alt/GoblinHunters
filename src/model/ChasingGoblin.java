@@ -6,7 +6,6 @@ import utils.EnemyType;
 
 public class ChasingGoblin extends Enemy {
 
-    // --- LA SOLUZIONE AL LOOP: Memoria dell'ultimo incrocio ---
     protected int lastDecisionX = -1;
     protected int lastDecisionY = -1;
 
@@ -22,7 +21,6 @@ public class ChasingGoblin extends Enemy {
     public void updateBehavior() {
         double px = Model.getInstance().xCoordinatePlayer();
         double py = Model.getInstance().yCoordinatePlayer();
-        double dist = Math.abs(this.x - px) + Math.abs(this.y - py);
 
         int currentGridX = (int) Math.round(x);
         int currentGridY = (int) Math.round(y);
@@ -30,26 +28,24 @@ public class ChasingGoblin extends Enemy {
         double diffX = Math.abs(x - currentGridX);
         double diffY = Math.abs(y - currentGridY);
 
+        // DECISIONE SOLO AL CENTRO DELLA CELLA
         if (diffX < speed && diffY < speed) {
             if (currentGridX != lastDecisionX || currentGridY != lastDecisionY) {
-
                 this.x = currentGridX;
                 this.y = currentGridY;
-
                 this.lastDecisionX = currentGridX;
                 this.lastDecisionY = currentGridY;
 
-                // LA MAGIA: Se ha appena rimbalzato, NON calcola la rotta per il player,
-                // ma gira a caso per districarsi dall'ingorgo!
-                if (dist <= 6 && !recentlyBounced) {
-                    decideSmartDirection(px, py);
+                // Se ho appena sbattuto contro un compagno, scelgo una via a caso per smaltire il traffico
+                if (recentlyBounced) {
+                    //changeDirection();
+                    recentlyBounced = false;
                 } else {
-                    changeDirection();
-                    recentlyBounced = false; // Reset dello stato: dal prossimo incrocio torna a inseguire!
+                    // Logica "Minvo": Punto il giocatore
+                    decideSmartDirection(px, py);
                 }
             }
         }
-
         moveInDirection();
     }
 
@@ -58,6 +54,7 @@ public class ChasingGoblin extends Enemy {
         double dy = ty - this.y;
         Direction primary, secondary;
 
+        // Scelgo l'asse dove la distanza è maggiore
         if (Math.abs(dx) > Math.abs(dy)) {
             primary = (dx > 0) ? Direction.RIGHT : Direction.LEFT;
             secondary = (dy > 0) ? Direction.DOWN : Direction.UP;
@@ -67,65 +64,34 @@ public class ChasingGoblin extends Enemy {
         }
 
         java.util.List<Direction> valid = getValidDirections();
+        Direction opposite = getOppositeDirection();
 
+        // Evita di tornare indietro a meno che non sia un vicolo cieco
+        if (valid.size() > 1) {
+            valid.remove(opposite);
+        }
+
+        // 1. Prova la via più diretta
         if (valid.contains(primary)) {
             this.currentDirection = primary;
-        } else if (valid.contains(secondary)) {
+        }
+        // 2. Prova la via secondaria per aggirare l'ostacolo
+        else if (valid.contains(secondary)) {
             this.currentDirection = secondary;
-        } else {
-            changeDirection(); // Se bloccato, cerca l'uscita
         }
-    }
-
-    // --- METODI DI SUPPORTO EREDITATI E BOMB-DODGING ---
-
-    protected int countObstacles(double x1, double y1, double x2, double y2) {
-        int startCol = (int) Math.min(x1, x2);
-        int endCol = (int) Math.max(x1, x2);
-        int startRow = (int) Math.min(y1, y2);
-        int endRow = (int) Math.max(y1, y2);
-
-        int count = 0;
-        int[][] map = Model.getInstance().getGameAreaArray();
-
-        for (int r = startRow; r <= endRow; r++) {
-            for (int c = startCol; c <= endCol; c++) {
-                if (map[r][c] == Config.CELL_DESTRUCTIBLE_BLOCK) {
-                    count++;
-                }
-            }
+        // 3. Prendi una qualsiasi via libera rimasta
+        else if (!valid.isEmpty()) {
+            this.currentDirection = valid.get(0);
         }
-        return count;
+        // 4. Vicolo cieco, torna indietro
+        else {
+            this.currentDirection = opposite;
+        }
     }
 
     @Override
     protected void resetMemory() {
-        // Dimentica l'ultimo incrocio in cui ha preso una decisione.
-        // In questo modo, quando rimbalza indietro dopo lo scontro,
-        // al prossimo incrocio ricalcolerà immediatamente una nuova rotta per aggirare l'ostacolo!
         this.lastDecisionX = -1;
         this.lastDecisionY = -1;
-    }
-
-    protected Direction getSafeDirectionFromBombs() {
-        IModel model = Model.getInstance();
-        int bombCount = model.getBombCount();
-
-        for (int i = 0; i < bombCount; i++) {
-            int bombRow = model.getBombRow(i);
-            int bombCol = model.getBombCol(i);
-
-            // Calcola la distanza tra il goblin e la singola bomba
-            double bdist = Math.abs(bombCol - this.x) + Math.abs(bombRow - this.y);
-
-            if (bdist < Config.SAFE_DISTANCE_FROM_BOMB) {
-                // Scappa nella direzione opposta alla bomba
-                if (bombCol > this.x) return Direction.LEFT;
-                if (bombCol < this.x) return Direction.RIGHT;
-                if (bombRow > this.y) return Direction.UP;
-                return Direction.DOWN;
-            }
-        }
-        return null;
     }
 }

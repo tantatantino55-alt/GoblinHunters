@@ -71,7 +71,13 @@ public class ControllerForView implements IControllerForView {
 
     @Override
     public void playerShoot() {
-        model.Model.getInstance().playerShoot();
+        Model.getInstance().playerShoot();
+    }
+    // In ControllerForView.java
+    @Override
+    public void resetPlayerStateAfterAction() {
+        // Il controller delega la logica al model
+        Model.getInstance().resetPlayerStateAfterAction();
     }
 
     @Override

@@ -60,5 +60,8 @@ public interface IControllerForView {
 
     void playerShoot();
 
+    // In ControllerForView.java
+    void resetPlayerStateAfterAction();
+
     void staffAttack();
 }

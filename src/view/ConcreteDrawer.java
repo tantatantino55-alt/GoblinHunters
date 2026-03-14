@@ -24,26 +24,25 @@ public class ConcreteDrawer extends AbstractDrawer {
     @Override
     public void draw(Graphics g) {
         Graphics2D g2d = (Graphics2D) g;
-
-        // 1. Sfondo Base (Nero di sicurezza per tutto lo schermo)
         g2d.setColor(Color.BLACK);
         g2d.fillRect(0, 0, getDrawingWidth(), getDrawingHeight());
 
-        // 2. Disegna la Mappa (Pavimento + Muri)
         drawMap(g2d);
-        drawDestructions(g2d);
+        drawDestructions(g2d); // Qui vengono disegnati i blocchi che esplodono
         drawFire(g2d);
-
-        // 3. Disegna le Entità
         drawBombs(g2d);
         drawEnemies(g2d);
         drawProjectiles(g2d);
-        drawPlayer(g2d);
 
-        // 4. Debug Griglia (Disegna linee sopra tutto per controllo)
+        // --- FIX TREMOLIO: USARE IF/ELSE ---
+        PlayerState state = ControllerForView.getInstance().getPlayerState();
+        if (state.name().startsWith("ATTACK")) {
+            drawStaffAttack(g2d); // Gestisce i 10 frame
+        } else {
+            drawPlayer(g2d); // Gestisce IDLE, RUN, CAST (3 frame) e INVINCIBILITÀ
+        }
+
         drawDebugGrid(g2d);
-
-        // 5. Disegna l'HUD (Senza ridisegnare il rettangolo nero!)
         drawHUD(g2d);
     }
 
@@ -418,6 +417,33 @@ public class ConcreteDrawer extends AbstractDrawer {
                     g2d.drawImage(sprite, screenX, screenY, Config.TILE_SIZE, Config.TILE_SIZE, null);
                 }
             }
+        }
+    }
+    private void drawStaffAttack(Graphics2D g2d) {
+        PlayerState state = ControllerForView.getInstance().getPlayerState();
+        double logX = ControllerForView.getInstance().getXCoordinatePlayer();
+        double logY = ControllerForView.getInstance().getYCoordinatePlayer();
+        long startTime = ControllerForView.getInstance().getPlayerStateStartTime();
+
+        int totalFrames = 10;
+        long timePassed = System.currentTimeMillis() - startTime;
+        int currentFrame = (int) (timePassed / Config.ANIMATION_DELAY_STAFF_ATTACK);
+
+        if (currentFrame >= totalFrames) {
+            ControllerForView.getInstance().resetPlayerStateAfterAction();
+            return;
+        }
+
+        BufferedImage sprite = spriteManager.getSprite(state, currentFrame);
+        if (sprite != null) {
+            // --- FIX COORDINATE: Usa la stessa logica di drawPlayer ---
+            int screenX = (int) (logX * Config.TILE_SIZE) + Config.GRID_OFFSET_X;
+            int screenY = (int) (logY * Config.TILE_SIZE) + Config.GRID_OFFSET_Y;
+
+            int drawX = screenX + (Config.TILE_SIZE - Config.ENTITY_FRAME_SIZE) / 2;
+            int drawY = screenY + (Config.TILE_SIZE - Config.ENTITY_FRAME_SIZE);
+
+            g2d.drawImage(sprite, drawX, drawY, Config.ENTITY_FRAME_SIZE, Config.ENTITY_FRAME_SIZE, null);
         }
     }
 

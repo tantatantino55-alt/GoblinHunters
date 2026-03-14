@@ -87,6 +87,15 @@ public class Model implements IModel {
     // src/model/Model.java
 
     private void updatePlayerMovement() {
+        PlayerState currentState = player.getState();
+        // ------------------------------------------------------
+        if (currentState.name().startsWith("ATTACK")) {
+            return; // Blocca l'aggiornamento del movimento/stato
+        }
+
+
+
+
         double currentX = player.getXCoordinate();
         double currentY = player.getYCoordinate();
         double deltaX = player.getDeltaX();
@@ -1091,15 +1100,12 @@ public class Model implements IModel {
 
 // ... dentro la classe Model ...
 
-
-
     @Override
     public void staffAttack() {
         double startX = player.getXCoordinate();
         double startY = player.getYCoordinate();
         utils.Direction dir = player.getDirection();
 
-        // 1. Calcolo posizione Hitbox (stessa logica Aura)
         double targetX = startX;
         double targetY = startY;
         double OFFSET = 0.7;
@@ -1111,42 +1117,59 @@ public class Model implements IModel {
             case UP    -> targetY -= OFFSET;
         }
 
-        // 2. Definizione Hitbox geometrica
         Rectangle2D.Double staffHitbox = new Rectangle2D.Double(targetX, targetY, 0.8, 0.8);
 
-        // 3. GESTIONE BLOCCHI (Rimozione istantanea sulla mappa logica)
+        // Gestione Blocchi
         int gridX = (int) Math.round(targetX);
         int gridY = (int) Math.round(targetY);
         int[][] map = getGameAreaArray();
 
         if (gridY >= 0 && gridY < map.length && gridX >= 0 && gridX < map[0].length) {
-            // Se è un blocco distruttibile, diventa cella vuota
             if (map[gridY][gridX] == Config.CELL_DESTRUCTIBLE_BLOCK) {
                 map[gridY][gridX] = Config.CELL_EMPTY;
+                destructionEffects.add(new BlockDestruction(gridY, gridX));
             }
         }
 
-        // 4. GESTIONE NEMICI (Rimozione istantanea tramite Iterator)
+        // Gestione Nemici
         Iterator<Enemy> eIt = enemies.iterator();
         while (eIt.hasNext()) {
             Enemy e = eIt.next();
-            Rectangle2D.Double enemyBox = new Rectangle2D.Double(e.getX(), e.getY(), Config.GOBLIN_HITBOX_WIDTH, Config.GOBLIN_HITBOX_HEIGHT);
-
+            Rectangle2D.Double enemyBox = new Rectangle2D.Double(e.getX(), e.getY(), 0.6, 0.6);
             if (staffHitbox.intersects(enemyBox)) {
                 eIt.remove();
-                System.out.println("Goblin eliminato dal colpo del bastone!");
-                break; // Colpisce un solo nemico e si ferma
+                break;
             }
         }
 
-        // 5. IMPOSTAZIONE DELLO STATO ANIMAZIONE (Basato sulla direzione)
+        // --- LOGICA DI VISUALIZZAZIONE (Stessa del Casting) ---
+        // Impostiamo lo stato ATTACK specifico per la direzione
         switch (dir) {
             case UP    -> player.setState(PlayerState.ATTACK_BACK);
             case DOWN  -> player.setState(PlayerState.ATTACK_FRONT);
             case LEFT  -> player.setState(PlayerState.ATTACK_LEFT);
             case RIGHT -> player.setState(PlayerState.ATTACK_RIGHT);
         }
+
+        // Fondamentale: aggiorniamo il tempo di inizio stato per la View
+
     }
+    // In Model.java
+    @Override
+    public void resetPlayerStateAfterAction() {
+        utils.Direction dir = player.getDirection();
+
+        PlayerState idleState = switch (dir) {
+            case UP    -> PlayerState.IDLE_BACK;
+            case DOWN  -> PlayerState.IDLE_FRONT;
+            case LEFT  -> PlayerState.IDLE_LEFT;
+            case RIGHT -> PlayerState.IDLE_RIGHT;
+        };
+
+        player.setState(idleState);
+    }
+
+
 
     public static IModel getInstance() {
         if (instance == null) instance = new Model();

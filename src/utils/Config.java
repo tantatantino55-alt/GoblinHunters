@@ -216,6 +216,8 @@ public class Config {
     public static final int AURA_DOWN_START  = 45;
     public static final int AURA_UP_START    = 57;
 
+    public static final int  ANIMATION_DELAY_STAFF_ATTACK = 15;
+
 // ... (altre costanti)
 
     // --- SLIDING / CORNER CORRECTION ---

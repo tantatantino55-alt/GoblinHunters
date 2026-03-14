@@ -64,4 +64,7 @@ public interface IModel {
     public boolean isEnemyAttacking(int index);
 
     public boolean isEnemyWaiting(int index);
+
+    // In Model.java
+    void resetPlayerStateAfterAction();
 }

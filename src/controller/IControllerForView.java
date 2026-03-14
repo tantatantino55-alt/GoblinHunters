@@ -59,4 +59,6 @@ public interface IControllerForView {
     public boolean isEnemyWaiting(int index);
 
     void playerShoot();
+
+    void staffAttack();
 }

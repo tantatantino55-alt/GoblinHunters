@@ -5,10 +5,13 @@ import utils.Direction;
 import utils.EnemyType;
 import utils.PlayerState;
 
+import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
+
+
 
 
 public class Model implements IModel {
@@ -1083,6 +1086,65 @@ public class Model implements IModel {
             gameAreaArray[row][col] = Config.CELL_EMPTY;
             destructionEffects.add(new BlockDestruction(row, col));
             System.out.println("Aura: Cassa distrutta in [" + row + ", " + col + "]");
+        }
+    }
+
+// ... dentro la classe Model ...
+
+
+
+    @Override
+    public void staffAttack() {
+        double startX = player.getXCoordinate();
+        double startY = player.getYCoordinate();
+        utils.Direction dir = player.getDirection();
+
+        // 1. Calcolo posizione Hitbox (stessa logica Aura)
+        double targetX = startX;
+        double targetY = startY;
+        double OFFSET = 0.7;
+
+        switch (dir) {
+            case RIGHT -> targetX += OFFSET;
+            case LEFT  -> targetX -= OFFSET;
+            case DOWN  -> targetY += OFFSET;
+            case UP    -> targetY -= OFFSET;
+        }
+
+        // 2. Definizione Hitbox geometrica
+        Rectangle2D.Double staffHitbox = new Rectangle2D.Double(targetX, targetY, 0.8, 0.8);
+
+        // 3. GESTIONE BLOCCHI (Rimozione istantanea sulla mappa logica)
+        int gridX = (int) Math.round(targetX);
+        int gridY = (int) Math.round(targetY);
+        int[][] map = getGameAreaArray();
+
+        if (gridY >= 0 && gridY < map.length && gridX >= 0 && gridX < map[0].length) {
+            // Se è un blocco distruttibile, diventa cella vuota
+            if (map[gridY][gridX] == Config.CELL_DESTRUCTIBLE_BLOCK) {
+                map[gridY][gridX] = Config.CELL_EMPTY;
+            }
+        }
+
+        // 4. GESTIONE NEMICI (Rimozione istantanea tramite Iterator)
+        Iterator<Enemy> eIt = enemies.iterator();
+        while (eIt.hasNext()) {
+            Enemy e = eIt.next();
+            Rectangle2D.Double enemyBox = new Rectangle2D.Double(e.getX(), e.getY(), Config.GOBLIN_HITBOX_WIDTH, Config.GOBLIN_HITBOX_HEIGHT);
+
+            if (staffHitbox.intersects(enemyBox)) {
+                eIt.remove();
+                System.out.println("Goblin eliminato dal colpo del bastone!");
+                break; // Colpisce un solo nemico e si ferma
+            }
+        }
+
+        // 5. IMPOSTAZIONE DELLO STATO ANIMAZIONE (Basato sulla direzione)
+        switch (dir) {
+            case UP    -> player.setState(PlayerState.ATTACK_BACK);
+            case DOWN  -> player.setState(PlayerState.ATTACK_FRONT);
+            case LEFT  -> player.setState(PlayerState.ATTACK_LEFT);
+            case RIGHT -> player.setState(PlayerState.ATTACK_RIGHT);
         }
     }
 

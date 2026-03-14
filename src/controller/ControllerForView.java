@@ -74,6 +74,11 @@ public class ControllerForView implements IControllerForView {
         model.Model.getInstance().playerShoot();
     }
 
+    @Override
+    public void staffAttack() {
+        Model.getInstance().staffAttack();
+    }
+
     public static IControllerForView getInstance() {
         if (instance == null) instance = new ControllerForView();
         return instance;

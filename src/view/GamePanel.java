@@ -12,6 +12,7 @@ public class GamePanel extends JPanel {
 
     private boolean canPlaceBomb = true;
     private boolean canShootAura = true;
+    private boolean canStaffAttack = true;
 
     public GamePanel(AbstractDrawer drawer) {
         this.drawer = drawer;
@@ -136,6 +137,28 @@ public class GamePanel extends JPanel {
             @Override
             public void actionPerformed(ActionEvent e) {
                 canShootAura = true; // Sblocchiamo il colpo
+            }
+        });
+
+        // --- COLPO DEL BASTONE (TASTO Z) ---
+        im.put(KeyStroke.getKeyStroke("Z"), "staffAttack");
+        am.put("staffAttack", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // Può colpire sempre, l'unico limite è il rilascio del tasto
+                if (canStaffAttack) {
+                    ControllerForView.getInstance().staffAttack();
+                    canStaffAttack = false; // Blocca ulteriori colpi istantanei
+                }
+            }
+        });
+
+// --- RILASCIO TASTO Z ---
+        im.put(KeyStroke.getKeyStroke("released Z"), "resetStaff");
+        am.put("resetStaff", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                canStaffAttack = true; // Sblocca per il prossimo colpo
             }
         });
     }

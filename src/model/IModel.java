@@ -4,8 +4,6 @@ import utils.Direction;
 import utils.EnemyType;
 import utils.PlayerState;
 
-import java.util.List;
-
 public interface IModel {
     public int getNumColumns();
     public int getNumRows();
@@ -34,6 +32,7 @@ public interface IModel {
     public boolean isPlayerInvincible();
     public int getPlayerLives();
     public int getElapsedTimeInSeconds();
+    void staffAttack();
 
     // --- NUOVI METODI A INDICE (Sostituiscono le allocazioni) ---
     // BOMBE

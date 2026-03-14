@@ -30,21 +30,24 @@ public class AuraProjectile extends Projectile {
 
     @Override
     protected void handleCollision(double nextX, double nextY) {
-        // 0. CONTROLLO RAGGIO D'AZIONE
-        // Calcoliamo la distanza percorsa dal punto di origine
-        double distanceTraveled = Math.abs(nextX - startX) + Math.abs(nextY - startY);
+        // --- 0. CONTROLLO LIMITI ASSOLUTI (Coordinate fisiche) ---
+        if (nextX < 0 || nextX >= Config.GRID_WIDTH || nextY < 0 || nextY >= Config.GRID_HEIGHT) {
+            this.active = false;
+            return;
+        }
 
-        // Se il proiettile ha percorso una distanza pari o superiore al raggio massimo, si dissolve
+        // 1. CONTROLLO RAGGIO D'AZIONE
+        double distanceTraveled = Math.abs(nextX - startX) + Math.abs(nextY - startY);
         if (distanceTraveled >= maxRange) {
             this.active = false;
             return;
         }
 
-        // 1. Controlliamo cosa c'è nella cella di destinazione
-        int col = (int) (nextX + 0.5); // Centro della hitbox
+        // 2. Calcolo indici della griglia
+        int col = (int) (nextX + 0.5);
         int row = (int) (nextY + 0.5);
 
-        // Controllo limiti mappa
+        // --- CONTROLLO DI SICUREZZA ANTI-CRASH (Indici array) ---
         if (col < 0 || col >= Config.GRID_WIDTH || row < 0 || row >= Config.GRID_HEIGHT) {
             this.active = false;
             return;
@@ -60,12 +63,9 @@ public class AuraProjectile extends Projectile {
 
         // CASO B: Muro Distruttibile -> Il proiettile lo rompe e si ferma
         if (cellType == Config.CELL_DESTRUCTIBLE_BLOCK) {
-
-            // Invece di far sparire la cassa nel nulla, diciamo al Model
-            // di generare l'esplosione dei frammenti e registrarla!
+            // Chiama l'esplosione dei frammenti!
             Model.getInstance().destroyBlock(row, col);
-
-            this.active = false; // L'energia dell'Aura si esaurisce
+            this.active = false;
             return;
         }
 

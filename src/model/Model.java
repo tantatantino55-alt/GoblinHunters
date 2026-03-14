@@ -332,22 +332,30 @@ public class Model implements IModel {
 
         switch (current) {
             case RUN_RIGHT:
-            case IDLE_RIGHT: // Se era già fermo a destra, resta fermo
+            case IDLE_RIGHT:
+            case CAST_RIGHT:   // <-- AGGIUNTO
+            case ATTACK_RIGHT: // <-- AGGIUNTO
                 player.setState(PlayerState.IDLE_RIGHT);
                 break;
 
             case RUN_LEFT:
             case IDLE_LEFT:
+            case CAST_LEFT:    // <-- AGGIUNTO
+            case ATTACK_LEFT:  // <-- AGGIUNTO
                 player.setState(PlayerState.IDLE_LEFT);
                 break;
 
             case RUN_BACK:
             case IDLE_BACK:
+            case CAST_BACK:    // <-- AGGIUNTO
+            case ATTACK_BACK:  // <-- AGGIUNTO
                 player.setState(PlayerState.IDLE_BACK);
                 break;
 
             case RUN_FRONT:
             case IDLE_FRONT:
+            case CAST_FRONT:   // <-- AGGIUNTO
+            case ATTACK_FRONT: // <-- AGGIUNTO
             default:
                 player.setState(PlayerState.IDLE_FRONT);
                 break;
@@ -1045,11 +1053,26 @@ public class Model implements IModel {
     private void spawnAuraProjectile() {
         double startX = player.getXCoordinate();
         double startY = player.getYCoordinate();
-        Direction dir = player.getDirection();
+        utils.Direction dir = player.getDirection();
 
-        // NESSUN OFFSET MATEMATICO! Spawna esattamente sulle coordinate logiche del mago.
-        // Essendo la tile già centrata 64x64, si allineerà perfettamente.
-        Projectile aura = new AuraProjectile(startX, startY, dir);
+        double projX = startX;
+        double projY = startY;
+
+        // --- VALORI DI OFFSET MANUALI (Modificali a piacimento!) ---
+        // 0.5 = Mezza cella. Usa valori positivi/negativi per centrare l'Aura
+        double OFFSET_RIGHT = 0.3;
+        double OFFSET_LEFT  = -0.3;
+        double OFFSET_DOWN  = 0.3;
+        double OFFSET_UP    = -0.3;
+
+        switch (dir) {
+            case RIGHT -> projX += OFFSET_RIGHT;
+            case LEFT  -> projX += OFFSET_LEFT;
+            case DOWN  -> projY += OFFSET_DOWN;
+            case UP    -> projY += OFFSET_UP;
+        }
+
+        Projectile aura = new AuraProjectile(projX, projY, dir);
         addProjectile(aura);
     }
 

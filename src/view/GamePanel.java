@@ -28,7 +28,7 @@ public class GamePanel extends JPanel {
         drawer.draw(g);
 
         // Sincronizza il disegno grafico con il refresh del monitor (V-Sync)
-        Toolkit.getDefaultToolkit().sync();
+        //Toolkit.getDefaultToolkit().sync();
     }
 
     private void setupKeyBindings() {

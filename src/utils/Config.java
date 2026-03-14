@@ -70,6 +70,7 @@ public class Config {
     public static final String SHOOTERGOBLIN_SHEET = "/ShooterGoblin.png";
     public static final String CHASING_GOBLIN_SHEET = "/ChasingGoblin.png";
     public static final String COMMON_GOBLIN = "/CommonGoblin.png";
+    public static final String VILLAGE_FRAME="/VillageFrame";
 
 
 
@@ -232,6 +233,13 @@ public class Config {
     // Quanto dura il fuoco nel mondo di gioco? (30 tick = 0.5 secondi a 60 FPS)
     public static final int FIRE_DURATION_TICKS = 30;
 
+    // Calcolati per centrare la griglia (13*64 x 11*64) in 960x932
+    public static final int FRAME_OFFSET_X = 64;
+    public static final int FRAME_OFFSET_Y = 114;
+
+    // Dimensioni della finestra uguali alla cornice
+    public static final int SCREEN_WIDTH = 960;
+    public static final int SCREEN_HEIGHT = 932;
     // --- ANIMAZIONE FUOCO (View) ---
 
 }

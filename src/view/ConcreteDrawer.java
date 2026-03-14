@@ -399,9 +399,9 @@ public class ConcreteDrawer extends AbstractDrawer {
             } else {
                 switch (dirOrdinal) {
                     case 0 -> key = "AURA_UP";
-                    case 1 -> key = "AURA_DOWN";
+                    case 1 -> key = "AURA_RIGHT";
                     case 2 -> key = "AURA_LEFT";
-                    case 3 -> key = "AURA_RIGHT";
+                    case 3 -> key = "AURA_DOWN";
                 }
             }
 

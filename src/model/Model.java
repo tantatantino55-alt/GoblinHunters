@@ -1060,10 +1060,10 @@ public class Model implements IModel {
 
         // --- VALORI DI OFFSET MANUALI (Modificali a piacimento!) ---
         // 0.5 = Mezza cella. Usa valori positivi/negativi per centrare l'Aura
-        double OFFSET_RIGHT = 0.3;
-        double OFFSET_LEFT  = -0.3;
-        double OFFSET_DOWN  = 0.3;
-        double OFFSET_UP    = -0.3;
+        double OFFSET_RIGHT = 0.7;
+        double OFFSET_LEFT  = -0.7;
+        double OFFSET_DOWN  = 0.7;
+        double OFFSET_UP    = -0.7;
 
         switch (dir) {
             case RIGHT -> projX += OFFSET_RIGHT;

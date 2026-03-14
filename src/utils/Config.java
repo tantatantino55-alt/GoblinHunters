@@ -146,6 +146,8 @@ public class Config {
     public static final int AURA_LEFT_INDEX  = 13;
     public static final int AURA_RIGHT_INDEX = 14;
     public static final int AURA_UP_INDEX    = 15;
+    public static final int  AuraProjectileSpeed = 2;
+    public static final int  BoneProjectileSpeed = 2;
 
 
 

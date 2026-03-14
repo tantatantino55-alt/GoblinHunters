@@ -14,7 +14,7 @@ public class AuraProjectile extends Projectile {
 
     public AuraProjectile(double startX, double startY, Direction dir) {
         // Velocità alta (es. 4x), NON è nemico (false)
-        super(startX, startY, dir, 4.0, false);
+        super(startX, startY, dir, Config.AuraProjectileSpeed, false);
 
         this.startX = startX;
         this.startY = startY;

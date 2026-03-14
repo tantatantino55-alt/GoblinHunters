@@ -118,7 +118,7 @@ public class Player extends Entity {
         this.lastCastTime = System.currentTimeMillis();
         // A 60FPS, 15 tick sono esattamente 0.25 secondi
         // (Perfetto per mostrare 3 frame d'animazione a 80ms l'uno)
-        this.castTimer = 8;
+        this.castTimer = 10;
         this.isMoving = false; // Ferma visivamente le gambe
     }
 

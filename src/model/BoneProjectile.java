@@ -1,5 +1,6 @@
 package model;
 
+import utils.Config;
 import utils.Direction;
 
 public class BoneProjectile extends Projectile {
@@ -13,7 +14,7 @@ public class BoneProjectile extends Projectile {
 
     public BoneProjectile(double startX, double startY, Direction dir) {
         // Velocità media (es. 3x), è un proiettile nemico (true)
-        super(startX, startY, dir, 3.0, true);
+        super(startX, startY, dir, Config.BoneProjectileSpeed, true);
         this.startX = startX;
         this.startY = startY;
     }

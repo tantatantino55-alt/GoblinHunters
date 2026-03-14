@@ -69,6 +69,11 @@ public class ControllerForView implements IControllerForView {
         return Model.getInstance().isEnemyWaiting(index);
     }
 
+    @Override
+    public void playerShoot() {
+        model.Model.getInstance().playerShoot();
+    }
+
     public static IControllerForView getInstance() {
         if (instance == null) instance = new ControllerForView();
         return instance;

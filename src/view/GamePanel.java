@@ -11,6 +11,7 @@ public class GamePanel extends JPanel {
     private AbstractDrawer drawer = null;
 
     private boolean canPlaceBomb = true;
+    private boolean canShootAura = true;
 
     public GamePanel(AbstractDrawer drawer) {
         this.drawer = drawer;
@@ -114,6 +115,27 @@ public class GamePanel extends JPanel {
             @Override
             public void actionPerformed(ActionEvent e) {
                 canPlaceBomb = true; // Sblocchiamo la possibilità di piazzare una nuova bomba
+            }
+        });
+
+        //colpo d'aura
+        im.put(KeyStroke.getKeyStroke("X"), "shootAura");
+        am.put("shootAura", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (canShootAura) {
+                    ControllerForView.getInstance().playerShoot();
+                    canShootAura = false; // Blocchiamo fino al rilascio
+                }
+            }
+        });
+
+        // --- NUOVO: RILASCIO TASTO X ---
+        im.put(KeyStroke.getKeyStroke("released X"), "resetAura");
+        am.put("resetAura", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                canShootAura = true; // Sblocchiamo il colpo
             }
         });
     }

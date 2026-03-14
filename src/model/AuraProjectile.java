@@ -60,9 +60,12 @@ public class AuraProjectile extends Projectile {
 
         // CASO B: Muro Distruttibile -> Il proiettile lo rompe e si ferma
         if (cellType == Config.CELL_DESTRUCTIBLE_BLOCK) {
-            // Distruggi il muro (imposta a vuoto)
-            Model.getInstance().getGameAreaArray()[row][col] = Config.CELL_EMPTY;
-            this.active = false; // Il colpo si consuma
+
+            // Invece di far sparire la cassa nel nulla, diciamo al Model
+            // di generare l'esplosione dei frammenti e registrarla!
+            Model.getInstance().destroyBlock(row, col);
+
+            this.active = false; // L'energia dell'Aura si esaurisce
             return;
         }
 

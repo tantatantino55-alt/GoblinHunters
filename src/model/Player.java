@@ -24,6 +24,12 @@ public class Player extends Entity {
     private int maxBombs = Config.INITIAL_MAX_BOMBS;
     private int bombRadius = Config.DEFAULT_BOMB_RADIUS;
 
+    // --- NUOVI ATTRIBUTI PER L'ATTACCO (Aura) ---
+    private boolean isCasting = false;
+    private int castTimer = 0;       // Conta i tick (frame logici) del lancio
+    private long lastCastTime = 0;   // Per calcolare il Cooldown
+    private final long CAST_COOLDOWN_MS = 800; // 0.8 secondi di attesa tra un colpo e l'altro
+
     public Player(double startX, double startY) {
         this.xCoordinate = startX;
         this.yCoordinate = startY;
@@ -36,7 +42,7 @@ public class Player extends Entity {
 
     public void setDirection(Direction newDirection) {
         this.currentDirection = newDirection;
-        updateState(); // Aggiorna lo sprite subito
+        //updateState(); // Aggiorna lo sprite subito
     }
 
     public Direction getDirection() {
@@ -102,4 +108,29 @@ public class Player extends Entity {
     public int getBombRadius() { return bombRadius; }
     public void setBombRadius(int radius) { this.bombRadius = radius; }
     public double getSpeed() { return speed; }
+
+    public boolean canCast() {
+        return System.currentTimeMillis() - lastCastTime > CAST_COOLDOWN_MS;
+    }
+
+    public void startCast() {
+        this.isCasting = true;
+        this.lastCastTime = System.currentTimeMillis();
+        // A 60FPS, 15 tick sono esattamente 0.25 secondi
+        // (Perfetto per mostrare 3 frame d'animazione a 80ms l'uno)
+        this.castTimer = 8;
+        this.isMoving = false; // Ferma visivamente le gambe
+    }
+
+    public boolean isCasting() { return isCasting; }
+
+    public void decrementCastTimer() {
+        if (castTimer > 0) castTimer--;
+    }
+
+    public int getCastTimer() { return castTimer; }
+
+    public void finishCast() { this.isCasting = false; }
+
+
 }

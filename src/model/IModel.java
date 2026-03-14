@@ -48,6 +48,8 @@ public interface IModel {
     double getProjectileY(int index);
     boolean isProjectileEnemy(int index);
     int getProjectileDirection(int index);
+    public void playerShoot();
+    public void destroyBlock(int row, int col);
 
     // EFFETTI DISTRUZIONE CASSE
     int getDestructionCount();

@@ -311,16 +311,18 @@ public class Model implements IModel {
 
     private void updatePlayerAction(double dx, double dy) {
         if (dx > 0) {
+            player.setDirection(Direction.RIGHT); // <--- AGGIUNTO
             player.setState(PlayerState.RUN_RIGHT);
         } else if (dx < 0) {
+            player.setDirection(Direction.LEFT);  // <--- AGGIUNTO
             player.setState(PlayerState.RUN_LEFT);
         } else if (dy > 0) {
+            player.setDirection(Direction.DOWN);  // <--- AGGIUNTO
             player.setState(PlayerState.RUN_FRONT);
         } else if (dy < 0) {
+            player.setDirection(Direction.UP);    // <--- AGGIUNTO
             player.setState(PlayerState.RUN_BACK);
         } else {
-            // IL GIOCATORE È FERMO (dx == 0 e dy == 0)
-            // Dobbiamo capire in che direzione guardava prima di fermarsi
             updateIdleState();
         }
     }
@@ -734,40 +736,41 @@ public class Model implements IModel {
 
     @Override
     public void updateGameLogic() {
-        elapsedTicks++; // Aumenta di 1 ogni frame (60 volte al secondo)
+        elapsedTicks++;
 
-        // 1. Prima muovi tutti
-        updatePlayerMovement(); // Può restare private!
-        updateEnemies();        // private
-
-        // 2. Poi gestisci le bombe (quando le implementerai)
-        updateBombs();          // private
-
-        updateProjectiles(); // <--- AGGIUNGI QUESTO
-
-        // 3. Infine controlli chi è morto o cosa è esploso
-        checkCollisions();      // private
-
-        // 4. Gestisci lo spawn
-        manageSpawning();       // private
-        // LOGICA DI PULIZIA: Il Model decide che dopo 500ms l'evento "distruzione" non esiste più.
-// --- GESTIONE FUOCO (PURE LOGIC) ---
-        // Decrementiamo la "vita" del fuoco.
-        Iterator<int[]> it = activeFire.iterator();
-        while (it.hasNext()) {
-            int[] f = it.next();
-            f[3]--; // Decrementa i tick (30 -> 29 -> ... -> 0)
-
-            if (f[3] <= 0) {
-                it.remove(); // Tempo scaduto, rimuovi logicamente
+        // 1. GESTIONE PLAYER (O si muove, O spara)
+        if (player.isCasting()) {
+            player.decrementCastTimer();
+            if (player.getCastTimer() <= 0) {
+                player.finishCast();
+                spawnAuraProjectile();
+                updateIdleState();
             }
+        } else {
+            // Viene chiamato UNA SOLA VOLTA!
+            updatePlayerMovement();
         }
 
-        // Pulizia effetti grafici di distruzione (basati su tempo reale o tick, a tua scelta)
+        // 2. AGGIORNAMENTO ENTITÀ (Chiamati UNA SOLA VOLTA!)
+        updateEnemies();
+        updateBombs();
+        updateProjectiles();
+
+        // 3. COLLISIONI E SPAWN
+        checkCollisions();
+        manageSpawning();
+
+        // 4. PULIZIA GRAFICA (Fuoco e Casse)
+        java.util.Iterator<int[]> it = activeFire.iterator();
+        while (it.hasNext()) {
+            int[] f = it.next();
+            f[3]--;
+            if (f[3] <= 0) it.remove();
+        }
+
         long now = System.currentTimeMillis();
         destructionEffects.removeIf(bd -> (now - bd.getCreationTime()) > 500);
     }
-
 
     @Override
     public int getEnemyCount() {
@@ -822,21 +825,41 @@ public class Model implements IModel {
         Iterator<Projectile> it = projectiles.iterator();
         while (it.hasNext()) {
             Projectile p = it.next();
-            p.update(); // Muove il proiettile
+            p.update(); // Muove il proiettile di uno step
 
             if (!p.isActive()) {
-                it.remove(); // Rimuove se ha colpito un muro
+                it.remove(); // Rimuove se ha colpito un muro o esaurito la gittata
                 continue;
             }
 
-            // Collisione Proiettile Nemico -> Player
+            // --- 1. PROIETTILE DEL GOBLIN (OSSO) -> Cerca solo il Player ---
             if (p.isEnemyProjectile()) {
-                // Hitbox semplice 0.5 (metà cella)
                 if (Math.abs(p.getX() - player.getXCoordinate()) < 0.5 &&
                         Math.abs(p.getY() - player.getYCoordinate()) < 0.5) {
 
                     handlePlayerHit();
-                    p.setActive(false);
+                    p.setActive(false); // L'osso si rompe addosso al player
+                }
+            }
+
+            // --- 2. PROIETTILE DEL PLAYER (AURA) -> Cerca solo i Nemici ---
+            else {
+                Iterator<Enemy> eIt = enemies.iterator();
+                boolean hitEnemy = false;
+
+                while(eIt.hasNext()) {
+                    Enemy e = eIt.next();
+                    // Tolleranza hitbox 0.6 per centrare il goblin
+                    if (Math.abs(p.getX() - e.getX()) < 0.6 && Math.abs(p.getY() - e.getY()) < 0.6) {
+                        eIt.remove(); // Elimina il Goblin dalla lista
+                        System.out.println("Goblin fulminato dall'Aura!");
+                        hitEnemy = true;
+                        break; // L'aura NON perfora: uccide un solo nemico e si ferma!
+                    }
+                }
+
+                if (hitEnemy) {
+                    p.setActive(false); // L'Aura si disintegra addosso al goblin
                 }
             }
         }
@@ -1000,20 +1023,44 @@ public class Model implements IModel {
     }
 
     private boolean isValidFireIndex(int index) { return index >= 0 && index < activeFire.size(); }
-    public void playerShoot() {
-        // Opzionale: Controllo cooldown (se l'hai messo nel Player)
-        // if (!player.canAttack()) return;
 
+    @Override
+    public void playerShoot() {
+        // Se è in cooldown o sta già attaccando, ignora l'input
+        if (!player.canCast() || player.isCasting()) return;
+
+        player.startCast();
+        player.setDelta(0, 0); // Frena di colpo (Rooting)
+
+        // Cambia lo stato per mostrare l'animazione CAST
+        switch (player.getDirection()) {
+            case UP -> player.setState(PlayerState.CAST_BACK);
+            case DOWN -> player.setState(PlayerState.CAST_FRONT);
+            case LEFT -> player.setState(PlayerState.CAST_LEFT);
+            case RIGHT -> player.setState(PlayerState.CAST_RIGHT);
+        }
+        System.out.println("Player: Inizio lancio Aura...");
+    }
+
+    private void spawnAuraProjectile() {
         double startX = player.getXCoordinate();
         double startY = player.getYCoordinate();
         Direction dir = player.getDirection();
 
-        // Crea Aura (Velocità 4x, Non è nemico)
+        // NESSUN OFFSET MATEMATICO! Spawna esattamente sulle coordinate logiche del mago.
+        // Essendo la tile già centrata 64x64, si allineerà perfettamente.
         Projectile aura = new AuraProjectile(startX, startY, dir);
         addProjectile(aura);
+    }
 
-        // player.recordAttack(); // Se usi il cooldown
-        System.out.println("SPARO: Aura creata verso " + dir);
+    @Override
+    // Aggiungi questo metodo pubblico così l'AuraProjectile può usarlo
+    public void destroyBlock(int row, int col) {
+        if (gameAreaArray[row][col] == Config.CELL_DESTRUCTIBLE_BLOCK) {
+            gameAreaArray[row][col] = Config.CELL_EMPTY;
+            destructionEffects.add(new BlockDestruction(row, col));
+            System.out.println("Aura: Cassa distrutta in [" + row + ", " + col + "]");
+        }
     }
 
     public static IModel getInstance() {

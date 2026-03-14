@@ -57,4 +57,6 @@ public interface IControllerForView {
     int getFireType(int index);
 
     public boolean isEnemyWaiting(int index);
+
+    void playerShoot();
 }

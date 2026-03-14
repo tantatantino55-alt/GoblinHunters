@@ -123,6 +123,15 @@ public class ConcreteDrawer extends AbstractDrawer {
 
         // B. CALCOLO FRAME ANIMAZIONE
         int totalFrames = getFramesForState(state);
+
+        // --- MODIFICA 4: FORZARE I 3 FRAME PER IL CAST ---
+        // Se lo stato è un lancio magico (CAST), ignoriamo i frame totali
+        // dell'intera animazione di attacco e forziamo il ciclo solo sui primi 3 frame!
+        if (state.name().startsWith("CAST")) {
+            totalFrames = 3;
+        }
+        // --------------------------------------------------
+
         long timePassed = System.currentTimeMillis() - startTime;
         int currentFrame;
 

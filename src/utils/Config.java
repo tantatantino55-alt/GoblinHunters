@@ -78,7 +78,7 @@ public class Config {
     public static final int FOREST_FRAME_INDEX = 4;// Il tuo file unico
     public  static final int THEME_FRAME_INDEX = 30;
 
-    public static final String CAVE_SHEET = "/Forest.png";
+    public static final String CAVE_SHEET = "/Cave.png";
     public static final String CAVE_FRAME="/CaveFrame.png";
 
     public static final String ORNAMENTS_SHEET = "/Ornaments.png";

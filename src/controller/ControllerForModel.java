@@ -30,8 +30,7 @@ public class ControllerForModel implements IControllerForModel, Runnable {
         if (Model.getInstance().isLevelCompletedFlag()) {
             System.out.println("Controller: Gate attraversato! Avvio procedura cambio mappa...");
 
-            // 1. CHIEDI LA MAPPA AL COLLEGA (Qui metto un mock)
-            int[][] nextMap = generateMockMapForNextLevel();
+            int[][] nextMap = Model.getInstance().generateProceduralMap();
 
             // 2. PASSA I DATI AL MODEL PER IL SETUP LOGICO
             Model.getInstance().prepareNextLevel(nextMap);

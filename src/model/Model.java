@@ -100,43 +100,67 @@ public class Model implements IModel {
 
     @Override
     // --- METODO PER GENERARE MAPPE PROCEDURALI (Utile per il cambio livello) ---
+    // --- METODO PER GENERARE MAPPE PROCEDURALI (Utile per il cambio livello) ---
     public int[][] generateProceduralMap() {
         int[][] nextMap = new int[Config.GRID_HEIGHT][Config.GRID_WIDTH];
         List<int[]> emptyCells = new ArrayList<>();
         List<int[]> cratePositions = new ArrayList<>();
 
-        // Pulizia del loot e del portale precedente (Fondamentale per i livelli > 1)
         hiddenLoot.clear();
 
-        // --- PASSO 1 & 2: PILASTRI FISSI E IL "BUNKER" INIZIALE ---
+        // 1. Scegliamo l'ID dell'edificio in base al livello (2 = Caverna/Animato)
+        int buildingID = (currentZone == 2) ? Config.CELL_SKELETON_START : Config.CELL_ORNAMENT;
+
+        // --- PASSO 1 & 2: PILASTRI FISSI, BUNKER E EDIFICI ---
         for (int r = 0; r < Config.GRID_HEIGHT; r++) {
             for (int c = 0; c < Config.GRID_WIDTH; c++) {
 
-                // Pilastri di pietra nelle righe e colonne dispari
-                if (r % 2 != 0 && c % 2 != 0) {
-                    nextMap[r][c] = Config.CELL_INDESTRUCTIBLE_BLOCK;
-                } else {
-                    // La "Safe Zone" a L in alto a sinistra: [0,0], [0,1], [1,0]
-                    boolean isSafeZone = (r == 0 && c == 0) || (r == 0 && c == 1) || (r == 1 && c == 0);
+                boolean isSafeZone = (r == 0 && c == 0) || (r == 0 && c == 1) || (r == 1 && c == 0);
+                boolean isBunkerWall = (r == 0 && c == 2) || (r == 2 && c == 0);
 
-                    // I muri del Bunker: chiudono la Safe Zone
-                    boolean isBunkerWall = (r == 0 && c == 2) || (r == 2 && c == 0);
+                // Coordinate dei due edifici 2x2 in alto
+                boolean isLeftBuilding = (r == 0 || r == 1) && (c == 3 || c == 4);
+                boolean isRightBuilding = (r == 0 || r == 1) && (c == 8 || c == 9);
 
-                    if (isSafeZone) {
-                        nextMap[r][c] = Config.CELL_EMPTY; // Dentro il bunker si sta sicuri
-                    } else if (isBunkerWall) {
-                        nextMap[r][c] = Config.CELL_DESTRUCTIBLE_BLOCK; // Muri forzati del bunker
-                        cratePositions.add(new int[]{r, c}); // Li aggiungiamo alla lista del loot
+                if (isLeftBuilding || isRightBuilding) {
+                    // Mettiamo l'ID grafico speciale SOLO nell'angolo in alto a sinistra dell'edificio
+                    if ((r == 0 && c == 3) || (r == 0 && c == 8)) {
+                        nextMap[r][c] = buildingID;
+                    } else {
+                        // Le altre 3 celle sono muri solidi "invisibili" per bloccare il passaggio
+                        nextMap[r][c] = Config.CELL_INDESTRUCTIBLE_BLOCK;
+                    }
+                }
+                else if (isSafeZone) {
+                    nextMap[r][c] = Config.CELL_EMPTY;
+                }
+                else if (isBunkerWall) {
+                    nextMap[r][c] = Config.CELL_DESTRUCTIBLE_BLOCK;
+                    cratePositions.add(new int[]{r, c});
+                }
+                else if (r == 1) {
+                    // RIGA 1: Esattamente i 3 pilastri che hai notato (colonne 1, 6, 11)
+                    if (c == 1 || c == 6 || c == 11) {
+                        nextMap[r][c] = Config.CELL_INDESTRUCTIBLE_BLOCK;
                     } else {
                         nextMap[r][c] = Config.CELL_EMPTY;
-                        emptyCells.add(new int[]{r, c}); // Spazi liberi per le casse casuali
+                        emptyCells.add(new int[]{r, c});
                     }
+                }
+                else if (r % 2 != 0 && c % 2 != 0) {
+                    // Pilastri standard per il resto della mappa
+                    nextMap[r][c] = Config.CELL_INDESTRUCTIBLE_BLOCK;
+                }
+                else {
+                    nextMap[r][c] = Config.CELL_EMPTY;
+                    emptyCells.add(new int[]{r, c});
                 }
             }
         }
 
-        // --- PASSO 3: GENERAZIONE DELLE RESTANTI 43 CASSE CASUALI (45 tot - 2 bunker) ---
-        int NUM_RANDOM_CRATES = 43;
+        // --- PASSO 3: GENERAZIONE CASSE CASUALI ---
+        // Avendo occupato spazio con gli edifici, ho abbassato le casse a 35 per non soffocare la mappa
+        int NUM_RANDOM_CRATES = 35;
         java.util.Collections.shuffle(emptyCells, randomGenerator);
 
         for (int i = 0; i < NUM_RANDOM_CRATES && i < emptyCells.size(); i++) {
@@ -145,33 +169,30 @@ public class Model implements IModel {
             cratePositions.add(pos);
         }
 
-        // --- PASSO 4: IL MAZZO DEL BOTTINO (Loot intelligente) ---
+        // --- PASSO 4: IL MAZZO DEL BOTTINO ---
         java.util.Collections.shuffle(cratePositions, randomGenerator);
 
         if (cratePositions.size() > 0) {
-            // 1. Il Portale (nascondilo nella 1° cassa estratta)
             int[] pCoords = cratePositions.get(0);
             portalRow = pCoords[0];
             portalCol = pCoords[1];
             System.out.println("DEBUG: Portale nascosto in [" + portalRow + ", " + portalCol + "]");
 
-            // 2. Le Bombe
             for (int i = 1; i <= 10 && i < cratePositions.size(); i++) {
                 int[] cCoords = cratePositions.get(i);
                 hiddenLoot.put(cCoords[0] + "," + cCoords[1], ItemType.AMMO_BOMB);
             }
 
-            // 3. L'Aura
             for (int i = 11; i <= 20 && i < cratePositions.size(); i++) {
                 int[] cCoords = cratePositions.get(i);
                 hiddenLoot.put(cCoords[0] + "," + cCoords[1], ItemType.AMMO_AURA);
             }
         }
 
-        return nextMap; // Restituisce la matrice generata pronta all'uso!
+        return nextMap;
     }
 
-    // In src/model/Model.java
+     // In src/model/Model.java
 
     // Sostituisci il vecchio isWalkable con questo basato su GRIGLIA RIGIDA
     // In src/model/Model.java
@@ -316,6 +337,7 @@ public class Model implements IModel {
         }
     }
 
+
     @Override
     public boolean isWalkable(double nextX, double nextY) {
         double hbW = Config.ENTITY_LOGICAL_HITBOX_WIDTH;
@@ -338,13 +360,17 @@ public class Model implements IModel {
         for (int r = startRow; r <= endRow; r++) {
             for (int c = startCol; c <= endCol; c++) {
 
-                // 1. Controllo Muri (Indistruttibili e Distruttibili)
-                if (gameAreaArray[r][c] == Config.CELL_INDESTRUCTIBLE_BLOCK ||
-                        gameAreaArray[r][c] == Config.CELL_DESTRUCTIBLE_BLOCK) {
+                int cell = gameAreaArray[r][c];
+
+                // 1. Controllo Muri (Indistruttibili, Distruttibili E GLI EDIFICI)
+                if (cell == Config.CELL_INDESTRUCTIBLE_BLOCK ||
+                        cell == Config.CELL_DESTRUCTIBLE_BLOCK ||
+                        cell == Config.CELL_ORNAMENT ||
+                        cell == Config.CELL_SKELETON_START) {
                     return false;
                 }
 
-                // 2. Controllo Bombe (Se c'è una bomba E nessuno ci è ancora sopra, diventa un muro)
+                // 2. Controllo Bombe
                 if (getBombAt(r, c) != null && !isPlayerCurrentlyInside(r, c) && !isAnyEnemyCurrentlyInside(r, c)) {
                     return false;
                 }
@@ -389,9 +415,17 @@ public class Model implements IModel {
     // --- Helper per inchiodare il giocatore ai binari senza rovinare le hitbox ---
     private boolean isCellBlocked(int r, int c) {
         if (r < 0 || r >= Config.GRID_HEIGHT || c < 0 || c >= Config.GRID_WIDTH) return true;
-        if (gameAreaArray[r][c] == Config.CELL_INDESTRUCTIBLE_BLOCK ||
-                gameAreaArray[r][c] == Config.CELL_DESTRUCTIBLE_BLOCK) return true;
+
+        int cell = gameAreaArray[r][c];
+        if (cell == Config.CELL_INDESTRUCTIBLE_BLOCK ||
+                cell == Config.CELL_DESTRUCTIBLE_BLOCK ||
+                cell == Config.CELL_ORNAMENT ||
+                cell == Config.CELL_SKELETON_START) {
+            return true;
+        }
+
         if (getBombAt(r, c) != null && !isPlayerCurrentlyInside(r, c)) return true;
+
         return false;
     }
 
@@ -584,24 +618,20 @@ public class Model implements IModel {
 
             int cellType = gameAreaArray[currentR][currentC];
 
-            if (cellType == Config.CELL_INDESTRUCTIBLE_BLOCK) {
+            // IL FUOCO SI FERMA CONTRO MURI O EDIFICI
+            if (cellType == Config.CELL_INDESTRUCTIBLE_BLOCK ||
+                    cellType == Config.CELL_ORNAMENT ||
+                    cellType == Config.CELL_SKELETON_START) {
                 break;
             }
 
             if (cellType == Config.CELL_DESTRUCTIBLE_BLOCK) {
-                // MODIFICA: Invece di svuotare l'array manualmente, chiamiamo destroyBlock
-                // che si occupa di cancellare la cassa, fare l'effetto grafico E droppare risorse!
                 destroyBlock(currentR, currentC);
                 break;
             }
 
-            // Se la cella è vuota, il fuoco prosegue e danneggia
             boolean isTip = (i == rad);
-            // ... (resto della logica per calcolare isTip) ...
-
             activeFire.add(new int[]{currentR, currentC, isTip ? endType : centralType, Config.FIRE_DURATION_TICKS});
-
-            // Controlla i danni SOLO nelle celle dove il fuoco è effettivamente passato (celle vuote)
             checkExplosionDamage(currentR, currentC);
         }
     }
@@ -1390,9 +1420,17 @@ public class Model implements IModel {
     // ==========================================================
 
     private void checkGateCollision() {
-        // Il Gate si attiva (e diventa attraversabile) SOLO se non ci sono più nemici
+        // Il Gate si attiva SOLO se non ci sono più nemici
         if (enemies.isEmpty()) {
-            gateActive = true;
+
+            // Se è la prima volta che ci accorgiamo che non ci sono nemici...
+            if (!gateActive) {
+                gateActive = true;
+
+                // ...facciamo apparire dinamicamente il Gate alle coordinate 0,0!
+                gameAreaArray[0][0] = GATE_ID;
+                System.out.println("Tutti i nemici sconfitti! Il Gate di uscita è apparso in [0, 0]!");
+            }
 
             // Convertiamo le coordinate in indici di matrice per il Player
             double centerX = player.getXCoordinate() + (Config.ENTITY_LOGICAL_HITBOX_WIDTH / 2.0);
@@ -1403,7 +1441,7 @@ public class Model implements IModel {
 
             // Sicurezza: controlliamo di non essere fuori dai bordi
             if (row >= 0 && row < Config.GRID_HEIGHT && col >= 0 && col < Config.GRID_WIDTH) {
-                // Se il Player calpesta l'ID del Gate (9)... Livello completato!
+                // Se il Player calpesta l'ID del Gate (9) in 0,0... Livello completato!
                 if (gameAreaArray[row][col] == GATE_ID) {
                     levelCompletedFlag = true;
                 }
@@ -1415,6 +1453,7 @@ public class Model implements IModel {
         // 1. Reset flag del Gate
         levelCompletedFlag = false;
         gateActive = false;
+        portalRevealed = false; // <--- AGGIUNGI QUESTA RIGA QUI!
 
         // 2. Progressione Zona e Tema
         currentZone++;

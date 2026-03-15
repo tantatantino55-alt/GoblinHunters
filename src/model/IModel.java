@@ -79,5 +79,10 @@ public interface IModel {
     int getPortalCol();
     boolean isPortalRevealed();
 
-
+    // --- GESTIONE LIVELLI E CAMBIO MAPPA (GATE) ---
+    int getCurrentZone();
+    int getDifficultyCycle();
+    boolean isGateActive();
+    boolean isLevelCompletedFlag();
+    void prepareNextLevel(int[][] newMap);
 }

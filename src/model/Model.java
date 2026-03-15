@@ -37,6 +37,12 @@ public class Model implements IModel {
     // Lista per il fuoco: int[]{row, col, type, timestamp}
 
     private final List<Collectible> activeItems = new ArrayList<>();
+    // --- VARIABILI PROGRESSIONE LIVELLI (GATE) ---
+    public static final int GATE_ID = 9;   // Il valore logico per il Gate di fine livello
+    private int currentZone = 0;           // 0 = Village, 1 = Forest, 2 = Cave
+    private int difficultyCycle = 1;       // Moltiplicatore di difficoltà post-boss
+    private boolean gateActive = false;    // Diventa true quando i nemici muoiono
+    private boolean levelCompletedFlag = false; // Avvisa il Controller del cambio mappa
 
 
     // --- VARIABILI PORTALE ---
@@ -876,6 +882,10 @@ public class Model implements IModel {
 
         long now = System.currentTimeMillis();
         destructionEffects.removeIf(bd -> (now - bd.getCreationTime()) > 500);
+        // --- AGGIUNTA: CONTROLLO GATE E FINE LIVELLO ---
+        if (!levelCompletedFlag) {
+            checkGateCollision();
+        }
     }
 
     @Override
@@ -1358,6 +1368,80 @@ public class Model implements IModel {
     @Override public int getPortalRow() { return portalRow; }
     @Override public int getPortalCol() { return portalCol; }
     @Override public boolean isPortalRevealed() { return portalRevealed; }
+
+// ==========================================================
+    // METODI PER LOGICA DEL GATE E CAMBIO LIVELLO
+    // ==========================================================
+
+    private void checkGateCollision() {
+        // Il Gate si attiva (e diventa attraversabile) SOLO se non ci sono più nemici
+        if (enemies.isEmpty()) {
+            gateActive = true;
+
+            // Convertiamo le coordinate in indici di matrice per il Player
+            double centerX = player.getXCoordinate() + (Config.ENTITY_LOGICAL_HITBOX_WIDTH / 2.0);
+            double centerY = player.getYCoordinate() + 0.35;
+
+            int col = (int) Math.floor(centerX);
+            int row = (int) Math.floor(centerY);
+
+            // Sicurezza: controlliamo di non essere fuori dai bordi
+            if (row >= 0 && row < Config.GRID_HEIGHT && col >= 0 && col < Config.GRID_WIDTH) {
+                // Se il Player calpesta l'ID del Gate (9)... Livello completato!
+                if (gameAreaArray[row][col] == GATE_ID) {
+                    levelCompletedFlag = true;
+                }
+            }
+        }
+    }
+
+    @Override
+    public void prepareNextLevel(int[][] newMap) {
+        // 1. Reset flag del Gate
+        levelCompletedFlag = false;
+        gateActive = false;
+
+        // 2. Progressione Zona (0->1->2-> Vittoria/Loop)
+        currentZone++;
+        if (currentZone > 2) {
+            currentZone = 0;   // Ricomincia dal Villaggio
+            difficultyCycle++; // Aumenta il moltiplicatore difficoltà
+            System.out.println("VITTORIA GLOBALE! Inizio ciclo di difficoltà: " + difficultyCycle);
+        } else {
+            System.out.println("Avanzamento al livello: " + currentZone);
+        }
+
+        // 3. Copia la nuova mappa generata dal tuo collega
+        for (int r = 0; r < Config.GRID_HEIGHT; r++) {
+            for (int c = 0; c < Config.GRID_WIDTH; c++) {
+                gameAreaArray[r][c] = newMap[r][c];
+            }
+        }
+
+        // 4. Svuota le vecchie entità dal campo per il nuovo livello
+        activeBombs.clear();
+        projectiles.clear();
+        activeFire.clear();
+        activeItems.clear();
+        enemies.clear();
+
+        // 5. Riposiziona il Player (nella safe-zone iniziale del bunker [0,0])
+        player.setXCoordinate(0.0);
+        player.setYCoordinate(0.0);
+        player.setDelta(0, 0);
+        player.setState(utils.PlayerState.IDLE_FRONT);
+
+        // 6. Spawn iniziale dei nuovi nemici per la nuova mappa
+        for (int i = 0; i < 6; i++) {
+            spawnEnemy();
+        }
+    }
+
+    // --- GETTER IMPLEMENTATI PER L'INTERFACCIA ---
+    @Override public int getCurrentZone() { return currentZone; }
+    @Override public int getDifficultyCycle() { return difficultyCycle; }
+    @Override public boolean isGateActive() { return gateActive; }
+    @Override public boolean isLevelCompletedFlag() { return levelCompletedFlag; }
 
     public static IModel getInstance() {
         if (instance == null) instance = new Model();

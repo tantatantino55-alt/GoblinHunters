@@ -25,6 +25,31 @@ public class ControllerForModel implements IControllerForModel, Runnable {
     @Override
     public void updateGame() {
         Model.getInstance().updateGameLogic();
+
+        // --- IL REGISTA INTERCETTA IL CAMBIO LIVELLO TRAMITE IL GATE ---
+        if (Model.getInstance().isLevelCompletedFlag()) {
+            System.out.println("Controller: Gate attraversato! Avvio procedura cambio mappa...");
+
+            // 1. CHIEDI LA MAPPA AL COLLEGA (Qui metto un mock)
+            int[][] nextMap = generateMockMapForNextLevel();
+
+            // 2. PASSA I DATI AL MODEL PER IL SETUP LOGICO
+            Model.getInstance().prepareNextLevel(nextMap);
+        }
+    }
+
+    // Helper temporaneo in attesa della generazione ufficiale del tuo collega
+    private int[][] generateMockMapForNextLevel() {
+        int[][] mock = new int[Config.GRID_HEIGHT][Config.GRID_WIDTH];
+        // Riempiamo tutto di vuoto per ora
+        for(int i=0; i<Config.GRID_HEIGHT; i++) {
+            for(int j=0; j<Config.GRID_WIDTH; j++) {
+                mock[i][j] = Config.CELL_EMPTY;
+            }
+        }
+        // Piazziamo il GATE al centro giusto per farti testare
+        mock[5][5] = model.Model.GATE_ID;
+        return mock;
     }
 
     // Implementazione di IControllerForModel.startGameLoop()

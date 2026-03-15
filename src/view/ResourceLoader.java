@@ -216,7 +216,7 @@ public class ResourceLoader {
         // Ornamento: Torre (128x128) - Seconda immagine nello sheet Ornaments
         villageTiles[utils.Config.CELL_ORNAMENT] = sm.extractTile(utils.Config.ORNAMENTS_SHEET, 1, 0, 128, 128);
 
-        villageTiles[utils.Config.THEME_FRAME_INDEX] = view.ResourceManager.loadImage(utils.Config.VILLAGE_FRAME + ".png");
+        villageTiles[utils.Config.THEME_FRAME_INDEX] = view.ResourceManager.loadImage(utils.Config.VILLAGE_FRAME );
         TileManager.getInstance().loadTheme("VILLAGE", villageTiles);
     }
 
@@ -234,7 +234,7 @@ public class ResourceLoader {
         // Ornamento: Albero Gigante (128x128) - Prima immagine nello sheet Ornaments
         forestTiles[utils.Config.CELL_ORNAMENT] = sm.extractTile(utils.Config.ORNAMENTS_SHEET, 0, 0, 128, 128);
 
-        forestTiles[utils.Config.THEME_FRAME_INDEX] = view.ResourceManager.loadImage(utils.Config.FOREST_FRAME + ".png");
+        forestTiles[utils.Config.THEME_FRAME_INDEX] = view.ResourceManager.loadImage(utils.Config.FOREST_FRAME );
         TileManager.getInstance().loadTheme("FOREST", forestTiles);
     }
 
@@ -249,24 +249,24 @@ public class ResourceLoader {
         BufferedImage[] caveTiles = new BufferedImage[utils.Config.THEME_FRAME_INDEX + 1];
 
         // --- A. CARICAMENTO BLOCCHI BASE (0-4) ---
-        caveTiles[utils.Config.CELL_EMPTY] = sm.extractTile(utils.Config.CAVE_SHEET + ".png", utils.Config.CAVE_FLOOR_COL, utils.Config.CAVE_ROW, size, size);
-        caveTiles[utils.Config.CELL_INDESTRUCTIBLE_BLOCK] = sm.extractTile(utils.Config.CAVE_SHEET + ".png", utils.Config.CAVE_WALL_IND_COL, utils.Config.CAVE_ROW, size, size);
-        caveTiles[utils.Config.CELL_DESTRUCTIBLE_BLOCK] = sm.extractTile(utils.Config.CAVE_SHEET + ".png", utils.Config.CAVE_WALL_DEST_COL, utils.Config.CAVE_ROW, size, size);
-        caveTiles[utils.Config.CELL_CRACKED_FLOOR] = sm.extractTile(utils.Config.CAVE_SHEET + ".png", utils.Config.CAVE_CRACKED_FLOOR_COL, utils.Config.CAVE_ROW, size, size);
-        caveTiles[utils.Config.CELL_LAVA_FLOOR] = sm.extractTile(utils.Config.CAVE_SHEET + ".png", utils.Config.CAVE_LAVA_FLOOR_COL, utils.Config.CAVE_ROW, size, size);
+        caveTiles[utils.Config.CELL_EMPTY] = sm.extractTile(utils.Config.CAVE_SHEET , utils.Config.CAVE_FLOOR_COL, utils.Config.CAVE_ROW, size, size);
+        caveTiles[utils.Config.CELL_INDESTRUCTIBLE_BLOCK] = sm.extractTile(utils.Config.CAVE_SHEET , utils.Config.CAVE_WALL_IND_COL, utils.Config.CAVE_ROW, size, size);
+        caveTiles[utils.Config.CELL_DESTRUCTIBLE_BLOCK] = sm.extractTile(utils.Config.CAVE_SHEET , utils.Config.CAVE_WALL_DEST_COL, utils.Config.CAVE_ROW, size, size);
+        caveTiles[utils.Config.CELL_CRACKED_FLOOR] = sm.extractTile(utils.Config.CAVE_SHEET , utils.Config.CAVE_CRACKED_FLOOR_COL, utils.Config.CAVE_ROW, size, size);
+        caveTiles[utils.Config.CELL_LAVA_FLOOR] = sm.extractTile(utils.Config.CAVE_SHEET , utils.Config.CAVE_LAVA_FLOOR_COL, utils.Config.CAVE_ROW, size, size);
 
         // --- B. CARICAMENTO EDIFICIO ANIMATO (6-22) ---
         // Usiamo il tuo metodo ufficiale per caricare l'animazione nello SpriteManager
-        sm.loadAnimation("CAVE_BUILDING", utils.Config.CAVE_SKELETON_SHEET + ".png", 0, utils.Config.SKELETON_FRAMES_COUNT, bSize);
+        sm.loadAnimation("CAVE_BUILDING", utils.Config.CAVE_SKELETON_SHEET , 0, utils.Config.SKELETON_FRAMES_COUNT, bSize);
 
         // Ora estraiamo i frame appena caricati e li "mappiamo" nell'array del tema
-        for (int i = 0; i < utils.Config.SKELETON_FRAMES_COUNT; i++) {
+        for (int i = 0; i <Config.SKELETON_FRAMES_COUNT; i++) {
             // Recuperiamo il singolo frame tramite getSprite (metodo pubblico)
             caveTiles[utils.Config.CELL_SKELETON_START + i] = sm.getSprite("CAVE_BUILDING", i);
         }
 
         // --- C. CORNICE (30) ---
-        caveTiles[utils.Config.THEME_FRAME_INDEX] = view.ResourceManager.loadImage(utils.Config.CAVE_FRAME + ".png");
+        caveTiles[utils.Config.THEME_FRAME_INDEX] = ResourceManager.loadImage(utils.Config.CAVE_FRAME );
 
         // Salviamo tutto nel TileManager
         TileManager.getInstance().loadTheme("CAVE", caveTiles);

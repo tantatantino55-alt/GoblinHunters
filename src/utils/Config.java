@@ -84,7 +84,7 @@ public class Config {
     public static final String ORNAMENTS_SHEET = "/Ornaments.png";
     public static final String CAVE_SKELETON_SHEET = "/CaveSkeleton.png";
     public static final int CELL_ORNAMENT = 5;
-    public static final int CELL_SKELETON_START = 6;
+    public static final int CELL_SKELETON_START = 5;
     public static final int SKELETON_FRAMES_COUNT = 17;
     // Nel file Config.java aggiungi/modifica:
     public static final int CAVE_BUILDING_SIZE = 128; // Dimensione dell'edificio animato

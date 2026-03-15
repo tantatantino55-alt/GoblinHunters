@@ -182,7 +182,7 @@ public class ConcreteDrawer extends AbstractDrawer {
         // ---------------------------------------------------------
         // LAYER 2: LA CORNICE DEL TEMA (Sopra la mappa)
         // ---------------------------------------------------------
-        BufferedImage frameImg = tileManager.getTileImage(3); // Recuperiamo la posizione 4
+        BufferedImage frameImg = tileManager.getTileImage(Config.THEME_FRAME_INDEX); // Recuperiamo la posizione 4
 
         if (frameImg != null) {
             // Usiamo gli offset che avevi già intelligentemente preparato in Config.java!

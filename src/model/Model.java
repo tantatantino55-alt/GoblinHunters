@@ -45,6 +45,10 @@ public class Model implements IModel {
     private boolean portalRevealed = false;
     private long lastPortalSpawnTime = 0;
 
+    // --- MAPPA DEL TESORO (Loot pre-calcolato) ---
+    // Usa una stringa "riga,colonna" come chiave per trovare l'oggetto
+    private final java.util.Map<String, utils.ItemType> hiddenLoot = new java.util.HashMap<>();
+
     private static final int[][] testMap = {
             {0, 0, 0, 2, 0, 2, 2, 0, 2, 2, 0, 0, 0}, // Riga 0: Angolo player sicuro
             {0, 1, 0, 1, 2, 1, 2, 1, 2, 1, 2, 1, 0}, // Riga 1: Pilastri e casse
@@ -67,39 +71,72 @@ public class Model implements IModel {
 
     private Model() {
         this.gameAreaArray = new int[Config.GRID_HEIGHT][Config.GRID_WIDTH];
-        for (int i = 0; i < Config.GRID_HEIGHT; i++)
-            System.arraycopy(testMap[i], 0, gameAreaArray[i], 0, Config.GRID_WIDTH);
+        List<int[]> emptyCells = new ArrayList<>();
 
-        // Il player nasce a (0.0, 0.0) logico
-        this.player = new Player(0.0, 0.0);
-
-        this.enemies = new ArrayList<>();
-
-        // --- AGGIUNTA: SPAWN INIZIALE DEI 6 GOBLIN ---
-        for (int i = 0; i < 6; i++) {
-            spawnEnemy();
-        }
-        // Inizializza il timer in modo che non parta subito
-        this.lastSpawnTime = System.currentTimeMillis();
-
-        // --- NASCONDIAMO IL PORTALE SOTTO UNA CASSA CASUALE ---
-        List<int[]> destructibleBlocks = new ArrayList<>();
+        // PASSO 1 & 2: PILASTRI FISSI E SAFE ZONE
         for (int r = 0; r < Config.GRID_HEIGHT; r++) {
             for (int c = 0; c < Config.GRID_WIDTH; c++) {
-                if (gameAreaArray[r][c] == Config.CELL_DESTRUCTIBLE_BLOCK) {
-                    destructibleBlocks.add(new int[]{r, c});
+                // Pilastri nelle righe e colonne dispari
+                if (r % 2 != 0 && c % 2 != 0) {
+                    gameAreaArray[r][c] = Config.CELL_INDESTRUCTIBLE_BLOCK;
+                } else {
+                    gameAreaArray[r][c] = Config.CELL_EMPTY;
+
+                    // La "Safe Zone" a L in alto a sinistra (0,0), (0,1), (1,0)
+                    boolean isSafeZone = (r == 0 && c == 0) || (r == 0 && c == 1) || (r == 1 && c == 0);
+
+                    // Se non è zona sicura, è un candidato per spawnare una cassa
+                    if (!isSafeZone) {
+                        emptyCells.add(new int[]{r, c});
+                    }
                 }
             }
         }
 
-        // Scegliamo una cassa a caso (se ce ne sono)
-        if (!destructibleBlocks.isEmpty()) {
-            int[] portalCoords = destructibleBlocks.get(randomGenerator.nextInt(destructibleBlocks.size()));
-            portalRow = portalCoords[0];
-            portalCol = portalCoords[1];
-            System.out.println("DEBUG: Portale nascosto in [" + portalRow + ", " + portalCol + "]");
+        // PASSO 3: GENERAZIONE DI 45 CASSE CASUALI
+        int NUM_CRATES = 45;
+        java.util.Collections.shuffle(emptyCells, randomGenerator); // Mescoliamo le coordinate vuote
+        List<int[]> cratePositions = new ArrayList<>();
+
+        for (int i = 0; i < NUM_CRATES && i < emptyCells.size(); i++) {
+            int[] pos = emptyCells.get(i);
+            gameAreaArray[pos[0]][pos[1]] = Config.CELL_DESTRUCTIBLE_BLOCK; // Piazziamo la cassa
+            cratePositions.add(pos); // Ci salviamo la sua posizione per il loot
         }
+
+        // PASSO 4: IL MAZZO DEL BOTTINO (Assegnazione risorse)
+        // La lista cratePositions è già casuale, quindi assegniamo in ordine!
+        if (cratePositions.size() > 0) {
+            // 1. Il Portale (nascondilo nella prima cassa estratta)
+            int[] pCoords = cratePositions.get(0);
+            portalRow = pCoords[0];
+            portalCol = pCoords[1];
+            System.out.println("DEBUG: Portale nascosto in [" + portalRow + ", " + portalCol + "]");
+
+            // 2. Le Bombe (nascondile nelle successive 10 casse: indice da 1 a 10)
+            for (int i = 1; i <= 10 && i < cratePositions.size(); i++) {
+                int[] cCoords = cratePositions.get(i);
+                hiddenLoot.put(cCoords[0] + "," + cCoords[1], ItemType.AMMO_BOMB);
+            }
+
+            // 3. L'Aura (nascondila nelle successive 10 casse: indice da 11 a 20)
+            for (int i = 11; i <= 20 && i < cratePositions.size(); i++) {
+                int[] cCoords = cratePositions.get(i);
+                hiddenLoot.put(cCoords[0] + "," + cCoords[1], ItemType.AMMO_AURA);
+            }
+        }
+
+        // Il player nasce sempre al sicuro
+        this.player = new Player(0.0, 0.0);
+        this.enemies = new ArrayList<>();
+
+        // Spawn Iniziale dei Goblin
+        for (int i = 0; i < 6; i++) {
+            spawnEnemy();
+        }
+        this.lastSpawnTime = System.currentTimeMillis();
     }
+
     // In src/model/Model.java
 
     // Sostituisci il vecchio isWalkable con questo basato su GRIGLIA RIGIDA

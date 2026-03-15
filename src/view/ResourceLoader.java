@@ -202,92 +202,75 @@ public class ResourceLoader {
         System.out.println("ResourceLoader: Tutti i temi mappa caricati con successo!");
     }
 
-    // ==========================================================
-    // METODI OPERAI (Logica specifica per ogni singolo tema)
-    // ==========================================================
-
+    // ---------------------------------------------------------
+    // 1. TEMA VILLAGGIO
+    // ---------------------------------------------------------
     private void loadVillageTheme(SpriteManager sm) {
         int size = utils.Config.TILE_SIZE;
-        BufferedImage[] villageTiles = new BufferedImage[4];
+        BufferedImage[] villageTiles = new BufferedImage[utils.Config.THEME_FRAME_INDEX + 1];
 
-        // 0: Pavimento
-        villageTiles[utils.Config.CELL_EMPTY] = sm.extractTile(
-                Config.VILLAGE_SHEET, utils.Config.VILLAGE_FLOOR_COL, utils.Config.VILLAGE_ROW, size, size);
+        villageTiles[utils.Config.CELL_EMPTY] = sm.extractTile(Config.VILLAGE_SHEET, utils.Config.VILLAGE_FLOOR_COL, utils.Config.VILLAGE_ROW, size, size);
+        villageTiles[utils.Config.CELL_INDESTRUCTIBLE_BLOCK] = sm.extractTile(utils.Config.VILLAGE_SHEET, utils.Config.VILLAGE_WALL_IND_COL, utils.Config.VILLAGE_ROW, size, size);
+        villageTiles[utils.Config.CELL_DESTRUCTIBLE_BLOCK] = sm.extractTile(utils.Config.VILLAGE_SHEET, utils.Config.VILLAGE_WALL_DEST_COL, utils.Config.VILLAGE_ROW, size, size);
 
-        // 1: Muro Indistruttibile
-        villageTiles[utils.Config.CELL_INDESTRUCTIBLE_BLOCK] = sm.extractTile(
-                Config.VILLAGE_SHEET, utils.Config.VILLAGE_WALL_IND_COL, utils.Config.VILLAGE_ROW, size, size);
+        // Ornamento: Torre (128x128) - Seconda immagine nello sheet Ornaments
+        villageTiles[utils.Config.CELL_ORNAMENT] = sm.extractTile(utils.Config.ORNAMENTS_SHEET, 1, 0, 128, 128);
 
-        // 2: Muro Distruttibile
-        villageTiles[utils.Config.CELL_DESTRUCTIBLE_BLOCK] = sm.extractTile(
-                Config.VILLAGE_SHEET, utils.Config.VILLAGE_WALL_DEST_COL, utils.Config.VILLAGE_ROW, size, size);
-
-        // 3: Cornice
-        villageTiles[utils.Config.THEME_FRAME_INDEX] = view.ResourceManager.loadImage(utils.Config.VILLAGE_FRAME);
-
+        villageTiles[utils.Config.THEME_FRAME_INDEX] = view.ResourceManager.loadImage(utils.Config.VILLAGE_FRAME + ".png");
         TileManager.getInstance().loadTheme("VILLAGE", villageTiles);
-        System.out.println("  -> Tema 'VILLAGE' caricato.");
     }
 
+    // ---------------------------------------------------------
+    // 2. TEMA FORESTA
+    // ---------------------------------------------------------
     private void loadForestTheme(SpriteManager sm) {
         int size = utils.Config.TILE_SIZE;
-        BufferedImage[] forestTiles = new BufferedImage[4];
+        BufferedImage[] forestTiles = new BufferedImage[utils.Config.THEME_FRAME_INDEX + 1];
 
-        // 0: Pavimento
-        forestTiles[utils.Config.CELL_EMPTY] = sm.extractTile(
-                utils.Config.FOREST_SHEET, utils.Config.FOREST_FLOOR_COL, utils.Config.FOREST_ROW, size, size);
+        forestTiles[utils.Config.CELL_EMPTY] = sm.extractTile(utils.Config.FOREST_SHEET, utils.Config.FOREST_FLOOR_COL, utils.Config.FOREST_ROW, size, size);
+        forestTiles[utils.Config.CELL_INDESTRUCTIBLE_BLOCK] = sm.extractTile(utils.Config.FOREST_SHEET, utils.Config.FOREST_WALL_IND_COL, utils.Config.FOREST_ROW, size, size);
+        forestTiles[utils.Config.CELL_DESTRUCTIBLE_BLOCK] = sm.extractTile(utils.Config.FOREST_SHEET, utils.Config.FOREST_WALL_DEST_COL, utils.Config.FOREST_ROW, size, size);
 
-        // 1: Muro Indistruttibile
-        forestTiles[utils.Config.CELL_INDESTRUCTIBLE_BLOCK] = sm.extractTile(
-                utils.Config.FOREST_SHEET, utils.Config.FOREST_WALL_IND_COL, utils.Config.FOREST_ROW, size, size);
+        // Ornamento: Albero Gigante (128x128) - Prima immagine nello sheet Ornaments
+        forestTiles[utils.Config.CELL_ORNAMENT] = sm.extractTile(utils.Config.ORNAMENTS_SHEET, 0, 0, 128, 128);
 
-        // 2: Muro Distruttibile
-        forestTiles[utils.Config.CELL_DESTRUCTIBLE_BLOCK] = sm.extractTile(
-                utils.Config.FOREST_SHEET, utils.Config.FOREST_WALL_DEST_COL, utils.Config.FOREST_ROW, size, size);
-
-        // 3: Cornice
-        forestTiles[utils.Config.THEME_FRAME_INDEX] = view.ResourceManager.loadImage(utils.Config.FOREST_FRAME);
-
+        forestTiles[utils.Config.THEME_FRAME_INDEX] = view.ResourceManager.loadImage(utils.Config.FOREST_FRAME + ".png");
         TileManager.getInstance().loadTheme("FOREST", forestTiles);
-        System.out.println("  -> Tema 'FOREST' caricato.");
     }
 
+    // ---------------------------------------------------------
+    // 3. TEMA CAVERNA
+    // ---------------------------------------------------------
     private void loadCaveTheme(SpriteManager sm) {
         int size = utils.Config.TILE_SIZE;
+        int bSize = utils.Config.CAVE_BUILDING_SIZE; // 128 pixel per l'edificio gigante
 
-        // ARRAY PIÙ GRANDE! Adesso è 11 per fare spazio alla cornice all'indice 10
-        BufferedImage[] caveTiles = new BufferedImage[11];
+        // Array del tema (fino all'indice 30 per la cornice)
+        BufferedImage[] caveTiles = new BufferedImage[utils.Config.THEME_FRAME_INDEX + 1];
 
-        // 0: Pavimento
-        caveTiles[utils.Config.CELL_EMPTY] = sm.extractTile(
-                utils.Config.CAVE_SHEET, utils.Config.CAVE_FLOOR_COL, utils.Config.CAVE_ROW, size, size);
+        // --- A. CARICAMENTO BLOCCHI BASE (0-4) ---
+        caveTiles[utils.Config.CELL_EMPTY] = sm.extractTile(utils.Config.CAVE_SHEET + ".png", utils.Config.CAVE_FLOOR_COL, utils.Config.CAVE_ROW, size, size);
+        caveTiles[utils.Config.CELL_INDESTRUCTIBLE_BLOCK] = sm.extractTile(utils.Config.CAVE_SHEET + ".png", utils.Config.CAVE_WALL_IND_COL, utils.Config.CAVE_ROW, size, size);
+        caveTiles[utils.Config.CELL_DESTRUCTIBLE_BLOCK] = sm.extractTile(utils.Config.CAVE_SHEET + ".png", utils.Config.CAVE_WALL_DEST_COL, utils.Config.CAVE_ROW, size, size);
+        caveTiles[utils.Config.CELL_CRACKED_FLOOR] = sm.extractTile(utils.Config.CAVE_SHEET + ".png", utils.Config.CAVE_CRACKED_FLOOR_COL, utils.Config.CAVE_ROW, size, size);
+        caveTiles[utils.Config.CELL_LAVA_FLOOR] = sm.extractTile(utils.Config.CAVE_SHEET + ".png", utils.Config.CAVE_LAVA_FLOOR_COL, utils.Config.CAVE_ROW, size, size);
 
-        // 1: Muro Indistruttibile
-        caveTiles[utils.Config.CELL_INDESTRUCTIBLE_BLOCK] = sm.extractTile(
-                utils.Config.CAVE_SHEET, utils.Config.CAVE_WALL_IND_COL, utils.Config.CAVE_ROW, size, size);
+        // --- B. CARICAMENTO EDIFICIO ANIMATO (6-22) ---
+        // Usiamo il tuo metodo ufficiale per caricare l'animazione nello SpriteManager
+        sm.loadAnimation("CAVE_BUILDING", utils.Config.CAVE_SKELETON_SHEET + ".png", 0, utils.Config.SKELETON_FRAMES_COUNT, bSize);
 
-        // 2: Muro Distruttibile
-        caveTiles[utils.Config.CELL_DESTRUCTIBLE_BLOCK] = sm.extractTile(
-                utils.Config.CAVE_SHEET, utils.Config.CAVE_WALL_DEST_COL, utils.Config.CAVE_ROW, size, size);
+        // Ora estraiamo i frame appena caricati e li "mappiamo" nell'array del tema
+        for (int i = 0; i < utils.Config.SKELETON_FRAMES_COUNT; i++) {
+            // Recuperiamo il singolo frame tramite getSprite (metodo pubblico)
+            caveTiles[utils.Config.CELL_SKELETON_START + i] = sm.getSprite("CAVE_BUILDING", i);
+        }
 
-        // ---------------------------------------------------------
-        // NUOVI BLOCCHI CAVERNA
-        // ---------------------------------------------------------
-        // 3: Pavimento con Crepe
-        caveTiles[utils.Config.CELL_CRACKED_FLOOR] = sm.extractTile(
-                utils.Config.CAVE_SHEET, utils.Config.CAVE_CRACKED_FLOOR_COL, utils.Config.CAVE_ROW, size, size);
+        // --- C. CORNICE (30) ---
+        caveTiles[utils.Config.THEME_FRAME_INDEX] = view.ResourceManager.loadImage(utils.Config.CAVE_FRAME + ".png");
 
-        // 4: Pavimento con Lava
-        caveTiles[utils.Config.CELL_LAVA_FLOOR] = sm.extractTile(
-                utils.Config.CAVE_SHEET, utils.Config.CAVE_LAVA_FLOOR_COL, utils.Config.CAVE_ROW, size, size);
-
-        // ---------------------------------------------------------
-        // 10: Cornice
-        caveTiles[utils.Config.CAVE_FRAME_INDEX] = view.ResourceManager.loadImage(utils.Config.CAVE_FRAME);
-
+        // Salviamo tutto nel TileManager
         TileManager.getInstance().loadTheme("CAVE", caveTiles);
-        System.out.println("  -> Tema 'CAVE' caricato (con lava e crepe).");
     }
-
-
 }
+
+

@@ -76,10 +76,19 @@ public class Config {
     public static final String FOREST_SHEET = "/Forest.png";
     public static final String FOREST_FRAME="/ForestFrame.png";
     public static final int FOREST_FRAME_INDEX = 4;// Il tuo file unico
-    public  static final int THEME_FRAME_INDEX = 3;
+    public  static final int THEME_FRAME_INDEX = 30;
 
     public static final String CAVE_SHEET = "/Forest.png";
     public static final String CAVE_FRAME="/CaveFrame.png";
+
+    public static final String ORNAMENTS_SHEET = "/Ornaments.png";
+    public static final String CAVE_SKELETON_SHEET = "/CaveSkeleton.png";
+    public static final int CELL_ORNAMENT = 5;
+    public static final int CELL_SKELETON_START = 6;
+    public static final int SKELETON_FRAMES_COUNT = 17;
+    // Nel file Config.java aggiungi/modifica:
+    public static final int CAVE_BUILDING_SIZE = 128; // Dimensione dell'edificio animato
+    public static final int SKELETON_SHEET_COLS = 6;
 
 
 

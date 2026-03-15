@@ -31,8 +31,9 @@ public class ConcreteDrawer extends AbstractDrawer {
         drawDestructions(g2d); // Qui vengono disegnati i blocchi che esplodono
         drawFire(g2d);
         drawBombs(g2d);
-        drawEnemies(g2d);
+        drawCollectibles(g2d);
         drawProjectiles(g2d);
+        drawEnemies(g2d);
 
         // --- FIX TREMOLIO: USARE IF/ELSE ---
         PlayerState state = ControllerForView.getInstance().getPlayerState();
@@ -56,26 +57,57 @@ public class ConcreteDrawer extends AbstractDrawer {
             lastFpsTime = currentTime; // Resetta il timer
         }
 
-        // 2. Recupero Dati dal Controller
-        int lives = ControllerForView.getInstance().getPlayerLives();
-        int totalSeconds = ControllerForView.getInstance().getElapsedTimeInSeconds();
+        // --- 2. RECUPERO DATI PANNELLO SINISTRO ---
+        int lives = controller.ControllerForView.getInstance().getPlayerLives();
+        int totalSeconds = controller.ControllerForView.getInstance().getElapsedTimeInSeconds();
 
         // Calcolo minuti e secondi formattati (es. 01:05)
         int minutes = totalSeconds / 60;
         int seconds = totalSeconds % 60;
         String timeString = String.format("%02d:%02d", minutes, seconds);
 
-        // 3. Impostazione Stile Testo
+        // --- 3. DISEGNO PANNELLO SINISTRO (Statistiche Base) ---
         g2d.setColor(Color.WHITE);
         g2d.setFont(new Font("Arial", Font.BOLD, 20));
-
-        // 4. Disegno a Schermo (A sinistra, nella zona nera di offset)
         int startX = 20;
 
-        // Disegna tutto in colonna
         g2d.drawString("FPS: " + currentFPS, startX, 50);
         g2d.drawString("VITE: " + lives, startX, 100);
         g2d.drawString("TEMPO: " + timeString, startX, 150);
+
+        // --- 4. RECUPERO DATI PANNELLO DESTRO (Tramite MVC!) ---
+        int bombAmmo = controller.ControllerForView.getInstance().getPlayerBombAmmo();
+        int auraAmmo = controller.ControllerForView.getInstance().getPlayerAuraAmmo();
+        boolean hasShield = controller.ControllerForView.getInstance().hasPlayerShield();
+        boolean hasMaxRadius = controller.ControllerForView.getInstance().hasPlayerMaxRadius();
+        boolean hasMaxSpeed = controller.ControllerForView.getInstance().hasPlayerMaxSpeed();
+
+        // --- 5. DISEGNO PANNELLO DESTRO (Munizioni e Power-Up) ---
+        // Calcoliamo la X in modo dinamico in base a dove finisce la mappa
+        int rightX = utils.Config.GRID_OFFSET_X + (utils.Config.GRID_WIDTH * utils.Config.TILE_SIZE) + 20;
+        int rightY = 50; // Partiamo allineati con l'altezza degli FPS
+        int gap = 30;    // Spazio verticale tra le righe di testo
+
+        // Sezione Munizioni
+        g2d.setFont(new Font("Arial", Font.BOLD, 18));
+        g2d.setColor(Color.YELLOW);
+        g2d.drawString("MUNIZIONI:", rightX, rightY);
+
+        g2d.setFont(new Font("Arial", Font.PLAIN, 16));
+        g2d.setColor(Color.WHITE);
+        g2d.drawString("Bombe: " + bombAmmo, rightX, rightY + gap);
+        g2d.drawString("Magia: " + auraAmmo, rightX, rightY + gap * 2);
+
+        // Sezione Potenziamenti
+        g2d.setFont(new Font("Arial", Font.BOLD, 18));
+        g2d.setColor(Color.CYAN);
+        g2d.drawString("POTENZIAMENTI:", rightX, rightY + gap * 4);
+
+        g2d.setFont(new Font("Arial", Font.PLAIN, 16));
+        g2d.setColor(Color.WHITE);
+        g2d.drawString("Scudo: " + (hasShield ? "ATTIVO" : "NO"), rightX, rightY + gap * 5);
+        g2d.drawString("Raggio Max: " + (hasMaxRadius ? "SI" : "NO"), rightX, rightY + gap * 6);
+        g2d.drawString("Velocità Max: " + (hasMaxSpeed ? "SI" : "NO"), rightX, rightY + gap * 7);
     }
 
     /**
@@ -85,27 +117,20 @@ public class ConcreteDrawer extends AbstractDrawer {
      */
     private void drawMap(Graphics2D g2d) {
         int[][] gameAreaArray = ControllerForView.getInstance().getGameAreaArray();
-
-        // Ottimizzazione: prendiamo l'immagine del pavimento una volta sola
         BufferedImage floorImg = tileManager.getTileImage(Config.CELL_EMPTY);
 
         for (int row = 0; row < Config.GRID_HEIGHT; row++) {
             for (int col = 0; col < Config.GRID_WIDTH; col++) {
-
-                // Calcolo posizione in pixel
                 int tileX = Config.GRID_OFFSET_X + col * Config.TILE_SIZE;
                 int tileY = Config.GRID_OFFSET_Y + row * Config.TILE_SIZE;
 
-                // --- LAYER 0: PAVIMENTO ---
-                // Disegniamo SEMPRE il pavimento sotto, così se distruggiamo un muro c'è la sabbia sotto
+                // LAYER 0: Pavimento
                 if (floorImg != null) {
                     g2d.drawImage(floorImg, tileX, tileY, Config.TILE_SIZE, Config.TILE_SIZE, null);
                 }
 
-                // --- LAYER 1: OGGETTI ---
+                // LAYER 1: Oggetti/Muri
                 int cellType = gameAreaArray[row][col];
-
-                // Se la cella non è vuota (quindi è un muro), disegniamo l'oggetto sopra
                 if (cellType != Config.CELL_EMPTY) {
                     BufferedImage wallImg = tileManager.getTileImage(cellType);
                     if (wallImg != null) {
@@ -113,6 +138,16 @@ public class ConcreteDrawer extends AbstractDrawer {
                     }
                 }
             }
+        } // Fine dei cicli for della mappa
+
+        // ---------------------------------------------------------
+        // LAYER 2: LA CORNICE DEL TEMA (Sopra la mappa)
+        // ---------------------------------------------------------
+        BufferedImage frameImg = tileManager.getTileImage(4); // Recuperiamo la posizione 4
+
+        if (frameImg != null) {
+            // Usiamo gli offset che avevi già intelligentemente preparato in Config.java!
+            g2d.drawImage(frameImg, Config.FRAME_OFFSET_X, Config.FRAME_OFFSET_Y, null);
         }
     }
 
@@ -447,8 +482,57 @@ public class ConcreteDrawer extends AbstractDrawer {
         }
     }
 
-    @Override public int getDrawingWidth() { return Config.GRID_OFFSET_X + Config.GAME_PANEL_WIDTH; }
-    @Override public int getDrawingHeight() { return Config.GRID_OFFSET_Y + Config.GAME_PANEL_HEIGHT; }
+    private void drawCollectibles(Graphics2D g2d) {
+        // Recuperiamo la lista degli oggetti a terra dal Model
+        for (model.Collectible item : model.Model.getInstance().getActiveItems()) {
+
+            // Calcoliamo le coordinate a schermo
+            int screenX = (int) (item.getX() * utils.Config.TILE_SIZE) + utils.Config.GRID_OFFSET_X;
+            int screenY = (int) (item.getY() * utils.Config.TILE_SIZE) + utils.Config.GRID_OFFSET_Y;
+
+            // Grandezza della forma (metà di una tile per centrarla bene)
+            int size = utils.Config.TILE_SIZE / 2;
+            int offset = (utils.Config.TILE_SIZE - size) / 2;
+
+            int drawX = screenX + offset;
+            int drawY = screenY + offset;
+
+            // Scegliamo colore e forma in base al tipo
+            switch (item.getType()) {
+                case AMMO_BOMB -> {
+                    g2d.setColor(Color.BLACK); // Bomba = Cerchio Nero
+                    g2d.fillOval(drawX, drawY, size, size);
+                    g2d.setColor(Color.WHITE);
+                    g2d.drawOval(drawX, drawY, size, size);
+                }
+                case AMMO_AURA -> {
+                    g2d.setColor(Color.CYAN); // Aura = Cerchio Azzurro
+                    g2d.fillOval(drawX, drawY, size, size);
+                }
+                case POWER_SHIELD -> {
+                    g2d.setColor(Color.BLUE); // Scudo = Quadrato Blu
+                    g2d.fillRect(drawX, drawY, size, size);
+                }
+                case POWER_RADIUS -> {
+                    g2d.setColor(Color.RED); // Fuoco/Raggio = Quadrato Rosso
+                    g2d.fillRect(drawX, drawY, size, size);
+                }
+                case POWER_SPEED -> {
+                    g2d.setColor(Color.YELLOW); // Velocità = Quadrato Giallo
+                    g2d.fillRect(drawX, drawY, size, size);
+                }
+            }
+        }
+    }
+
+    //@Override public int getDrawingWidth() { return Config.GRID_OFFSET_X + 960 }//Config.GAME_PANEL_WIDTH; }
+   // @Override public int getDrawingHeight() { return Config.GRID_OFFSET_Y +932;} //Config.GAME_PANEL_HEIGHT; }
+
+    @Override
+    public int getDrawingWidth() { return Config.WINDOW_PREFERRED_WIDTH; }
+
+    @Override
+    public int getDrawingHeight() { return Config.WINDOW_PREFERRED_HEIGHT; }
 
     private int getFramesForState(PlayerState state) {
         String s = state.name();

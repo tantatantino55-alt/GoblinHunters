@@ -1,9 +1,6 @@
 package model;
 
-import utils.Config;
-import utils.Direction;
-import utils.EnemyType;
-import utils.PlayerState;
+import utils.*;
 
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
@@ -39,6 +36,7 @@ public class Model implements IModel {
     private final List<int[]> activeFire = new ArrayList<>(); // [row, col, type, timestamp]
     // Lista per il fuoco: int[]{row, col, type, timestamp}
 
+    private final List<Collectible> activeItems = new ArrayList<>();
 
     private static final int[][] testMap = {
             {0, 0, 0, 2, 0, 2, 2, 0, 2, 2, 0, 0, 0}, // Riga 0: Angolo player sicuro
@@ -69,6 +67,13 @@ public class Model implements IModel {
         this.player = new Player(0.0, 0.0);
 
         this.enemies = new ArrayList<>();
+
+        // --- AGGIUNTA: SPAWN INIZIALE DEI 6 GOBLIN ---
+        for (int i = 0; i < 6; i++) {
+            spawnEnemy();
+        }
+        // Inizializza il timer in modo che non parta subito
+        this.lastSpawnTime = System.currentTimeMillis();
     }
     // In src/model/Model.java
 
@@ -511,36 +516,27 @@ public class Model implements IModel {
      * Tenta di distruggere una cella. Ritorna true se l'onda d'urto può proseguire.
      */
 
-    // In src/model/Model.java
     @Override
     public void placeBomb() {
-        //if (activeBombs.size() >= player.getMaxBombs()) return;
+        // --- AGGIUNTA: CONTROLLO MUNIZIONI BOMBA ---
+        if (player.getBombAmmo() <= 0) {
+            System.out.println("Bombe esaurite!");
+            return; // Blocca il piazzamento
+        }
 
-        // --- CALCOLO PERFETTO DEL CENTRO ---
-        // X: Centro orizzontale (Invariato)
         double centerX = player.getXCoordinate() + (Config.ENTITY_LOGICAL_HITBOX_WIDTH / 2.0);
-
-        // Y: Qui c'era l'errore. Dobbiamo puntare al centro della hitbox di collisione.
-        // In isWalkable la hitbox va da (Y+0.1) a (Y+0.6). Il centro è Y + 0.35.
-        // Usiamo questo valore fisso per essere sicuri di restare nella cella camminabile.
         double centerY = player.getYCoordinate() + 0.35;
 
-        // Math.floor per ottenere l'indice della griglia
         int col = (int) Math.floor(centerX);
         int row = (int) Math.floor(centerY);
 
-        // --- CONTROLLI ---
         if (row < 0 || row >= Config.GRID_HEIGHT || col < 0 || col >= Config.GRID_WIDTH) return;
 
-        // CHECK DI SICUREZZA (Smart Fallback)
-        // Se per qualche motivo di arrotondamento siamo finiti dentro un muro...
         if (gameAreaArray[row][col] != Config.CELL_EMPTY) {
-            // ...proviamo a piazzare nella cella superiore (dove c'è la testa),
-            // che è sicuramente libera se ci stiamo camminando.
             if (gameAreaArray[row - 1][col] == Config.CELL_EMPTY) {
                 row = row - 1;
             } else {
-                return; // Se neanche quella è libera, allora siamo davvero bloccati.
+                return;
             }
         }
 
@@ -549,8 +545,11 @@ public class Model implements IModel {
             if (b.getRow() == row && b.getCol() == col) return;
         }
 
+        // --- AGGIUNTA: CONSUMO MUNIZIONE ---
+        player.addBombAmmo(-1); // La consuma solo se la piazza effettivamente!
+
         activeBombs.add(new Bomb(row, col, Config.BOMB_DETONATION_TICKS, player.getBombRadius()));
-        System.out.println("Bomba piazzata in [" + row + "," + col + "]");
+        System.out.println("Bomba piazzata in [" + row + "," + col + "] (Rimaste: " + player.getBombAmmo() + ")");
     }
 
     /**
@@ -576,17 +575,20 @@ public class Model implements IModel {
             double eH = Config.GOBLIN_HITBOX_HEIGHT;
 
             // Intersezione tra Rettangoli (AABB)
-            // Se il rettangolo del nemico tocca il rettangolo dell'esplosione...
             boolean hitX = eX < expX + expSize && eX + eW > expX;
             boolean hitY = eY < expY + expSize && eY + eH > expY;
 
             if (hitX && hitY) {
                 it.remove(); // RIMUOVI IL NEMICO DALLA LISTA
+
+                // --- AGGIUNTA DROP GOBLIN ---
+                generateGoblinDrop(eX, eY);
+
                 System.out.println("Goblin eliminato dall'esplosione in [" + row + "," + col + "]!");
             }
         }
 
-        // --- AGGIUNTA: DANNO AL PLAYER ---
+        // --- DANNO AL PLAYER ---
         if (!player.isInvincible()) {
             double pX = player.getXCoordinate();
             double pY = player.getYCoordinate();
@@ -628,19 +630,30 @@ public class Model implements IModel {
 
 
     private void manageSpawning() {
-        // Controllo cap massimo (da Config)
-        if (enemies.size() >= Config.MAX_ENEMIES_ON_MAP) return; //HO messo 1 per le prove
+        int currentEnemies = enemies.size();
 
+        // REGOLA 1: Se li abbiamo uccisi tutti, fermiamo lo spawn definitivamente (VITTORIA!)
+        if (currentEnemies == 0) {
+            // Qui in futuro metteremo la logica per aprire il Portale!
+            return;
+        }
+
+        // REGOLA 2: Se siamo al massimo (6), teniamo il timer "bloccato".
+        // In questo modo, quando ne uccidi uno, il timer riparte da zero
+        // e devi aspettare tutto il tempo (es. 3 secondi) prima che ne appaia un altro.
+        if (currentEnemies >= 6) {
+            lastSpawnTime = System.currentTimeMillis();
+            return;
+        }
+
+        // REGOLA 3: Se ci sono tra 1 e 5 goblin, il timer scorre.
+        // Quando scade, ne spawna UNO e resetta il timer.
         long currentTime = System.currentTimeMillis();
-        // Controllo intervallo tempo (da Config)
         if (currentTime - lastSpawnTime > Config.SPAWN_INTERVAL_MS) {
             spawnEnemy();
             lastSpawnTime = currentTime;
         }
     }
-    // In Model.java, aggiorna il metodo spawnEnemy
-
-    // In src/model/Model.java
 
     private void spawnEnemy() {
         int r, c;
@@ -653,33 +666,20 @@ public class Model implements IModel {
             r = randomGenerator.nextInt(Config.GRID_HEIGHT);
 
             if (isValidSpawnPoint(c, r)) {
-                /*
-                ----versione per generazone casuale------
 
-                // Scegliamo il tipo in base a quanti nemici ci sono già
-                int typeIndex = enemies.size() % 3;
+                // Generazione Casuale Equilibrata
+                int typeIndex = randomGenerator.nextInt(3);
                 Enemy newEnemy;
 
-
                 switch (typeIndex) {
-                    case 1 -> newEnemy = new ChasingGoblin(c, r);
-                    case 2 -> newEnemy = new ShooterGoblin(c, r);
+                    case 0 -> newEnemy = new ChasingGoblin(c, r);
+                    case 1 -> newEnemy = new ShooterGoblin(c, r);
                     default -> newEnemy = new CommonGoblin(c, r);
                 }
 
-
                 enemies.add(newEnemy);
                 spawned = true;
-                lastSpawnTime = System.currentTimeMillis(); // Reset del timer solo se nasce
                 System.out.println("Model: Generato " + newEnemy.getType() + " in (" + c + ", " + r + ")");
-                 */
-
-                // TEST: Crea SEMPRE E SOLO uno specifico gobllin
-                Enemy newEnemy = new ShooterGoblin(c, r);
-
-                enemies.add(newEnemy);
-                spawned = true;
-                lastSpawnTime = System.currentTimeMillis();
             }
             attempts++;
         }
@@ -769,6 +769,7 @@ public class Model implements IModel {
         } else {
             // Viene chiamato UNA SOLA VOLTA!
             updatePlayerMovement();
+            checkItemPickup();
         }
 
         // 2. AGGIORNAMENTO ENTITÀ (Chiamati UNA SOLA VOLTA!)
@@ -872,6 +873,10 @@ public class Model implements IModel {
                     // Tolleranza hitbox 0.6 per centrare il goblin
                     if (Math.abs(p.getX() - e.getX()) < 0.6 && Math.abs(p.getY() - e.getY()) < 0.6) {
                         eIt.remove(); // Elimina il Goblin dalla lista
+
+                        // --- AGGIUNTA DROP GOBLIN ---
+                        generateGoblinDrop(e.getX(), e.getY());
+
                         System.out.println("Goblin fulminato dall'Aura!");
                         hitEnemy = true;
                         break; // L'aura NON perfora: uccide un solo nemico e si ferma!
@@ -884,6 +889,7 @@ public class Model implements IModel {
             }
         }
     }
+
     // ... in fondo alla classe Model ...
 
     @Override
@@ -1049,6 +1055,13 @@ public class Model implements IModel {
         // Se è in cooldown o sta già attaccando, ignora l'input
         if (!player.canCast() || player.isCasting()) return;
 
+        // --- AGGIUNTA: CONTROLLO MUNIZIONI AURA ---
+        if (player.getAuraAmmo() <= 0) {
+            System.out.println("Colpi d'Aura esauriti!");
+            return; // Blocca il colpo
+        }
+        player.addAuraAmmo(-1); // Consuma 1 munizione
+
         player.startCast();
         player.setDelta(0, 0); // Frena di colpo (Rooting)
 
@@ -1059,7 +1072,7 @@ public class Model implements IModel {
             case LEFT -> player.setState(PlayerState.CAST_LEFT);
             case RIGHT -> player.setState(PlayerState.CAST_RIGHT);
         }
-        System.out.println("Player: Inizio lancio Aura...");
+        System.out.println("Player: Inizio lancio Aura... (Munizioni rimaste: " + player.getAuraAmmo() + ")");
     }
 
     private void spawnAuraProjectile() {
@@ -1093,6 +1106,11 @@ public class Model implements IModel {
     public void destroyBlock(int row, int col) {
         if (gameAreaArray[row][col] == Config.CELL_DESTRUCTIBLE_BLOCK) {
             gameAreaArray[row][col] = Config.CELL_EMPTY;
+
+            // --- AGGIUNTA DROP CASSA ---
+            // Nota: x è la colonna, y è la riga
+            generateCrateDrop(col, row);
+
             destructionEffects.add(new BlockDestruction(row, col));
             System.out.println("Aura: Cassa distrutta in [" + row + ", " + col + "]");
         }
@@ -1170,6 +1188,88 @@ public class Model implements IModel {
     }
 
 
+    // --- LOTTERIA DELLE CASSE (Risorse) ---
+    private void generateCrateDrop(double x, double y) {
+        Random rand = new Random();
+        int roll = rand.nextInt(100);
+
+        ItemType drop = null;
+        if (roll < 20) {
+            drop = ItemType.AMMO_AURA; // 20%
+        } else if (roll < 35) {
+            drop = ItemType.AMMO_BOMB; // 15%
+        }
+
+        if (drop != null) {
+            activeItems.add(new Collectible(x, y, drop));
+            System.out.println("Cassa droppa: " + drop.name());
+        }
+    }
+
+    // --- LOTTERIA DEI GOBLIN (Power-up Intelligenti) ---
+    private void generateGoblinDrop(double x, double y) {
+        Random rand = new Random();
+        if (rand.nextInt(100) >= 40) return; // 40% di possibilità di drop
+
+        List<ItemType> availableDrops = new ArrayList<>();
+        if (!player.hasShield()) availableDrops.add(ItemType.POWER_SHIELD);
+        if (!player.hasMaxRadius()) availableDrops.add(ItemType.POWER_RADIUS);
+        if (!player.hasMaxSpeed()) availableDrops.add(ItemType.POWER_SPEED);
+
+        if (availableDrops.isEmpty()) return; // Il player ha già tutto maxato!
+
+        int dropIndex = rand.nextInt(availableDrops.size());
+        ItemType droppedItem = availableDrops.get(dropIndex);
+
+        // Centriamo l'oggetto rispetto alle coordinate di morte del nemico
+        int col = (int) Math.floor(x);
+        int row = (int) Math.floor(y);
+        activeItems.add(new Collectible(col, row, droppedItem));
+        System.out.println("Goblin droppa: " + droppedItem.name());
+    }
+
+    private void checkItemPickup() {
+        Iterator<Collectible> it = activeItems.iterator();
+        double pX = player.getXCoordinate();
+        double pY = player.getYCoordinate();
+
+        while (it.hasNext()) {
+            Collectible item = it.next();
+            // Controllo tolleranza 0.5 per la raccolta
+            if (Math.abs(pX - item.getX()) < 0.6 && Math.abs(pY - item.getY()) < 0.6) {
+                applyItemEffect(item.getType());
+                it.remove(); // Oggetto raccolto!
+            }
+        }
+    }
+
+    private void applyItemEffect(ItemType type) {
+        switch (type) {
+            case AMMO_BOMB -> player.addBombAmmo(10);
+            case AMMO_AURA -> player.addAuraAmmo(10);
+            case POWER_SHIELD -> player.setShield(true);
+            case POWER_RADIUS -> {
+                player.setMaxRadius(true);
+                // Qui in futuro metterai: player.setBombRadius(Config.BOMB_RADIUS + 1);
+            }
+            case POWER_SPEED -> {
+                player.setMaxSpeed(true);
+                // Qui in futuro aumenteremo la logica della velocità
+            }
+        }
+        System.out.println("RACCOLTO: " + type.name());
+    }
+
+    @Override
+    public java.util.List<Collectible> getActiveItems() {
+        return activeItems;
+    }
+
+    @Override public int getPlayerBombAmmo() { return player.getBombAmmo(); }
+    @Override public int getPlayerAuraAmmo() { return player.getAuraAmmo(); }
+    @Override public boolean hasPlayerShield() { return player.hasShield(); }
+    @Override public boolean hasPlayerMaxRadius() { return player.hasMaxRadius(); }
+    @Override public boolean hasPlayerMaxSpeed() { return player.hasMaxSpeed(); }
 
     public static IModel getInstance() {
         if (instance == null) instance = new Model();

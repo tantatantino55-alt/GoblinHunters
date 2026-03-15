@@ -64,4 +64,10 @@ public interface IControllerForView {
     void resetPlayerStateAfterAction();
 
     void staffAttack();
+
+    int getPlayerBombAmmo();
+    int getPlayerAuraAmmo();
+    boolean hasPlayerShield();
+    boolean hasPlayerMaxRadius();
+    boolean hasPlayerMaxSpeed();
 }

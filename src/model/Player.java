@@ -30,6 +30,13 @@ public class Player extends Entity {
     private long lastCastTime = 0;   // Per calcolare il Cooldown
     private final long CAST_COOLDOWN_MS = 800; // 0.8 secondi di attesa tra un colpo e l'altro
 
+    // --- RISORSE E POWER-UP ---
+    private int bombAmmo = 5;   // Iniziamo con 5 bombe per test
+    private int auraAmmo = 10;  // Iniziamo con 10 magie per test
+    private boolean hasShield = false;
+    private boolean hasMaxRadius = false;
+    private boolean hasMaxSpeed = false;
+
     public Player(double startX, double startY) {
         this.xCoordinate = startX;
         this.yCoordinate = startY;
@@ -89,11 +96,21 @@ public class Player extends Entity {
     // ... (Il resto dei getter/setter per coordinate, vite, bombe rimane uguale) ...
     public boolean isInvincible() { return System.currentTimeMillis() < invincibilityEndTime; }
     public void takeDamage() {
-        if (!isInvincible() && lives > 0) {
-            lives--;
+        if (isInvincible() || lives <= 0) return; // Controllo di sicurezza iniziale
+
+        // Se ha lo scudo, perde lo scudo ma NON perde la vita!
+        if (hasShield) {
+            hasShield = false;
             invincibilityEndTime = System.currentTimeMillis() + Config.INVINCIBILITY_DURATION_MS;
-            System.out.println("Player colpito! Vite rimaste: " + lives);
+            System.out.println("Scudo distrutto! Nessuna vita persa.");
+            return;
         }
+
+        // Se non ha lo scudo, prende il danno normalmente
+        lives--;
+        invincibilityEndTime = System.currentTimeMillis() + Config.INVINCIBILITY_DURATION_MS;
+        setState(PlayerState.HURT_FRONT); // Usiamo setState per far ripartire il timer dell'animazione
+        System.out.println("Player colpito! Vite rimaste: " + lives);
     }
     public int getLives() { return lives; }
     public double getXCoordinate() { return xCoordinate; }
@@ -132,5 +149,21 @@ public class Player extends Entity {
 
     public void finishCast() { this.isCasting = false; }
 
+    // Metodi per le Risorse
+    public int getBombAmmo() { return bombAmmo; }
+    public void addBombAmmo(int amount) { this.bombAmmo += amount; }
+
+    public int getAuraAmmo() { return auraAmmo; }
+    public void addAuraAmmo(int amount) { this.auraAmmo += amount; }
+
+    // Metodi per i Power-up
+    public boolean hasShield() { return hasShield; }
+    public void setShield(boolean shield) { this.hasShield = shield; }
+
+    public boolean hasMaxRadius() { return hasMaxRadius; }
+    public void setMaxRadius(boolean max) { this.hasMaxRadius = max; }
+
+    public boolean hasMaxSpeed() { return hasMaxSpeed; }
+    public void setMaxSpeed(boolean max) { this.hasMaxSpeed = max; }
 
 }

@@ -3,6 +3,8 @@ package view;
 import utils.Config;
 import utils.PlayerState;
 
+import java.awt.image.BufferedImage;
+
 /**
  * Classe dedicata esclusivamente alla configurazione e al caricamento
  * iniziale delle risorse grafiche nel sistema.
@@ -21,6 +23,7 @@ public class ResourceLoader {
         loadChasingGoblinAnimations(sm);
         loadCommonGoblinAnimations(sm);
         loadProjectiles(sm);
+        loadMapThemes(sm);
 
 
 
@@ -186,6 +189,48 @@ public class ResourceLoader {
 
         System.out.println("ResourceLoader: Proiettili Aura caricati (12 frame).");
 
+    }
+
+    private void loadMapThemes(SpriteManager sm) {
+        System.out.println("ResourceLoader: Estrazione temi mappa dallo Sheet...");
+
+        int size = utils.Config.TILE_SIZE;
+
+        // ---------------------------------------------------------
+        // TEMA 1: VILLAGE
+        // L'array è di 3 elementi perché i codici cella vanno da 0 a 2
+        // ---------------------------------------------------------
+        BufferedImage[] villageTiles = new BufferedImage[10];
+
+        // Indice 0: Pavimento (Vuoto)
+        villageTiles[utils.Config.CELL_EMPTY] = sm.extractTile(
+                utils.Config.MAIN_SHEET,
+                utils.Config.TILE_FLOOR_COL,
+                utils.Config.TILE_FLOOR_ROW,
+                size, size
+        );
+
+        // Indice 1: Muro Indistruttibile
+        villageTiles[utils.Config.CELL_INDESTRUCTIBLE_BLOCK] = sm.extractTile(
+                utils.Config.MAIN_SHEET,
+                utils.Config.TILE_WALL_IND_COL,
+                utils.Config.TILE_WALL_IND_ROW,
+                size, size
+        );
+
+        // Indice 2: Muro Distruttibile (Cassa)
+        villageTiles[utils.Config.CELL_DESTRUCTIBLE_BLOCK] = sm.extractTile(
+                utils.Config.MAIN_SHEET,
+                utils.Config.TILE_WALL_DEST_COL,
+                utils.Config.TILE_WALL_DEST_ROW,
+                size, size
+        );
+        villageTiles[Config.VILLAGE_FRAME_INDEX] = ResourceManager.loadImage(Config.VILLAGE_FRAME);
+
+        // Salviamo l'intero array nel TileManager sotto l'etichetta "VILLAGE"
+        TileManager.getInstance().loadTheme("VILLAGE", villageTiles);
+
+        System.out.println("ResourceLoader: Tema 'VILLAGE' caricato con successo!");
     }
 
 

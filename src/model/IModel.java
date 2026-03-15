@@ -5,6 +5,9 @@ import utils.EnemyType;
 import utils.PlayerState;
 
 public interface IModel {
+
+    int[][] generateProceduralMap();
+
     public int getNumColumns();
     public int getNumRows();
     public double xCoordinatePlayer();
@@ -83,6 +86,7 @@ public interface IModel {
     int getCurrentZone();
     int getDifficultyCycle();
     boolean isGateActive();
+    String getCurrentTheme();
     boolean isLevelCompletedFlag();
     void prepareNextLevel(int[][] newMap);
 }

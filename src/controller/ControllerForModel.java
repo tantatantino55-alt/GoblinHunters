@@ -35,6 +35,7 @@ public class ControllerForModel implements IControllerForModel, Runnable {
 
             // 2. PASSA I DATI AL MODEL PER IL SETUP LOGICO
             Model.getInstance().prepareNextLevel(nextMap);
+
         }
     }
 

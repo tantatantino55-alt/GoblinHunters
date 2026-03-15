@@ -105,6 +105,10 @@ public class ControllerForView implements IControllerForView {
     public boolean isPortalRevealed() {
         return model.Model.getInstance().isPortalRevealed();
     }
+    @Override
+    public String getCurrentTheme() {
+        return model.Model.getInstance().getCurrentTheme();
+    }
 
     public static IControllerForView getInstance() {
         if (instance == null) instance = new ControllerForView();

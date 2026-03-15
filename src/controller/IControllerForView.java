@@ -74,4 +74,5 @@ public interface IControllerForView {
     int getPortalRow();
     int getPortalCol();
     boolean isPortalRevealed();
+    String getCurrentTheme();
 }

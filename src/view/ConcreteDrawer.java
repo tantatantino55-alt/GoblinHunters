@@ -155,8 +155,14 @@ public class ConcreteDrawer extends AbstractDrawer {
      * Layer 1: Oggetti (Muri distruttibili/indistruttibili)
      */
     private void drawMap(Graphics2D g2d) {
+        // 1. La View chiede al Controller in che tema siamo
+        String theme = controller.ControllerForView.getInstance().getCurrentTheme();
+
+        // 2. La View aggiorna il proprio TileManager
+        view.TileManager.getInstance().setCurrentTheme(theme);
         int[][] gameAreaArray = ControllerForView.getInstance().getGameAreaArray();
         BufferedImage floorImg = tileManager.getTileImage(Config.CELL_EMPTY);
+
 
         for (int row = 0; row < Config.GRID_HEIGHT; row++) {
             for (int col = 0; col < Config.GRID_WIDTH; col++) {

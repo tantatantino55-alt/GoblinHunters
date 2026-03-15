@@ -43,6 +43,7 @@ public class Model implements IModel {
     private int difficultyCycle = 1;       // Moltiplicatore di difficoltà post-boss
     private boolean gateActive = false;    // Diventa true quando i nemici muoiono
     private boolean levelCompletedFlag = false; // Avvisa il Controller del cambio mappa
+    private String currentTheme = "VILLAGE"; // <-- AGGIUNTO: Tema iniziale
 
 
     // --- VARIABILI PORTALE ---
@@ -75,12 +76,37 @@ public class Model implements IModel {
 // 0 = Vuoto
     // 1 = Muro Indistruttibile (Test Sliding)
 
+
     private Model() {
         this.gameAreaArray = new int[Config.GRID_HEIGHT][Config.GRID_WIDTH];
-        List<int[]> emptyCells = new ArrayList<>();
 
-        // Spostiamo la lista delle casse qui sopra per poterci aggiungere subito quelle del bunker
+        // 1. CHIAMIAMO IL NUOVO METODO PER AVERE LA PRIMA MAPPA
+        int[][] initialMap = generateProceduralMap();
+
+        // 2. LA COPIAMO NELLA GRIGLIA UFFICIALE DEL GIOCO
+        for (int r = 0; r < Config.GRID_HEIGHT; r++) {
+            System.arraycopy(initialMap[r], 0, gameAreaArray[r], 0, Config.GRID_WIDTH);
+        }
+
+        // 3. INIZIALIZZIAMO PLAYER E NEMICI
+        this.player = new Player(0.0, 0.0);
+        this.enemies = new ArrayList<>();
+
+        for (int i = 0; i < 6; i++) {
+            spawnEnemy();
+        }
+        this.lastSpawnTime = System.currentTimeMillis();
+    }
+
+    @Override
+    // --- METODO PER GENERARE MAPPE PROCEDURALI (Utile per il cambio livello) ---
+    public int[][] generateProceduralMap() {
+        int[][] nextMap = new int[Config.GRID_HEIGHT][Config.GRID_WIDTH];
+        List<int[]> emptyCells = new ArrayList<>();
         List<int[]> cratePositions = new ArrayList<>();
+
+        // Pulizia del loot e del portale precedente (Fondamentale per i livelli > 1)
+        hiddenLoot.clear();
 
         // --- PASSO 1 & 2: PILASTRI FISSI E IL "BUNKER" INIZIALE ---
         for (int r = 0; r < Config.GRID_HEIGHT; r++) {
@@ -88,7 +114,7 @@ public class Model implements IModel {
 
                 // Pilastri di pietra nelle righe e colonne dispari
                 if (r % 2 != 0 && c % 2 != 0) {
-                    gameAreaArray[r][c] = Config.CELL_INDESTRUCTIBLE_BLOCK;
+                    nextMap[r][c] = Config.CELL_INDESTRUCTIBLE_BLOCK;
                 } else {
                     // La "Safe Zone" a L in alto a sinistra: [0,0], [0,1], [1,0]
                     boolean isSafeZone = (r == 0 && c == 0) || (r == 0 && c == 1) || (r == 1 && c == 0);
@@ -97,12 +123,12 @@ public class Model implements IModel {
                     boolean isBunkerWall = (r == 0 && c == 2) || (r == 2 && c == 0);
 
                     if (isSafeZone) {
-                        gameAreaArray[r][c] = Config.CELL_EMPTY; // Dentro il bunker si sta sicuri
+                        nextMap[r][c] = Config.CELL_EMPTY; // Dentro il bunker si sta sicuri
                     } else if (isBunkerWall) {
-                        gameAreaArray[r][c] = Config.CELL_DESTRUCTIBLE_BLOCK; // Muri forzati del bunker
-                        cratePositions.add(new int[]{r, c}); // Li aggiungiamo alla lista del loot!
+                        nextMap[r][c] = Config.CELL_DESTRUCTIBLE_BLOCK; // Muri forzati del bunker
+                        cratePositions.add(new int[]{r, c}); // Li aggiungiamo alla lista del loot
                     } else {
-                        gameAreaArray[r][c] = Config.CELL_EMPTY;
+                        nextMap[r][c] = Config.CELL_EMPTY;
                         emptyCells.add(new int[]{r, c}); // Spazi liberi per le casse casuali
                     }
                 }
@@ -111,16 +137,15 @@ public class Model implements IModel {
 
         // --- PASSO 3: GENERAZIONE DELLE RESTANTI 43 CASSE CASUALI (45 tot - 2 bunker) ---
         int NUM_RANDOM_CRATES = 43;
-        java.util.Collections.shuffle(emptyCells, randomGenerator); // Mescoliamo le coordinate vuote
+        java.util.Collections.shuffle(emptyCells, randomGenerator);
 
         for (int i = 0; i < NUM_RANDOM_CRATES && i < emptyCells.size(); i++) {
             int[] pos = emptyCells.get(i);
-            gameAreaArray[pos[0]][pos[1]] = Config.CELL_DESTRUCTIBLE_BLOCK;
+            nextMap[pos[0]][pos[1]] = Config.CELL_DESTRUCTIBLE_BLOCK;
             cratePositions.add(pos);
         }
 
         // --- PASSO 4: IL MAZZO DEL BOTTINO (Loot intelligente) ---
-        // Prima di distribuire il loot, mescoliamo TUTTE le 45 casse (comprese quelle del bunker!)
         java.util.Collections.shuffle(cratePositions, randomGenerator);
 
         if (cratePositions.size() > 0) {
@@ -130,29 +155,20 @@ public class Model implements IModel {
             portalCol = pCoords[1];
             System.out.println("DEBUG: Portale nascosto in [" + portalRow + ", " + portalCol + "]");
 
-            // 2. Le Bombe (nascondile nelle successive 10 casse: indice da 1 a 10)
+            // 2. Le Bombe
             for (int i = 1; i <= 10 && i < cratePositions.size(); i++) {
                 int[] cCoords = cratePositions.get(i);
                 hiddenLoot.put(cCoords[0] + "," + cCoords[1], ItemType.AMMO_BOMB);
             }
 
-            // 3. L'Aura (nascondila nelle successive 10 casse: indice da 11 a 20)
+            // 3. L'Aura
             for (int i = 11; i <= 20 && i < cratePositions.size(); i++) {
                 int[] cCoords = cratePositions.get(i);
                 hiddenLoot.put(cCoords[0] + "," + cCoords[1], ItemType.AMMO_AURA);
             }
         }
 
-        // Il player nasce sempre al sicuro dentro il bunker [0,0]
-        this.player = new Player(0.0, 0.0);
-        this.enemies = new ArrayList<>();
-
-        // Spawn Iniziale dei Goblin: Nasceranno fuori dal bunker perché le celle [0,2] e [2,0]
-        // sono casse e il metodo isValidSpawnPoint vieta lo spawn sulle casse!
-        for (int i = 0; i < 6; i++) {
-            spawnEnemy();
-        }
-        this.lastSpawnTime = System.currentTimeMillis();
+        return nextMap; // Restituisce la matrice generata pronta all'uso!
     }
 
     // In src/model/Model.java
@@ -1394,14 +1410,13 @@ public class Model implements IModel {
             }
         }
     }
-
     @Override
     public void prepareNextLevel(int[][] newMap) {
         // 1. Reset flag del Gate
         levelCompletedFlag = false;
         gateActive = false;
 
-        // 2. Progressione Zona (0->1->2-> Vittoria/Loop)
+        // 2. Progressione Zona e Tema
         currentZone++;
         if (currentZone > 2) {
             currentZone = 0;   // Ricomincia dal Villaggio
@@ -1411,12 +1426,18 @@ public class Model implements IModel {
             System.out.println("Avanzamento al livello: " + currentZone);
         }
 
-        // 3. Copia la nuova mappa generata dal tuo collega
-        for (int r = 0; r < Config.GRID_HEIGHT; r++) {
-            for (int c = 0; c < Config.GRID_WIDTH; c++) {
-                gameAreaArray[r][c] = newMap[r][c];
-            }
+        // --- AGGIUNTA: AGGIORNAMENTO DEL TEMA LOGICO ---
+        switch (currentZone) {
+            case 1:  currentTheme = "FOREST"; break;
+            case 2:  currentTheme = "CAVE"; break;
+            case 0:
+            default: currentTheme = "VILLAGE"; break;
         }
+
+        // 3. Copia la nuova mappa generata...
+        // ... (il resto del metodo rimane uguale) ...
+
+
 
         // 4. Svuota le vecchie entità dal campo per il nuovo livello
         activeBombs.clear();
@@ -1442,6 +1463,7 @@ public class Model implements IModel {
     @Override public int getDifficultyCycle() { return difficultyCycle; }
     @Override public boolean isGateActive() { return gateActive; }
     @Override public boolean isLevelCompletedFlag() { return levelCompletedFlag; }
+    @Override public String getCurrentTheme() { return currentTheme; }
 
     public static IModel getInstance() {
         if (instance == null) instance = new Model();

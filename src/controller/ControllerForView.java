@@ -85,6 +85,12 @@ public class ControllerForView implements IControllerForView {
         Model.getInstance().staffAttack();
     }
 
+    @Override public int getPlayerBombAmmo() { return model.Model.getInstance().getPlayerBombAmmo(); }
+    @Override public int getPlayerAuraAmmo() { return model.Model.getInstance().getPlayerAuraAmmo(); }
+    @Override public boolean hasPlayerShield() { return model.Model.getInstance().hasPlayerShield(); }
+    @Override public boolean hasPlayerMaxRadius() { return model.Model.getInstance().hasPlayerMaxRadius(); }
+    @Override public boolean hasPlayerMaxSpeed() { return model.Model.getInstance().hasPlayerMaxSpeed(); }
+
     public static IControllerForView getInstance() {
         if (instance == null) instance = new ControllerForView();
         return instance;

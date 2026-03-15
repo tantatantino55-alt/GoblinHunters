@@ -1,23 +1,26 @@
 package view;
 
-import utils.Config;
-
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
  * Gestisce le immagini per le celle statiche della mappa (Muri, Pavimenti, ecc.).
- * Usa SpriteManager per estrarre le texture da un unico foglio.
+ * Ora supporta i "Temi" (es. VILLAGE, FOREST).
  */
 public class TileManager {
 
     private static TileManager instance = null;
-    private final Map<Integer, BufferedImage> tileImages;
+
+    // Mappa: Chiave = Nome Tema ("VILLAGE"), Valore = Array di immagini
+    private final Map<String, BufferedImage[]> themeMap;
+
+    // Tema attualmente in uso per il livello (default a VILLAGE)
+    private String currentTheme = "VILLAGE";
 
     private TileManager() {
-        this.tileImages = new HashMap<>();
-        loadTilesFromSheet();
+        this.themeMap = new HashMap<>();
+        // NIENTE CARICAMENTO QUI! Ora ci pensa il ResourceLoader.
     }
 
     public static TileManager getInstance() {
@@ -28,54 +31,39 @@ public class TileManager {
     }
 
     /**
-     * Carica i tasselli (tiles) usando lo SpriteManager.
-     * Le coordinate (COL/ROW) devono essere definite in Config.
+     * Registra un nuovo tema nel TileManager.
      */
-    private void loadTilesFromSheet() {
-        System.out.println("TileManager: Estrazione tiles dallo Sheet unico...");
-
-        SpriteManager sm = SpriteManager.getInstance();
-
-        // Dimensione della tile sul file PNG (potrebbe essere diversa da quella a schermo!)
-        // Se il tuo sprite sheet è 32x32 ma il gioco è 64x64, qui metti 32 (o Config.TILE_SIZE_ON_SHEET)
-        // Se è 1:1, usa Config.TILE_SIZE
-        int size = Config.TILE_SIZE;
-
-        // 1. Pavimento (Vuoto)
-        BufferedImage floor = sm.extractTile(
-                Config.MAIN_SHEET,
-                Config.TILE_FLOOR_COL,
-                Config.TILE_FLOOR_ROW,
-                size, size
-        );
-        if (floor != null) tileImages.put(Config.CELL_EMPTY, floor);
-
-        // 2. Muro Indistruttibile
-        BufferedImage wallInd = sm.extractTile(
-                Config.MAIN_SHEET,
-                Config.TILE_WALL_IND_COL,
-                Config.TILE_WALL_IND_ROW,
-                size, size
-        );
-        if (wallInd != null) tileImages.put(Config.CELL_INDESTRUCTIBLE_BLOCK, wallInd);
-
-        // 3. Muro Distruttibile
-        BufferedImage wallDest = sm.extractTile(
-                Config.MAIN_SHEET,
-                Config.TILE_WALL_DEST_COL,
-                Config.TILE_WALL_DEST_ROW,
-                size, size
-        );
-        if (wallDest != null) tileImages.put(Config.CELL_DESTRUCTIBLE_BLOCK, wallDest);
-
-        System.out.println("TileManager: Caricamento completato. Tiles caricate: " + tileImages.size());
+    public void loadTheme(String themeName, BufferedImage[] tiles) {
+        themeMap.put(themeName, tiles);
     }
 
+    /**
+     * Cambia il tema grafico in tempo reale.
+     */
+    public void setCurrentTheme(String themeName) {
+        if (themeMap.containsKey(themeName)) {
+            this.currentTheme = themeName;
+        } else {
+            System.err.println("TileManager: Tema '" + themeName + "' non trovato!");
+        }
+    }
+
+    /**
+     * Restituisce l'immagine corretta in base al tipo di cella e al tema corrente.
+     * Ricorda: 0 = Vuoto, 1 = Indistruttibile, 2 = Distruttibile
+     */
     public BufferedImage getTileImage(int cellType) {
-        return tileImages.get(cellType);
+        BufferedImage[] tiles = themeMap.get(currentTheme);
+
+        // Se il tema esiste e il cellType rientra nei limiti dell'array (0, 1, 2)
+        if (tiles != null && cellType >= 0 && cellType < tiles.length) {
+            return tiles[cellType];
+        }
+        return null;
     }
 
     public boolean hasTileImage(int cellType) {
-        return tileImages.containsKey(cellType);
+        BufferedImage[] tiles = themeMap.get(currentTheme);
+        return tiles != null && cellType >= 0 && cellType < tiles.length && tiles[cellType] != null;
     }
 }

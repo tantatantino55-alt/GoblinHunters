@@ -65,6 +65,13 @@ public interface IModel {
 
     public boolean isEnemyWaiting(int index);
 
-    // In Model.java
     void resetPlayerStateAfterAction();
+
+    java.util.List<model.Collectible> getActiveItems();
+
+    int getPlayerBombAmmo();
+    int getPlayerAuraAmmo();
+    boolean hasPlayerShield();
+    boolean hasPlayerMaxRadius();
+    boolean hasPlayerMaxSpeed();
 }

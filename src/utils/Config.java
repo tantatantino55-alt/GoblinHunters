@@ -9,8 +9,8 @@ public class Config {
     public static final int TILE_SIZE = 64;
     public static final int GAME_PANEL_WIDTH = GRID_WIDTH * TILE_SIZE;
     public static final int GAME_PANEL_HEIGHT = GRID_HEIGHT * TILE_SIZE;
-    public static final int WINDOW_PREFERRED_WIDTH = 1152;
-    public static final int WINDOW_PREFERRED_HEIGHT = 896;
+  //  public static final int WINDOW_PREFERRED_WIDTH = 1152;
+   // public static final int WINDOW_PREFERRED_HEIGHT = 896;
 
     // --- LOGICA PLAYER (Unità Mondo - PURE MVC) ---
     public static final double ENTITY_LOGICAL_SPEED = 0.05;
@@ -52,8 +52,8 @@ public class Config {
     public static final double MAX_LOGICAL_Y = (double) GRID_HEIGHT - 1.0;
 
     // --- PARAMETRI RENDER (Solo View) ---
-    public static final int GRID_OFFSET_X = 160;
-    public static final int GRID_OFFSET_Y = 46;
+    //public static final int GRID_OFFSET_X = 160;
+    //public static final int GRID_OFFSET_Y = 46;
     public static final int PLAYER_PIVOT_Y = 102;
     public static final int FPS = 60;
     public static final int GAME_LOOP_DELAY_MS = 1000 / FPS;
@@ -70,8 +70,10 @@ public class Config {
     public static final String SHOOTERGOBLIN_SHEET = "/ShooterGoblin.png";
     public static final String CHASING_GOBLIN_SHEET = "/ChasingGoblin.png";
     public static final String COMMON_GOBLIN = "/CommonGoblin.png";
-    public static final String VILLAGE_FRAME="/VillageFrame";
-
+    public static final String VILLAGE_FRAME="/VillageFrame.png";
+    public static final int VILLAGE_FRAME_INDEX = 4;
+    public static final String FOREST_FRAME="/ForestFrame.png";
+    public static final String CAVE_FRAME="/CaveFrame.png";
 
 
     // --- 1. COMMON GOBLIN (File: common.png) ---
@@ -233,14 +235,32 @@ public class Config {
     // Quanto dura il fuoco nel mondo di gioco? (30 tick = 0.5 secondi a 60 FPS)
     public static final int FIRE_DURATION_TICKS = 30;
 
-    // Calcolati per centrare la griglia (13*64 x 11*64) in 960x932
-    public static final int FRAME_OFFSET_X = 64;
-    public static final int FRAME_OFFSET_Y = 114;
+    // Dimensioni della cornice decorativa
+    public static final int FRAME_WIDTH = 960;
+    public static final int FRAME_HEIGHT = 832;
 
-    // Dimensioni della finestra uguali alla cornice
-    public static final int SCREEN_WIDTH = 960;
-    public static final int SCREEN_HEIGHT = 932;
+    // Calcolo dell'offset per centrare la griglia (13*64=832, 11*64=704)
+    // (960 - 832) / 2 = 64 pixel di bordo laterale
+    // (832 - 704) / 2 = 64 pixel di bordo superiore/inferiore
+    //public static final int FRAME_OFFSET_X = (FRAME_WIDTH - (GRID_WIDTH * TILE_SIZE)) / 2;
+   // public static final int FRAME_OFFSET_Y = (FRAME_HEIGHT - (GRID_HEIGHT * TILE_SIZE)) / 2;
     // --- ANIMAZIONE FUOCO (View) ---
 
+
+
+    // --- PARAMETRI RENDER (Solo View) ---
+    // Posizione della cornice sullo schermo
+    public static final int FRAME_OFFSET_X = 0;
+    public static final int FRAME_OFFSET_Y = 0;
+
+    // Offset perfetti per far cadere la griglia ESATTAMENTE nel buco trasparente
+    public static final int GRID_OFFSET_X = 64;   // Bordo laterale della cornice
+    public static final int GRID_OFFSET_Y = 64;  // Bordo superiore largo (per l'HUD)
+
+    // Dimensioni Finestra:
+    // Larghezza = 960 (Cornice) + 192 (Spazio per la tua UI laterale "MUNIZIONI") = 1152
+    // Altezza = 932 (Altezza esatta della cornice per non tagliarla sotto)
+    public static final int WINDOW_PREFERRED_WIDTH = 1152;
+    public static final int WINDOW_PREFERRED_HEIGHT = 932;
 }
 

@@ -91,6 +91,21 @@ public class ControllerForView implements IControllerForView {
     @Override public boolean hasPlayerMaxRadius() { return model.Model.getInstance().hasPlayerMaxRadius(); }
     @Override public boolean hasPlayerMaxSpeed() { return model.Model.getInstance().hasPlayerMaxSpeed(); }
 
+    @Override
+    public int getPortalRow() {
+        return model.Model.getInstance().getPortalRow();
+    }
+
+    @Override
+    public int getPortalCol() {
+        return model.Model.getInstance().getPortalCol();
+    }
+
+    @Override
+    public boolean isPortalRevealed() {
+        return model.Model.getInstance().isPortalRevealed();
+    }
+
     public static IControllerForView getInstance() {
         if (instance == null) instance = new ControllerForView();
         return instance;

@@ -74,4 +74,8 @@ public interface IModel {
     boolean hasPlayerShield();
     boolean hasPlayerMaxRadius();
     boolean hasPlayerMaxSpeed();
+
+    int getPortalRow();
+    int getPortalCol();
+    boolean isPortalRevealed();
 }

@@ -95,22 +95,22 @@ public class Player extends Entity {
 
     // ... (Il resto dei getter/setter per coordinate, vite, bombe rimane uguale) ...
     public boolean isInvincible() { return System.currentTimeMillis() < invincibilityEndTime; }
-    public void takeDamage() {
-        if (isInvincible() || lives <= 0) return; // Controllo di sicurezza iniziale
+    public boolean takeDamage() {
+        if (isInvincible() || lives <= 0) return false;
 
-        // Se ha lo scudo, perde lo scudo ma NON perde la vita!
         if (hasShield) {
             hasShield = false;
-            invincibilityEndTime = System.currentTimeMillis() + Config.INVINCIBILITY_DURATION_MS;
+            // 2 secondi di invincibilità per scappare!
+            invincibilityEndTime = System.currentTimeMillis() + 2000;
             System.out.println("Scudo distrutto! Nessuna vita persa.");
-            return;
+            return false; // Ritorna false perché NON ha perso vite
         }
 
-        // Se non ha lo scudo, prende il danno normalmente
         lives--;
-        invincibilityEndTime = System.currentTimeMillis() + Config.INVINCIBILITY_DURATION_MS;
-        setState(PlayerState.HURT_FRONT); // Usiamo setState per far ripartire il timer dell'animazione
+        invincibilityEndTime = System.currentTimeMillis() + 2000;
+        setState(PlayerState.HURT_FRONT);
         System.out.println("Player colpito! Vite rimaste: " + lives);
+        return true; // Ritorna true perché ha perso una vita
     }
     public int getLives() { return lives; }
     public double getXCoordinate() { return xCoordinate; }
@@ -161,9 +161,16 @@ public class Player extends Entity {
     public void setShield(boolean shield) { this.hasShield = shield; }
 
     public boolean hasMaxRadius() { return hasMaxRadius; }
-    public void setMaxRadius(boolean max) { this.hasMaxRadius = max; }
+    public void setMaxRadius(boolean max) {
+        this.hasMaxRadius = max;
+        // Se max è true, la bomba fa un'esplosione più grande (+2 caselle)
+        this.bombRadius = max ? Config.DEFAULT_BOMB_RADIUS + 1 : Config.DEFAULT_BOMB_RADIUS;
+    }
 
     public boolean hasMaxSpeed() { return hasMaxSpeed; }
-    public void setMaxSpeed(boolean max) { this.hasMaxSpeed = max; }
-
+    public void setMaxSpeed(boolean max) {
+        this.hasMaxSpeed = max;
+        // Se max è true, aumenta la velocità del 50%
+        this.speed = max ? Config.ENTITY_LOGICAL_SPEED * 1.2 : Config.ENTITY_LOGICAL_SPEED;
+    }
 }

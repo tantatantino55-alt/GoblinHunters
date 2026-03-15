@@ -28,6 +28,7 @@ public class ConcreteDrawer extends AbstractDrawer {
         g2d.fillRect(0, 0, getDrawingWidth(), getDrawingHeight());
 
         drawMap(g2d);
+        drawPortal(g2d);
         drawDestructions(g2d); // Qui vengono disegnati i blocchi che esplodono
         drawFire(g2d);
         drawBombs(g2d);
@@ -47,6 +48,30 @@ public class ConcreteDrawer extends AbstractDrawer {
         drawHUD(g2d);
     }
 
+    private void drawPortal(Graphics2D g2d) {
+        // Chiediamo al Controller se il portale è stato scoperto
+        if (controller.ControllerForView.getInstance().isPortalRevealed()) {
+
+            // Recuperiamo le coordinate sempre tramite il Controller
+            int pCol = controller.ControllerForView.getInstance().getPortalCol();
+            int pRow = controller.ControllerForView.getInstance().getPortalRow();
+
+            int screenX = (pCol * utils.Config.TILE_SIZE) + utils.Config.GRID_OFFSET_X;
+            int screenY = (pRow * utils.Config.TILE_SIZE) + utils.Config.GRID_OFFSET_Y;
+
+            // Colore di sfondo del portale (Viola scuro)
+            g2d.setColor(new Color(138, 43, 226));
+            g2d.fillRect(screenX, screenY, utils.Config.TILE_SIZE, utils.Config.TILE_SIZE);
+
+            // Bordo lampeggiante per dare l'idea di "Allarme" (Lampeggia ogni mezzo secondo)
+            if (System.currentTimeMillis() % 1000 < 500) {
+                g2d.setColor(Color.MAGENTA);
+                g2d.drawRect(screenX + 4, screenY + 4, utils.Config.TILE_SIZE - 8, utils.Config.TILE_SIZE - 8);
+                g2d.drawRect(screenX + 5, screenY + 5, utils.Config.TILE_SIZE - 10, utils.Config.TILE_SIZE - 10);
+            }
+        }
+    }
+
     private void drawHUD(Graphics2D g2d) {
         // --- 1. CALCOLO FPS ---
         frameCount++;
@@ -57,7 +82,7 @@ public class ConcreteDrawer extends AbstractDrawer {
             lastFpsTime = currentTime; // Resetta il timer
         }
 
-        // --- 2. RECUPERO DATI PANNELLO SINISTRO ---
+        // --- 2. RECUPERO DATI TRAMITE CONTROLLER ---
         int lives = controller.ControllerForView.getInstance().getPlayerLives();
         int totalSeconds = controller.ControllerForView.getInstance().getElapsedTimeInSeconds();
 
@@ -66,48 +91,62 @@ public class ConcreteDrawer extends AbstractDrawer {
         int seconds = totalSeconds % 60;
         String timeString = String.format("%02d:%02d", minutes, seconds);
 
-        // --- 3. DISEGNO PANNELLO SINISTRO (Statistiche Base) ---
-        g2d.setColor(Color.WHITE);
-        g2d.setFont(new Font("Arial", Font.BOLD, 20));
-        int startX = 20;
-
-        g2d.drawString("FPS: " + currentFPS, startX, 50);
-        g2d.drawString("VITE: " + lives, startX, 100);
-        g2d.drawString("TEMPO: " + timeString, startX, 150);
-
-        // --- 4. RECUPERO DATI PANNELLO DESTRO (Tramite MVC!) ---
         int bombAmmo = controller.ControllerForView.getInstance().getPlayerBombAmmo();
         int auraAmmo = controller.ControllerForView.getInstance().getPlayerAuraAmmo();
         boolean hasShield = controller.ControllerForView.getInstance().hasPlayerShield();
         boolean hasMaxRadius = controller.ControllerForView.getInstance().hasPlayerMaxRadius();
         boolean hasMaxSpeed = controller.ControllerForView.getInstance().hasPlayerMaxSpeed();
 
-        // --- 5. DISEGNO PANNELLO DESTRO (Munizioni e Power-Up) ---
-        // Calcoliamo la X in modo dinamico in base a dove finisce la mappa
-        int rightX = utils.Config.GRID_OFFSET_X + (utils.Config.GRID_WIDTH * utils.Config.TILE_SIZE) + 20;
-        int rightY = 50; // Partiamo allineati con l'altezza degli FPS
-        int gap = 30;    // Spazio verticale tra le righe di testo
+        // --- 3. IMPOSTAZIONI DI LAYOUT (TUTTO A DESTRA) ---
+        // Calcoliamo la X saltando la griglia E la cornice (che è larga 1 TILE_SIZE)
+        int panelX = utils.Config.GRID_OFFSET_X
+                + (utils.Config.GRID_WIDTH * utils.Config.TILE_SIZE)
+                + utils.Config.TILE_SIZE // <--- Salto della cornice!
+                + 30; // Margine di respiro dalla cornice al testo
 
-        // Sezione Munizioni
+        int currentY = 60;   // Punto di partenza dall'alto
+        int lineGap = 30;    // Spazio standard tra una riga di testo e l'altra
+        int sectionGap = 20; // Spazio extra per separare le diverse sezioni
+
+        // --- 4. DISEGNO STATISTICHE BASE (Spostate a destra!) ---
+        g2d.setColor(Color.WHITE);
+        g2d.setFont(new Font("Arial", Font.BOLD, 20));
+
+        g2d.drawString("FPS: " + currentFPS, panelX, currentY);
+        currentY += lineGap;
+        g2d.drawString("VITE: " + lives, panelX, currentY);
+        currentY += lineGap;
+        g2d.drawString("TEMPO: " + timeString, panelX, currentY);
+
+        currentY += lineGap + sectionGap;
+
+        // --- 5. DISEGNO MUNIZIONI ---
         g2d.setFont(new Font("Arial", Font.BOLD, 18));
         g2d.setColor(Color.YELLOW);
-        g2d.drawString("MUNIZIONI:", rightX, rightY);
+        g2d.drawString("MUNIZIONI:", panelX, currentY);
+        currentY += lineGap;
 
         g2d.setFont(new Font("Arial", Font.PLAIN, 16));
         g2d.setColor(Color.WHITE);
-        g2d.drawString("Bombe: " + bombAmmo, rightX, rightY + gap);
-        g2d.drawString("Magia: " + auraAmmo, rightX, rightY + gap * 2);
+        g2d.drawString("Bombe: " + bombAmmo, panelX, currentY);
+        currentY += lineGap;
+        g2d.drawString("Magia: " + auraAmmo, panelX, currentY);
 
-        // Sezione Potenziamenti
+        currentY += lineGap + sectionGap;
+
+        // --- 6. DISEGNO POTENZIAMENTI ---
         g2d.setFont(new Font("Arial", Font.BOLD, 18));
         g2d.setColor(Color.CYAN);
-        g2d.drawString("POTENZIAMENTI:", rightX, rightY + gap * 4);
+        g2d.drawString("POTENZIAMENTI:", panelX, currentY);
+        currentY += lineGap;
 
         g2d.setFont(new Font("Arial", Font.PLAIN, 16));
         g2d.setColor(Color.WHITE);
-        g2d.drawString("Scudo: " + (hasShield ? "ATTIVO" : "NO"), rightX, rightY + gap * 5);
-        g2d.drawString("Raggio Max: " + (hasMaxRadius ? "SI" : "NO"), rightX, rightY + gap * 6);
-        g2d.drawString("Velocità Max: " + (hasMaxSpeed ? "SI" : "NO"), rightX, rightY + gap * 7);
+        g2d.drawString("Scudo: " + (hasShield ? "ATTIVO" : "NO"), panelX, currentY);
+        currentY += lineGap;
+        g2d.drawString("Raggio Max: " + (hasMaxRadius ? "SI" : "NO"), panelX, currentY);
+        currentY += lineGap;
+        g2d.drawString("Velocità Max: " + (hasMaxSpeed ? "SI" : "NO"), panelX, currentY);
     }
 
     /**
@@ -143,7 +182,7 @@ public class ConcreteDrawer extends AbstractDrawer {
         // ---------------------------------------------------------
         // LAYER 2: LA CORNICE DEL TEMA (Sopra la mappa)
         // ---------------------------------------------------------
-        BufferedImage frameImg = tileManager.getTileImage(4); // Recuperiamo la posizione 4
+        BufferedImage frameImg = tileManager.getTileImage(3); // Recuperiamo la posizione 4
 
         if (frameImg != null) {
             // Usiamo gli offset che avevi già intelligentemente preparato in Config.java!

@@ -66,14 +66,24 @@ public class Config {
     // --- RISORSE ---
     public static final String PLAYER1_SHEET = "/wizardmale.png";
     public static final int ENTITY_FRAME_SIZE = 128;
-    public static final String MAIN_SHEET = "/Village.png"; // Il tuo file unico
+    public static final String VILLAGE_SHEET = "/Village.png";
+    public static final String VILLAGE_FRAME="/VillageFrame.png";
+    public static final int VILLAGE_FRAME_INDEX = 3;// Il tuo file unico
     public static final String SHOOTERGOBLIN_SHEET = "/ShooterGoblin.png";
     public static final String CHASING_GOBLIN_SHEET = "/ChasingGoblin.png";
     public static final String COMMON_GOBLIN = "/CommonGoblin.png";
-    public static final String VILLAGE_FRAME="/VillageFrame.png";
-    public static final int VILLAGE_FRAME_INDEX = 4;
+
+    public static final String FOREST_SHEET = "/Forest.png";
     public static final String FOREST_FRAME="/ForestFrame.png";
+    public static final int FOREST_FRAME_INDEX = 4;// Il tuo file unico
+    public  static final int THEME_FRAME_INDEX = 3;
+
+    public static final String CAVE_SHEET = "/Forest.png";
     public static final String CAVE_FRAME="/CaveFrame.png";
+
+
+
+
 
 
     // --- 1. COMMON GOBLIN (File: common.png) ---
@@ -130,6 +140,9 @@ public class Config {
     public static final int CELL_EMPTY = 0;
     public static final int CELL_INDESTRUCTIBLE_BLOCK = 1;
     public static final int CELL_DESTRUCTIBLE_BLOCK = 2;
+    // NUOVI TIPI DI BLOCCHI
+    public static final int CELL_CRACKED_FLOOR = 3; // Crepe
+    public static final int CELL_LAVA_FLOOR = 4;    // Lava
     public static final String ITEM_SHEET = "/Items.png";
     public static final int BOMB_SPRITE_START = 0;
     public static final int BOMB_FRAMES = 8;
@@ -164,6 +177,31 @@ public class Config {
 
     // --- MAPPA & DISTRUZIONE (MapItems.png) ---
     // Celle Statiche
+// ==========================================================
+    // COORDINATE SPRITESHEET PER I TEMI (Colonna, Riga)
+    // ==========================================================
+
+    // --- 1. VILLAGGIO ---
+    public static final int VILLAGE_ROW = 0;               // Riga unica per tutti gli elementi del villaggio
+    public static final int VILLAGE_FLOOR_COL = 1;         // Pavimento
+    public static final int VILLAGE_WALL_IND_COL = 0;      // Muro Indistruttibile
+    public static final int VILLAGE_WALL_DEST_COL = 2;     // Cassa/Muro Distruttibile
+
+    // --- 2. FORESTA ---
+    public static final int FOREST_ROW = 0;                // Riga unica per tutti gli elementi della foresta
+    public static final int FOREST_FLOOR_COL = 2;          // Erba
+    public static final int FOREST_WALL_IND_COL = 0;       // Albero Grande
+    public static final int FOREST_WALL_DEST_COL = 1;      // Cespuglio/Tronco distruttibile
+
+    // --- 3. CAVERNA (CAVE) ---
+    public static final int CAVE_ROW = 0;                  // Riga unica per tutti gli elementi della caverna
+    public static final int CAVE_FLOOR_COL = 3;            // Roccia liscia
+    public static final int CAVE_WALL_IND_COL = 4;         // Muro di roccia scura
+    public static final int CAVE_WALL_DEST_COL = 0;// Cristalli/Rocce fragili
+    public static final int CAVE_FRAME_INDEX = 5;
+    // NUOVE COORDINATE
+    public static final int CAVE_CRACKED_FLOOR_COL = 1;    // Pavimento con crepe
+    public static final int CAVE_LAVA_FLOOR_COL = 2;
 
 
 
@@ -194,12 +232,7 @@ public class Config {
 
     // Villaggio in rovina
     // Coordinate (Colonna, Riga) nello sheet
-    public static final int TILE_FLOOR_COL = 1;
-    public static final int TILE_FLOOR_ROW = 0;
-    public static final int TILE_WALL_IND_COL = 0;
-    public static final int TILE_WALL_IND_ROW =0;
-    public static final int TILE_WALL_DEST_COL = 2;
-    public static final int TILE_WALL_DEST_ROW = 0;
+
     // In src/utils/Config.java
     public static final double MAGNET_TOLERANCE = 0.40; // Più alto = più facile imboccare i corridoi
     public static final double GOBLIN_COMMON_SPEED = 0.03; // Leggermente più veloce per fluidità

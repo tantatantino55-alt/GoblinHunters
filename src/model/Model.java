@@ -38,6 +38,13 @@ public class Model implements IModel {
 
     private final List<Collectible> activeItems = new ArrayList<>();
 
+
+    // --- VARIABILI PORTALE ---
+    private int portalRow = -1;
+    private int portalCol = -1;
+    private boolean portalRevealed = false;
+    private long lastPortalSpawnTime = 0;
+
     private static final int[][] testMap = {
             {0, 0, 0, 2, 0, 2, 2, 0, 2, 2, 0, 0, 0}, // Riga 0: Angolo player sicuro
             {0, 1, 0, 1, 2, 1, 2, 1, 2, 1, 2, 1, 0}, // Riga 1: Pilastri e casse
@@ -74,6 +81,24 @@ public class Model implements IModel {
         }
         // Inizializza il timer in modo che non parta subito
         this.lastSpawnTime = System.currentTimeMillis();
+
+        // --- NASCONDIAMO IL PORTALE SOTTO UNA CASSA CASUALE ---
+        List<int[]> destructibleBlocks = new ArrayList<>();
+        for (int r = 0; r < Config.GRID_HEIGHT; r++) {
+            for (int c = 0; c < Config.GRID_WIDTH; c++) {
+                if (gameAreaArray[r][c] == Config.CELL_DESTRUCTIBLE_BLOCK) {
+                    destructibleBlocks.add(new int[]{r, c});
+                }
+            }
+        }
+
+        // Scegliamo una cassa a caso (se ce ne sono)
+        if (!destructibleBlocks.isEmpty()) {
+            int[] portalCoords = destructibleBlocks.get(randomGenerator.nextInt(destructibleBlocks.size()));
+            portalRow = portalCoords[0];
+            portalCol = portalCoords[1];
+            System.out.println("DEBUG: Portale nascosto in [" + portalRow + ", " + portalCol + "]");
+        }
     }
     // In src/model/Model.java
 
@@ -321,7 +346,16 @@ public class Model implements IModel {
 
     @Override
     public void setPlayerDelta(double dx, double dy) {
-        // Riceve già valori logici (es. 0.05), li salva direttamente
+        // Usiamo la VERA velocità del player (che aumenta col Power-up)
+        double currentSpeed = player.getSpeed();
+
+        // Applichiamo la direzione richiesta ma con la velocità corretta
+        if (dx > 0) dx = currentSpeed;
+        else if (dx < 0) dx = -currentSpeed;
+
+        if (dy > 0) dy = currentSpeed;
+        else if (dy < 0) dy = -currentSpeed;
+
         this.player.setDelta(dx, dy);
     }
 
@@ -468,9 +502,6 @@ public class Model implements IModel {
         expandFireDirection(r, c, 0, 1, rad, 3, 7);  // DESTRA
     }
 
-    // Sostituisci il metodo expandFireDirection
-
-    // In src/model/Model.java
     private void expandFireDirection(int startR, int startC, int dr, int dc, int rad, int centralType, int endType) {
         for (int i = 1; i <= rad; i++) {
             int currentR = startR + dr * i;
@@ -487,12 +518,9 @@ public class Model implements IModel {
             }
 
             if (cellType == Config.CELL_DESTRUCTIBLE_BLOCK) {
-                gameAreaArray[currentR][currentC] = Config.CELL_EMPTY;
-                destructionEffects.add(new BlockDestruction(currentR, currentC));
-
-                // RIMOSSO: checkExplosionDamage(currentR, currentC);
-                // La cassa assorbe l'esplosione. Il fuoco si ferma qui e NON danneggia
-                // chi è "dietro" o chi tocca leggermente questa cella.
+                // MODIFICA: Invece di svuotare l'array manualmente, chiamiamo destroyBlock
+                // che si occupa di cancellare la cassa, fare l'effetto grafico E droppare risorse!
+                destroyBlock(currentR, currentC);
                 break;
             }
 
@@ -506,6 +534,7 @@ public class Model implements IModel {
             checkExplosionDamage(currentR, currentC);
         }
     }
+
     /*
      * Gestisce l'effetto dell'esplosione su una singola cella.
      * Ritorna TRUE se l'esplosione può continuare attraverso questa cella.
@@ -632,27 +661,34 @@ public class Model implements IModel {
     private void manageSpawning() {
         int currentEnemies = enemies.size();
 
-        // REGOLA 1: Se li abbiamo uccisi tutti, fermiamo lo spawn definitivamente (VITTORIA!)
+        // Se li abbiamo uccisi tutti, il portale si spegne e potremo passarci per vincere!
         if (currentEnemies == 0) {
-            // Qui in futuro metteremo la logica per aprire il Portale!
             return;
         }
 
-        // REGOLA 2: Se siamo al massimo (6), teniamo il timer "bloccato".
-        // In questo modo, quando ne uccidi uno, il timer riparte da zero
-        // e devi aspettare tutto il tempo (es. 3 secondi) prima che ne appaia un altro.
-        if (currentEnemies >= 6) {
-            lastSpawnTime = System.currentTimeMillis();
-            return;
+        // Se il portale è stato scoperto E ci sono meno di 6 goblin vivi, genera mostri!
+        if (portalRevealed && currentEnemies < 6) {
+            long currentTime = System.currentTimeMillis();
+            if (currentTime - lastPortalSpawnTime > 10000) { // 10 secondi (10000 ms)
+                spawnEnemyAtPortal();
+                lastPortalSpawnTime = currentTime;
+            }
+        }
+    }
+
+    private void spawnEnemyAtPortal() {
+        int typeIndex = randomGenerator.nextInt(3);
+        Enemy newEnemy;
+
+        // Il goblin nasce ESATTAMENTE sulle coordinate del portale
+        switch (typeIndex) {
+            case 0 -> newEnemy = new ChasingGoblin(portalCol, portalRow);
+            case 1 -> newEnemy = new ShooterGoblin(portalCol, portalRow);
+            default -> newEnemy = new CommonGoblin(portalCol, portalRow);
         }
 
-        // REGOLA 3: Se ci sono tra 1 e 5 goblin, il timer scorre.
-        // Quando scade, ne spawna UNO e resetta il timer.
-        long currentTime = System.currentTimeMillis();
-        if (currentTime - lastSpawnTime > Config.SPAWN_INTERVAL_MS) {
-            spawnEnemy();
-            lastSpawnTime = currentTime;
-        }
+        enemies.add(newEnemy);
+        System.out.println("Allarme! Il Portale ha sputato fuori un " + newEnemy.getType() + "!");
     }
 
     private void spawnEnemy() {
@@ -732,20 +768,20 @@ public class Model implements IModel {
         }
     }
 
-    // 2. Aggiorniamo handlePlayerHit per gestire Respawn e Reset
     private void handlePlayerHit() {
         if (player.isInvincible()) return;
 
-        // Applica il danno (riduce vita e imposta timer invincibilità)
-        player.takeDamage();
+        // lifeLost sarà TRUE solo se non avevamo lo scudo
+        boolean lifeLost = player.takeDamage();
 
-        // RESET POSIZIONE (Respawn)
-        player.setXCoordinate(0.0);
-        player.setYCoordinate(0.0);
-        player.setDelta(0, 0); // Ferma eventuali movimenti residui
-        player.setState(PlayerState.IDLE_FRONT); // Reset animazione
-
-        System.out.println("RESPAWN: Player riportato all'inizio.");
+        // RESET POSIZIONE (Respawn) SOLO SE ABBIAMO PERSO LA VITA
+        if (lifeLost) {
+            player.setXCoordinate(0.0);
+            player.setYCoordinate(0.0);
+            player.setDelta(0, 0);
+            player.setState(PlayerState.IDLE_FRONT);
+            System.out.println("RESPAWN: Player riportato all'inizio.");
+        }
     }
 
     private void updateEnemies() {
@@ -1102,21 +1138,24 @@ public class Model implements IModel {
     }
 
     @Override
-    // Aggiungi questo metodo pubblico così l'AuraProjectile può usarlo
     public void destroyBlock(int row, int col) {
         if (gameAreaArray[row][col] == Config.CELL_DESTRUCTIBLE_BLOCK) {
             gameAreaArray[row][col] = Config.CELL_EMPTY;
 
             // --- AGGIUNTA DROP CASSA ---
-            // Nota: x è la colonna, y è la riga
             generateCrateDrop(col, row);
 
+            // --- CONTROLLO PORTALE ---
+            if (row == portalRow && col == portalCol) {
+                portalRevealed = true;
+                lastPortalSpawnTime = System.currentTimeMillis(); // Fa partire il timer
+                System.out.println("ALLARME! Portale scoperto prematuramente in [" + row + ", " + col + "]!");
+            }
+
             destructionEffects.add(new BlockDestruction(row, col));
-            System.out.println("Aura: Cassa distrutta in [" + row + ", " + col + "]");
+            System.out.println("Cassa distrutta in [" + row + ", " + col + "]");
         }
     }
-
-// ... dentro la classe Model ...
 
     @Override
     public void staffAttack() {
@@ -1144,8 +1183,8 @@ public class Model implements IModel {
 
         if (gridY >= 0 && gridY < map.length && gridX >= 0 && gridX < map[0].length) {
             if (map[gridY][gridX] == Config.CELL_DESTRUCTIBLE_BLOCK) {
-                map[gridY][gridX] = Config.CELL_EMPTY;
-                destructionEffects.add(new BlockDestruction(gridY, gridX));
+                // MODIFICA: Usiamo il metodo ufficiale anche per il bastone
+                destroyBlock(gridY, gridX);
             }
         }
 
@@ -1156,6 +1195,11 @@ public class Model implements IModel {
             Rectangle2D.Double enemyBox = new Rectangle2D.Double(e.getX(), e.getY(), 0.6, 0.6);
             if (staffHitbox.intersects(enemyBox)) {
                 eIt.remove();
+
+                // MODIFICA: Aggiunto il drop del Power-up quando ucciso col bastone
+                generateGoblinDrop(e.getX(), e.getY());
+                System.out.println("Goblin eliminato con il bastone!");
+
                 break;
             }
         }
@@ -1170,9 +1214,8 @@ public class Model implements IModel {
         }
 
         // Fondamentale: aggiorniamo il tempo di inizio stato per la View
-
     }
-    // In Model.java
+
     @Override
     public void resetPlayerStateAfterAction() {
         utils.Direction dir = player.getDirection();
@@ -1209,19 +1252,23 @@ public class Model implements IModel {
     // --- LOTTERIA DEI GOBLIN (Power-up Intelligenti) ---
     private void generateGoblinDrop(double x, double y) {
         Random rand = new Random();
-        if (rand.nextInt(100) >= 40) return; // 40% di possibilità di drop
 
-        List<ItemType> availableDrops = new ArrayList<>();
-        if (!player.hasShield()) availableDrops.add(ItemType.POWER_SHIELD);
-        if (!player.hasMaxRadius()) availableDrops.add(ItemType.POWER_RADIUS);
-        if (!player.hasMaxSpeed()) availableDrops.add(ItemType.POWER_SPEED);
+        // MODIFICA TEMPORANEA PER TEST: Droppa SEMPRE al 100%
+        // (In futuro rimetteremo: if (rand.nextInt(100) >= 40) return;)
 
-        if (availableDrops.isEmpty()) return; // Il player ha già tutto maxato!
+        List<utils.ItemType> availableDrops = new ArrayList<>();
+        if (!player.hasShield()) availableDrops.add(utils.ItemType.POWER_SHIELD);
+        if (!player.hasMaxRadius()) availableDrops.add(utils.ItemType.POWER_RADIUS);
+        if (!player.hasMaxSpeed()) availableDrops.add(utils.ItemType.POWER_SPEED);
+
+        if (availableDrops.isEmpty()) {
+            System.out.println("Nessun drop: il player ha già tutto maxato!");
+            return;
+        }
 
         int dropIndex = rand.nextInt(availableDrops.size());
-        ItemType droppedItem = availableDrops.get(dropIndex);
+        utils.ItemType droppedItem = availableDrops.get(dropIndex);
 
-        // Centriamo l'oggetto rispetto alle coordinate di morte del nemico
         int col = (int) Math.floor(x);
         int row = (int) Math.floor(y);
         activeItems.add(new Collectible(col, row, droppedItem));
@@ -1270,6 +1317,10 @@ public class Model implements IModel {
     @Override public boolean hasPlayerShield() { return player.hasShield(); }
     @Override public boolean hasPlayerMaxRadius() { return player.hasMaxRadius(); }
     @Override public boolean hasPlayerMaxSpeed() { return player.hasMaxSpeed(); }
+
+    @Override public int getPortalRow() { return portalRow; }
+    @Override public int getPortalCol() { return portalCol; }
+    @Override public boolean isPortalRevealed() { return portalRevealed; }
 
     public static IModel getInstance() {
         if (instance == null) instance = new Model();

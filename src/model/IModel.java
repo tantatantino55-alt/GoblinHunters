@@ -78,4 +78,6 @@ public interface IModel {
     int getPortalRow();
     int getPortalCol();
     boolean isPortalRevealed();
+
+
 }

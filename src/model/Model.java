@@ -73,41 +73,52 @@ public class Model implements IModel {
         this.gameAreaArray = new int[Config.GRID_HEIGHT][Config.GRID_WIDTH];
         List<int[]> emptyCells = new ArrayList<>();
 
-        // PASSO 1 & 2: PILASTRI FISSI E SAFE ZONE
+        // Spostiamo la lista delle casse qui sopra per poterci aggiungere subito quelle del bunker
+        List<int[]> cratePositions = new ArrayList<>();
+
+        // --- PASSO 1 & 2: PILASTRI FISSI E IL "BUNKER" INIZIALE ---
         for (int r = 0; r < Config.GRID_HEIGHT; r++) {
             for (int c = 0; c < Config.GRID_WIDTH; c++) {
-                // Pilastri nelle righe e colonne dispari
+
+                // Pilastri di pietra nelle righe e colonne dispari
                 if (r % 2 != 0 && c % 2 != 0) {
                     gameAreaArray[r][c] = Config.CELL_INDESTRUCTIBLE_BLOCK;
                 } else {
-                    gameAreaArray[r][c] = Config.CELL_EMPTY;
-
-                    // La "Safe Zone" a L in alto a sinistra (0,0), (0,1), (1,0)
+                    // La "Safe Zone" a L in alto a sinistra: [0,0], [0,1], [1,0]
                     boolean isSafeZone = (r == 0 && c == 0) || (r == 0 && c == 1) || (r == 1 && c == 0);
 
-                    // Se non è zona sicura, è un candidato per spawnare una cassa
-                    if (!isSafeZone) {
-                        emptyCells.add(new int[]{r, c});
+                    // I muri del Bunker: chiudono la Safe Zone
+                    boolean isBunkerWall = (r == 0 && c == 2) || (r == 2 && c == 0);
+
+                    if (isSafeZone) {
+                        gameAreaArray[r][c] = Config.CELL_EMPTY; // Dentro il bunker si sta sicuri
+                    } else if (isBunkerWall) {
+                        gameAreaArray[r][c] = Config.CELL_DESTRUCTIBLE_BLOCK; // Muri forzati del bunker
+                        cratePositions.add(new int[]{r, c}); // Li aggiungiamo alla lista del loot!
+                    } else {
+                        gameAreaArray[r][c] = Config.CELL_EMPTY;
+                        emptyCells.add(new int[]{r, c}); // Spazi liberi per le casse casuali
                     }
                 }
             }
         }
 
-        // PASSO 3: GENERAZIONE DI 45 CASSE CASUALI
-        int NUM_CRATES = 45;
+        // --- PASSO 3: GENERAZIONE DELLE RESTANTI 43 CASSE CASUALI (45 tot - 2 bunker) ---
+        int NUM_RANDOM_CRATES = 43;
         java.util.Collections.shuffle(emptyCells, randomGenerator); // Mescoliamo le coordinate vuote
-        List<int[]> cratePositions = new ArrayList<>();
 
-        for (int i = 0; i < NUM_CRATES && i < emptyCells.size(); i++) {
+        for (int i = 0; i < NUM_RANDOM_CRATES && i < emptyCells.size(); i++) {
             int[] pos = emptyCells.get(i);
-            gameAreaArray[pos[0]][pos[1]] = Config.CELL_DESTRUCTIBLE_BLOCK; // Piazziamo la cassa
-            cratePositions.add(pos); // Ci salviamo la sua posizione per il loot
+            gameAreaArray[pos[0]][pos[1]] = Config.CELL_DESTRUCTIBLE_BLOCK;
+            cratePositions.add(pos);
         }
 
-        // PASSO 4: IL MAZZO DEL BOTTINO (Assegnazione risorse)
-        // La lista cratePositions è già casuale, quindi assegniamo in ordine!
+        // --- PASSO 4: IL MAZZO DEL BOTTINO (Loot intelligente) ---
+        // Prima di distribuire il loot, mescoliamo TUTTE le 45 casse (comprese quelle del bunker!)
+        java.util.Collections.shuffle(cratePositions, randomGenerator);
+
         if (cratePositions.size() > 0) {
-            // 1. Il Portale (nascondilo nella prima cassa estratta)
+            // 1. Il Portale (nascondilo nella 1° cassa estratta)
             int[] pCoords = cratePositions.get(0);
             portalRow = pCoords[0];
             portalCol = pCoords[1];
@@ -126,11 +137,12 @@ public class Model implements IModel {
             }
         }
 
-        // Il player nasce sempre al sicuro
+        // Il player nasce sempre al sicuro dentro il bunker [0,0]
         this.player = new Player(0.0, 0.0);
         this.enemies = new ArrayList<>();
 
-        // Spawn Iniziale dei Goblin
+        // Spawn Iniziale dei Goblin: Nasceranno fuori dal bunker perché le celle [0,2] e [2,0]
+        // sono casse e il metodo isValidSpawnPoint vieta lo spawn sulle casse!
         for (int i = 0; i < 6; i++) {
             spawnEnemy();
         }
@@ -1179,8 +1191,14 @@ public class Model implements IModel {
         if (gameAreaArray[row][col] == Config.CELL_DESTRUCTIBLE_BLOCK) {
             gameAreaArray[row][col] = Config.CELL_EMPTY;
 
-            // --- AGGIUNTA DROP CASSA ---
-            generateCrateDrop(col, row);
+            // --- PASSO 5: DROP INTELLIGENTE PRECALCOLATO ---
+            String key = row + "," + col; // Creiamo la chiave "riga,colonna"
+            if (hiddenLoot.containsKey(key)) {
+                ItemType droppedItem = hiddenLoot.get(key); // Leggiamo cosa c'era nascosto
+                activeItems.add(new Collectible(col, row, droppedItem));
+                System.out.println("Cassa droppa: " + droppedItem.name());
+                hiddenLoot.remove(key); // Rimuoviamo l'oggetto dalla memoria
+            }
 
             // --- CONTROLLO PORTALE ---
             if (row == portalRow && col == portalCol) {
@@ -1267,24 +1285,6 @@ public class Model implements IModel {
         player.setState(idleState);
     }
 
-
-    // --- LOTTERIA DELLE CASSE (Risorse) ---
-    private void generateCrateDrop(double x, double y) {
-        Random rand = new Random();
-        int roll = rand.nextInt(100);
-
-        ItemType drop = null;
-        if (roll < 20) {
-            drop = ItemType.AMMO_AURA; // 20%
-        } else if (roll < 35) {
-            drop = ItemType.AMMO_BOMB; // 15%
-        }
-
-        if (drop != null) {
-            activeItems.add(new Collectible(x, y, drop));
-            System.out.println("Cassa droppa: " + drop.name());
-        }
-    }
 
     // --- LOTTERIA DEI GOBLIN (Power-up Intelligenti) ---
     private void generateGoblinDrop(double x, double y) {

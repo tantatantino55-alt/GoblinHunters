@@ -66,7 +66,7 @@ public class Config {
     // --- RISORSE ---
     public static final String PLAYER1_SHEET = "/wizardmale.png";
     public static final int ENTITY_FRAME_SIZE = 128;
-    public static final String MAIN_SHEET = "/MapItems.png"; // Il tuo file unico
+    public static final String MAIN_SHEET = "/Village.png"; // Il tuo file unico
     public static final String SHOOTERGOBLIN_SHEET = "/ShooterGoblin.png";
     public static final String CHASING_GOBLIN_SHEET = "/ChasingGoblin.png";
     public static final String COMMON_GOBLIN = "/CommonGoblin.png";

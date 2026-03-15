@@ -465,7 +465,6 @@ public class Model implements IModel {
 
     // Sostituisci il metodo expandFireDirection
 
-    // In src/model/Model.java
     private void expandFireDirection(int startR, int startC, int dr, int dc, int rad, int centralType, int endType) {
         for (int i = 1; i <= rad; i++) {
             int currentR = startR + dr * i;
@@ -482,12 +481,9 @@ public class Model implements IModel {
             }
 
             if (cellType == Config.CELL_DESTRUCTIBLE_BLOCK) {
-                gameAreaArray[currentR][currentC] = Config.CELL_EMPTY;
-                destructionEffects.add(new BlockDestruction(currentR, currentC));
-
-                // RIMOSSO: checkExplosionDamage(currentR, currentC);
-                // La cassa assorbe l'esplosione. Il fuoco si ferma qui e NON danneggia
-                // chi è "dietro" o chi tocca leggermente questa cella.
+                // MODIFICA: Invece di svuotare l'array manualmente, chiamiamo destroyBlock
+                // che si occupa di cancellare la cassa, fare l'effetto grafico E droppare risorse!
+                destroyBlock(currentR, currentC);
                 break;
             }
 
@@ -1093,12 +1089,16 @@ public class Model implements IModel {
     public void destroyBlock(int row, int col) {
         if (gameAreaArray[row][col] == Config.CELL_DESTRUCTIBLE_BLOCK) {
             gameAreaArray[row][col] = Config.CELL_EMPTY;
+
+            // --- AGGIUNTA DROP CASSA ---
+            // x è la colonna (col), y è la riga (row)
+            generateCrateDrop(col, row);
+
             destructionEffects.add(new BlockDestruction(row, col));
-            System.out.println("Aura: Cassa distrutta in [" + row + ", " + col + "]");
+            System.out.println("Cassa distrutta in [" + row + ", " + col + "]");
         }
     }
 
-// ... dentro la classe Model ...
 
     @Override
     public void staffAttack() {
@@ -1126,8 +1126,8 @@ public class Model implements IModel {
 
         if (gridY >= 0 && gridY < map.length && gridX >= 0 && gridX < map[0].length) {
             if (map[gridY][gridX] == Config.CELL_DESTRUCTIBLE_BLOCK) {
-                map[gridY][gridX] = Config.CELL_EMPTY;
-                destructionEffects.add(new BlockDestruction(gridY, gridX));
+                // MODIFICA: Usiamo il metodo ufficiale anche per il bastone
+                destroyBlock(gridY, gridX);
             }
         }
 
@@ -1138,8 +1138,39 @@ public class Model implements IModel {
             Rectangle2D.Double enemyBox = new Rectangle2D.Double(e.getX(), e.getY(), 0.6, 0.6);
             if (staffHitbox.intersects(enemyBox)) {
                 eIt.remove();
+
+                // MODIFICA: Aggiunto il drop del Power-up quando ucciso col bastone
+                generateGoblinDrop(e.getX(), e.getY());
+                System.out.println("Goblin eliminato con il bastone!");
+
                 break;
             }
+        }
+
+        // --- LOTTERIA DEI GOBLIN (Power-up Intelligenti) ---
+        private void generateGoblinDrop(double x, double y) {
+            Random rand = new Random();
+
+            // MODIFICA TEMPORANEA PER TEST: Droppa SEMPRE al 100%
+            // (In futuro rimetteremo: if (rand.nextInt(100) >= 40) return;)
+
+            List<utils.ItemType> availableDrops = new ArrayList<>();
+            if (!player.hasShield()) availableDrops.add(utils.ItemType.POWER_SHIELD);
+            if (!player.hasMaxRadius()) availableDrops.add(utils.ItemType.POWER_RADIUS);
+            if (!player.hasMaxSpeed()) availableDrops.add(utils.ItemType.POWER_SPEED);
+
+            if (availableDrops.isEmpty()) {
+                System.out.println("Nessun drop: il player ha già tutto maxato!");
+                return;
+            }
+
+            int dropIndex = rand.nextInt(availableDrops.size());
+            utils.ItemType droppedItem = availableDrops.get(dropIndex);
+
+            int col = (int) Math.floor(x);
+            int row = (int) Math.floor(y);
+            activeItems.add(new Collectible(col, row, droppedItem));
+            System.out.println("Goblin droppa: " + droppedItem.name());
         }
 
         // --- LOGICA DI VISUALIZZAZIONE (Stessa del Casting) ---
@@ -1152,9 +1183,8 @@ public class Model implements IModel {
         }
 
         // Fondamentale: aggiorniamo il tempo di inizio stato per la View
-
     }
-    // In Model.java
+
     @Override
     public void resetPlayerStateAfterAction() {
         utils.Direction dir = player.getDirection();

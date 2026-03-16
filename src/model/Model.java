@@ -16,6 +16,7 @@ public class Model implements IModel {
     private final int[][] gameAreaArray;
     private Player player;
 
+
     // Variabile per il cronometro
     private int elapsedTicks = 0;
 
@@ -37,6 +38,7 @@ public class Model implements IModel {
     // Lista per il fuoco: int[]{row, col, type, timestamp}
 
     private final List<Collectible> activeItems = new ArrayList<>();
+    private boolean isTransitioning = false;
     // --- VARIABILI PROGRESSIONE LIVELLI (GATE) ---
     public static final int GATE_ID = 9;   // Il valore logico per il Gate di fine livello
     private int currentZone = 0;           // 0 = Village, 1 = Forest, 2 = Cave
@@ -92,13 +94,14 @@ public class Model implements IModel {
         this.player = new Player(0.0, 0.0);
         this.enemies = new ArrayList<>();
 
-        for (int i = 0; i < 6; i++) {
+        for (int i = 0; i < 1; i++) {
             spawnEnemy();
         }
         this.lastSpawnTime = System.currentTimeMillis();
     }
 
     @Override
+    // --- METODO PER GENERARE MAPPE PROCEDURALI (Utile per il cambio livello) ---
     // --- METODO PER GENERARE MAPPE PROCEDURALI (Utile per il cambio livello) ---
     // --- METODO PER GENERARE MAPPE PROCEDURALI (Utile per il cambio livello) ---
     public int[][] generateProceduralMap() {
@@ -108,7 +111,6 @@ public class Model implements IModel {
 
         hiddenLoot.clear();
 
-        // 1. Scegliamo l'ID dell'edificio in base al livello (2 = Caverna/Animato)
         int buildingID = (currentZone == 2) ? Config.CELL_SKELETON_START : Config.CELL_ORNAMENT;
 
         // --- PASSO 1 & 2: PILASTRI FISSI, BUNKER E EDIFICI ---
@@ -118,16 +120,15 @@ public class Model implements IModel {
                 boolean isSafeZone = (r == 0 && c == 0) || (r == 0 && c == 1) || (r == 1 && c == 0);
                 boolean isBunkerWall = (r == 0 && c == 2) || (r == 2 && c == 0);
 
-                // Coordinate dei due edifici 2x2 in alto
-                boolean isLeftBuilding = (r == 0 || r == 1) && (c == 3 || c == 4);
-                boolean isRightBuilding = (r == 0 || r == 1) && (c == 8 || c == 9);
+                // NOVITÀ: Gli edifici occupano la base SOLO nella RIGA 0!
+                boolean isLeftBuildingBase = (r == 0) && (c == 3 || c == 4);
+                boolean isRightBuildingBase = (r == 0) && (c == 8 || c == 9);
 
-                if (isLeftBuilding || isRightBuilding) {
-                    // Mettiamo l'ID grafico speciale SOLO nell'angolo in alto a sinistra dell'edificio
-                    if ((r == 0 && c == 3) || (r == 0 && c == 8)) {
+                if (isLeftBuildingBase || isRightBuildingBase) {
+                    if (c == 3 || c == 8) {
                         nextMap[r][c] = buildingID;
                     } else {
-                        // Le altre 3 celle sono muri solidi "invisibili" per bloccare il passaggio
+                        // Cella invisibile a destra per bloccare il passaggio orizzontale
                         nextMap[r][c] = Config.CELL_INDESTRUCTIBLE_BLOCK;
                     }
                 }
@@ -139,7 +140,7 @@ public class Model implements IModel {
                     cratePositions.add(new int[]{r, c});
                 }
                 else if (r == 1) {
-                    // RIGA 1: Esattamente i 3 pilastri che hai notato (colonne 1, 6, 11)
+                    // RIGA 1: È COMPLETAMENTE LIBERA! (Puoi camminarci) eccetto i 3 pilastri
                     if (c == 1 || c == 6 || c == 11) {
                         nextMap[r][c] = Config.CELL_INDESTRUCTIBLE_BLOCK;
                     } else {
@@ -148,7 +149,6 @@ public class Model implements IModel {
                     }
                 }
                 else if (r % 2 != 0 && c % 2 != 0) {
-                    // Pilastri standard per il resto della mappa
                     nextMap[r][c] = Config.CELL_INDESTRUCTIBLE_BLOCK;
                 }
                 else {
@@ -159,7 +159,6 @@ public class Model implements IModel {
         }
 
         // --- PASSO 3: GENERAZIONE CASSE CASUALI ---
-        // Avendo occupato spazio con gli edifici, ho abbassato le casse a 35 per non soffocare la mappa
         int NUM_RANDOM_CRATES = 35;
         java.util.Collections.shuffle(emptyCells, randomGenerator);
 
@@ -192,7 +191,6 @@ public class Model implements IModel {
         return nextMap;
     }
 
-     // In src/model/Model.java
 
     // Sostituisci il vecchio isWalkable con questo basato su GRIGLIA RIGIDA
     // In src/model/Model.java
@@ -1473,8 +1471,10 @@ public class Model implements IModel {
             default: currentTheme = "VILLAGE"; break;
         }
 
-        // 3. Copia la nuova mappa generata...
-        // ... (il resto del metodo rimane uguale) ...
+        // 3. Copia la nuova mappa generata
+        for (int r = 0; r < utils.Config.GRID_HEIGHT; r++) {
+            System.arraycopy(newMap[r], 0, this.gameAreaArray[r], 0, utils.Config.GRID_WIDTH);
+        }
 
 
 
@@ -1492,9 +1492,18 @@ public class Model implements IModel {
         player.setState(utils.PlayerState.IDLE_FRONT);
 
         // 6. Spawn iniziale dei nuovi nemici per la nuova mappa
-        for (int i = 0; i < 6; i++) {
+        for (int i = 0; i < 1; i++) {
             spawnEnemy();
         }
+    }
+    @Override
+    public boolean isTransitioning() {
+        return this.isTransitioning;
+    }
+
+    @Override
+    public void setTransitioning(boolean transitioning) {
+        this.isTransitioning = transitioning;
     }
 
     // --- GETTER IMPLEMENTATI PER L'INTERFACCIA ---

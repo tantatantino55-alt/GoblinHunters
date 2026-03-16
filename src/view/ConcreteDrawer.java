@@ -15,6 +15,8 @@ public class ConcreteDrawer extends AbstractDrawer {
     private long lastFpsTime = System.currentTimeMillis();
     private int frameCount = 0;
     private int currentFPS = 0;
+    private float transitionAlpha = Config.MIN_ALPHA; // Partiamo da completamente trasparente
+    private boolean fadingOut = true;
 
     public ConcreteDrawer() {
         this.tileManager = TileManager.getInstance();
@@ -35,6 +37,7 @@ public class ConcreteDrawer extends AbstractDrawer {
         drawCollectibles(g2d);
         drawProjectiles(g2d);
         drawEnemies(g2d);
+        drawTransition(g2d);
 
         // --- FIX TREMOLIO: USARE IF/ELSE ---
         PlayerState state = ControllerForView.getInstance().getPlayerState();
@@ -155,46 +158,86 @@ public class ConcreteDrawer extends AbstractDrawer {
      * Layer 1: Oggetti (Muri distruttibili/indistruttibili)
      */
     private void drawMap(Graphics2D g2d) {
-        // 1. La View chiede al Controller in che tema siamo
         String theme = controller.ControllerForView.getInstance().getCurrentTheme();
-
-        // 2. La View aggiorna il proprio TileManager
         view.TileManager.getInstance().setCurrentTheme(theme);
-        int[][] gameAreaArray = ControllerForView.getInstance().getGameAreaArray();
-        BufferedImage floorImg = tileManager.getTileImage(Config.CELL_EMPTY);
+        int[][] gameAreaArray = controller.ControllerForView.getInstance().getGameAreaArray();
 
+        BufferedImage floorImg = tileManager.getTileImage(utils.Config.CELL_EMPTY);
+        BufferedImage frameImg = tileManager.getTileImage(utils.Config.THEME_FRAME_INDEX);
 
-        for (int row = 0; row < Config.GRID_HEIGHT; row++) {
-            for (int col = 0; col < Config.GRID_WIDTH; col++) {
-                int tileX = Config.GRID_OFFSET_X + col * Config.TILE_SIZE;
-                int tileY = Config.GRID_OFFSET_Y + row * Config.TILE_SIZE;
-
-                // LAYER 0: Pavimento
+        // --- LAYER 0: PAVIMENTO DI BASE ---
+        for (int row = 0; row < utils.Config.GRID_HEIGHT; row++) {
+            for (int col = 0; col < utils.Config.GRID_WIDTH; col++) {
+                int tileX = utils.Config.GRID_OFFSET_X + col * utils.Config.TILE_SIZE;
+                int tileY = utils.Config.GRID_OFFSET_Y + row * utils.Config.TILE_SIZE;
                 if (floorImg != null) {
-                    g2d.drawImage(floorImg, tileX, tileY, Config.TILE_SIZE, Config.TILE_SIZE, null);
+                    g2d.drawImage(floorImg, tileX, tileY, utils.Config.TILE_SIZE, utils.Config.TILE_SIZE, null);
                 }
+            }
+        }
 
-                // LAYER 1: Oggetti/Muri
+        // --- LAYER 1: CORNICE DEL TEMA ---
+        // La disegniamo PRIMA degli edifici così gli edifici ci finiscono SOPRA!
+        if (frameImg != null) {
+            g2d.drawImage(frameImg, utils.Config.FRAME_OFFSET_X, utils.Config.FRAME_OFFSET_Y, null);
+        }
+
+        // --- LAYER 2: MURI, PILASTRI E CASSE ---
+        for (int row = 0; row < utils.Config.GRID_HEIGHT; row++) {
+            for (int col = 0; col < utils.Config.GRID_WIDTH; col++) {
                 int cellType = gameAreaArray[row][col];
-                if (cellType != Config.CELL_EMPTY) {
+                int tileX = utils.Config.GRID_OFFSET_X + col * utils.Config.TILE_SIZE;
+                int tileY = utils.Config.GRID_OFFSET_Y + row * utils.Config.TILE_SIZE;
+
+                // Escludiamo gli edifici (che ora usano tutti l'ID 5) e i blocchi vuoti
+                if (cellType != utils.Config.CELL_EMPTY && cellType != utils.Config.CELL_ORNAMENT) {
+
+                    // NON disegniamo nulla nella cella (0,4) e (0,9) perché ci andrà sopra l'edificio
+                    if (row == 0 && (col == 4 || col == 9)) {
+                        continue;
+                    }
+
                     BufferedImage wallImg = tileManager.getTileImage(cellType);
                     if (wallImg != null) {
-                        g2d.drawImage(wallImg, tileX, tileY, Config.TILE_SIZE, Config.TILE_SIZE, null);
+                        g2d.drawImage(wallImg, tileX, tileY, utils.Config.TILE_SIZE, utils.Config.TILE_SIZE, null);
                     }
                 }
             }
-        } // Fine dei cicli for della mappa
+        }
 
-        // ---------------------------------------------------------
-        // LAYER 2: LA CORNICE DEL TEMA (Sopra la mappa)
-        // ---------------------------------------------------------
-        BufferedImage frameImg = tileManager.getTileImage(Config.THEME_FRAME_INDEX); // Recuperiamo la posizione 4
+        // --- LAYER 3: EDIFICI GIGANTI (Disegnati per ultimi, sopra a tutto!) ---
+        for (int row = 0; row < utils.Config.GRID_HEIGHT; row++) {
+            for (int col = 0; col < utils.Config.GRID_WIDTH; col++) {
+                int cellType = gameAreaArray[row][col];
 
-        if (frameImg != null) {
-            // Usiamo gli offset che avevi già intelligentemente preparato in Config.java!
-            g2d.drawImage(frameImg, Config.FRAME_OFFSET_X, Config.FRAME_OFFSET_Y, null);
+                // Nella mappa, tutti i grandi edifici sono segnati con il numero 5 (CELL_ORNAMENT)
+                if (cellType == utils.Config.CELL_ORNAMENT) {
+                    int tileX = utils.Config.GRID_OFFSET_X + col * utils.Config.TILE_SIZE;
+
+                    // Spostiamo la Y in alto di 64 pixel (- utils.Config.TILE_SIZE)
+                    // In questo modo la base poggia sulla Riga 0 e il tetto copre la cornice nera!
+                    int tileY = utils.Config.GRID_OFFSET_Y + row * utils.Config.TILE_SIZE - utils.Config.TILE_SIZE;
+
+                    // MAGIA: Scegliamo COSA disegnare basandoci sul tema caricato!
+                    if ("CAVE".equals(theme)) {
+                        // Animazione Caverna: Calcola il frame index e sommalo a CELL_SKELETON_START (5)
+                        int frameIndex = (int) ((System.currentTimeMillis() / 100) % utils.Config.SKELETON_FRAMES_COUNT);
+                        BufferedImage skeletonFrame = tileManager.getTileImage(utils.Config.CELL_SKELETON_START + frameIndex);
+                        if (skeletonFrame != null) {
+                            g2d.drawImage(skeletonFrame, tileX, tileY, 128, 128, null);
+                        }
+                    } else {
+                        // Mappe 1 e 2: Disegna l'ornamento fisso (indice 5)
+                        BufferedImage ornament = tileManager.getTileImage(utils.Config.CELL_ORNAMENT);
+                        if (ornament != null) {
+                            g2d.drawImage(ornament, tileX, tileY, 128, 128, null);
+                        }
+                    }
+                }
+            }
         }
     }
+
 
     private void drawPlayer(Graphics2D g2d) {
         // 1. RECUPERO STATO INVINCIBILITÀ
@@ -569,6 +612,34 @@ public class ConcreteDrawer extends AbstractDrawer {
             }
         }
     }
+    public void drawTransition(Graphics2D g2d) {
+
+        // --- 1. AGGIORNAMENTO TRASPARENZA ---
+        if (ControllerForView.getInstance().isTransitioning()) {
+            if (transitionAlpha < Config.MAX_ALPHA) {
+                transitionAlpha += Config.FADE_SPEED;
+                if (transitionAlpha > Config.MAX_ALPHA) transitionAlpha = Config.MAX_ALPHA;
+            }
+        } else {
+            if (transitionAlpha > Config.MIN_ALPHA) {
+                transitionAlpha -= Config.FADE_SPEED;
+                if (transitionAlpha < Config.MIN_ALPHA) transitionAlpha = Config.MIN_ALPHA;
+            }
+        }
+
+        // --- 2. DISEGNO DEL RETTANGOLO ---
+        if (transitionAlpha > Config.MIN_ALPHA) {
+            g2d.setColor(new Color(0.0f, 0.0f, 0.0f, transitionAlpha));
+
+            // Prendi larghezza e altezza direttamente dal Config!
+            g2d.fillRect(0, 0, Config.WINDOW_PREFERRED_WIDTH, Config.WINDOW_PREFERRED_HEIGHT);
+        }
+    }
+    /**
+     * Disegna l'effetto di transizione.
+     * Da chiamare come ULTIMA istruzione nel tuo metodo di rendering principale.
+     */
+
 
     //@Override public int getDrawingWidth() { return Config.GRID_OFFSET_X + 960 }//Config.GAME_PANEL_WIDTH; }
    // @Override public int getDrawingHeight() { return Config.GRID_OFFSET_Y +932;} //Config.GAME_PANEL_HEIGHT; }

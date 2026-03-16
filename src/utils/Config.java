@@ -85,10 +85,10 @@ public class Config {
     public static final String CAVE_SKELETON_SHEET = "/CaveSkeleton.png";
     public static final int CELL_ORNAMENT = 5;
     public static final int CELL_SKELETON_START = 5;
-    public static final int SKELETON_FRAMES_COUNT = 17;
+    public static final int SKELETON_FRAMES_COUNT = 18;
     // Nel file Config.java aggiungi/modifica:
     public static final int CAVE_BUILDING_SIZE = 128; // Dimensione dell'edificio animato
-    public static final int SKELETON_SHEET_COLS = 6;
+    public static final int SKELETON_SHEET_COLS = 8;
 
 
 
@@ -304,5 +304,12 @@ public class Config {
     // Altezza = 932 (Altezza esatta della cornice per non tagliarla sotto)
     public static final int WINDOW_PREFERRED_WIDTH = 1152;
     public static final int WINDOW_PREFERRED_HEIGHT = 932;
+
+    public final static int MAX_TRANSITION_TICKS = 120;
+
+    // Configurazione della transizione
+    public static final float FADE_SPEED = 0.02f; // Velocità della sfumatura
+    public static final float MAX_ALPHA = 1.0f;   // Opacità massima (tutto nero)
+    public static final float MIN_ALPHA = 0.0f;   // Trasparenza totale
 }
 

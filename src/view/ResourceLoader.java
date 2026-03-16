@@ -255,13 +255,12 @@ public class ResourceLoader {
         caveTiles[utils.Config.CELL_CRACKED_FLOOR] = sm.extractTile(utils.Config.CAVE_SHEET , utils.Config.CAVE_CRACKED_FLOOR_COL, utils.Config.CAVE_ROW, size, size);
         caveTiles[utils.Config.CELL_LAVA_FLOOR] = sm.extractTile(utils.Config.CAVE_SHEET , utils.Config.CAVE_LAVA_FLOOR_COL, utils.Config.CAVE_ROW, size, size);
 
-        // --- B. CARICAMENTO EDIFICIO ANIMATO (6-22) ---
-        // Usiamo il tuo metodo ufficiale per caricare l'animazione nello SpriteManager
-        sm.loadAnimation("CAVE_BUILDING", utils.Config.CAVE_SKELETON_SHEET , 0, utils.Config.SKELETON_FRAMES_COUNT, bSize);
+        // In src/view/ResourceLoader.java -> loadCaveTheme()
+        // --- B. CARICAMENTO EDIFICIO ANIMATO ---
+        sm.loadAnimation("CAVE_BUILDING", utils.Config.CAVE_SKELETON_SHEET, 0, utils.Config.SKELETON_FRAMES_COUNT, bSize);
 
-        // Ora estraiamo i frame appena caricati e li "mappiamo" nell'array del tema
-        for (int i = 0; i <Config.SKELETON_FRAMES_COUNT; i++) {
-            // Recuperiamo il singolo frame tramite getSprite (metodo pubblico)
+        for (int i = 0; i < utils.Config.SKELETON_FRAMES_COUNT; i++) {
+            // Mettiamo i frame a partire dall'indice 5 (CELL_SKELETON_START)
             caveTiles[utils.Config.CELL_SKELETON_START + i] = sm.getSprite("CAVE_BUILDING", i);
         }
 
@@ -271,6 +270,7 @@ public class ResourceLoader {
         // Salviamo tutto nel TileManager
         TileManager.getInstance().loadTheme("CAVE", caveTiles);
     }
+
 }
 
 

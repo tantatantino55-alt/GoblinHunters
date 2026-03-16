@@ -16,40 +16,55 @@ public class ControllerForModel implements IControllerForModel, Runnable {
     //---------------------------------------------------------------
     private Thread gameThread;
     private boolean running = false;
+    private int transitionTimer = 0;
+    private final int MAX_TRANSITION_TICKS = Config.MAX_TRANSITION_TICKS; // Circa 2 second
+
 
     private ControllerForModel() {
         // Non usiamo più il Timer di Swing!
     }
 
     // Implementazione di IControllerForModel.updateGame()
+    // Implementazione di IControllerForModel.updateGame()
     @Override
     public void updateGame() {
+        // --- 1. GESTIONE TRANSIZIONE (GIOCO IN PAUSA LOGICA) ---
+        if (Model.getInstance().isTransitioning()) {
+            this.transitionTimer--;
+
+            // A metà tempo esatto (schermo tutto nero), carichiamo la nuova mappa
+            if (this.transitionTimer == MAX_TRANSITION_TICKS / 2) {
+                System.out.println("Controller: Generazione nuova mappa durante la transizione...");
+                int[][] nextMap = Model.getInstance().generateProceduralMap();
+                Model.getInstance().prepareNextLevel(nextMap);
+            }
+
+            // Quando il timer scade, sblocchiamo il gioco
+            if (this.transitionTimer <= 0) {
+                Model.getInstance().setTransitioning(false);
+            }
+
+            return; // IMPORTANTE: Esce dal metodo, ferma il tempo di gioco!
+        }
+
+        // --- 2. NORMALE AGGIORNAMENTO DEL GIOCO ---
         Model.getInstance().updateGameLogic();
 
-        // --- IL REGISTA INTERCETTA IL CAMBIO LIVELLO TRAMITE IL GATE ---
+        // --- 3. IL REGISTA INTERCETTA IL CAMBIO LIVELLO TRAMITE IL GATE ---
+        // Se il model ci dice che il livello è finito, NON generiamo subito la mappa, ma facciamo partire l'animazione!
         if (Model.getInstance().isLevelCompletedFlag()) {
-            System.out.println("Controller: Gate attraversato! Avvio procedura cambio mappa...");
-
-            int[][] nextMap = Model.getInstance().generateProceduralMap();
-
-            // 2. PASSA I DATI AL MODEL PER IL SETUP LOGICO
-            Model.getInstance().prepareNextLevel(nextMap);
-
+            System.out.println("Controller: Gate attraversato! Avvio animazione transizione...");
+            onLevelCompleted();
         }
     }
 
-    // Helper temporaneo in attesa della generazione ufficiale del tuo collega
-    private int[][] generateMockMapForNextLevel() {
-        int[][] mock = new int[Config.GRID_HEIGHT][Config.GRID_WIDTH];
-        // Riempiamo tutto di vuoto per ora
-        for(int i=0; i<Config.GRID_HEIGHT; i++) {
-            for(int j=0; j<Config.GRID_WIDTH; j++) {
-                mock[i][j] = Config.CELL_EMPTY;
-            }
+    // ... Qui sotto continua il tuo normale codice di update (movimenti, collisioni, ecc.) ...
+
+    public void onLevelCompleted() {
+        if (!Model.getInstance().isTransitioning()) {
+            Model.getInstance().setTransitioning(true);
+            this.transitionTimer = MAX_TRANSITION_TICKS;
         }
-        // Piazziamo il GATE al centro giusto per farti testare
-        mock[5][5] = model.Model.GATE_ID;
-        return mock;
     }
 
     // Implementazione di IControllerForModel.startGameLoop()

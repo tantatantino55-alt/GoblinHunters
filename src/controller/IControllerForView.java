@@ -75,4 +75,6 @@ public interface IControllerForView {
     int getPortalCol();
     boolean isPortalRevealed();
     String getCurrentTheme();
+
+    boolean isTransitioning();
 }

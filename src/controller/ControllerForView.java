@@ -107,8 +107,12 @@ public class ControllerForView implements IControllerForView {
     }
     @Override
     public String getCurrentTheme() {
-        return model.Model.getInstance().getCurrentTheme();
+        return Model.getInstance().getCurrentTheme();
     }
+    public boolean isTransitioning(){
+        return Model.getInstance().isTransitioning();
+    }
+
 
     public static IControllerForView getInstance() {
         if (instance == null) instance = new ControllerForView();

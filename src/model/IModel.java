@@ -89,4 +89,6 @@ public interface IModel {
     String getCurrentTheme();
     boolean isLevelCompletedFlag();
     void prepareNextLevel(int[][] newMap);
+    boolean isTransitioning();
+    void setTransitioning(boolean transitioning);
 }

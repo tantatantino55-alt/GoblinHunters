@@ -2,6 +2,7 @@ package controller;
 
 import utils.Direction;
 import utils.EnemyType;
+import utils.ItemType;
 import utils.PlayerState;
 
 public interface IControllerForView {
@@ -77,4 +78,9 @@ public interface IControllerForView {
     String getCurrentTheme();
 
     boolean isTransitioning();
+    // Collectibles (oggetti a terra)
+    int getCollectibleCount();
+    double getCollectibleX(int index);
+    double getCollectibleY(int index);
+    ItemType getCollectibleType(int index);
 }

@@ -91,4 +91,9 @@ public interface IModel {
     void prepareNextLevel(int[][] newMap);
     boolean isTransitioning();
     void setTransitioning(boolean transitioning);
+    // Collectibles (oggetti a terra)
+    int getCollectibleCount();
+    double getCollectibleX(int index);
+    double getCollectibleY(int index);
+    utils.ItemType getCollectibleType(int index);
 }

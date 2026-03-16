@@ -112,6 +112,18 @@ public class ControllerForView implements IControllerForView {
     public boolean isTransitioning(){
         return Model.getInstance().isTransitioning();
     }
+    @Override public int getCollectibleCount() {
+        return Model.getInstance().getActiveItems().size();
+    }
+    @Override public double getCollectibleX(int index) {
+        return Model.getInstance().getActiveItems().get(index).getX();
+    }
+    @Override public double getCollectibleY(int index) {
+        return Model.getInstance().getActiveItems().get(index).getY();
+    }
+    @Override public utils.ItemType getCollectibleType(int index) {
+        return Model.getInstance().getActiveItems().get(index).getType();
+    }
 
 
     public static IControllerForView getInstance() {

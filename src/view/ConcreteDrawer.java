@@ -656,4 +656,31 @@ public class ConcreteDrawer extends AbstractDrawer {
         else if (s.contains("RUN")) return Config.PLAYER_RUN_FRAMES;
         else return Config.PLAYER_IDLE_FRAMES;
     }
+    private void drawCollectibles(Graphics2D g2d) {
+        int count = ControllerForView.getInstance().getCollectibleCount();
+
+        for (int i = 0; i < count; i++) {
+            int screenX = (int)(ControllerForView.getInstance().getCollectibleX(i)
+                    * Config.TILE_SIZE) + Config.GRID_OFFSET_X;
+            int screenY = (int)(ControllerForView.getInstance().getCollectibleY(i)
+                    * Config.TILE_SIZE) + Config.GRID_OFFSET_Y;
+
+            utils.ItemType type = ControllerForView.getInstance().getCollectibleType(i);
+            int size = Config.TILE_SIZE / 2;
+            int offset = (Config.TILE_SIZE - size) / 2;
+
+            switch (type) {
+                case AMMO_BOMB -> {
+                    g2d.setColor(Color.BLACK);
+                    g2d.fillOval(screenX + offset, screenY + offset, size, size);
+                    g2d.setColor(Color.WHITE);
+                    g2d.drawOval(screenX + offset, screenY + offset, size, size);
+                }
+                case AMMO_AURA    -> { g2d.setColor(Color.CYAN);   g2d.fillOval(screenX+offset, screenY+offset, size, size); }
+                case POWER_SHIELD -> { g2d.setColor(Color.BLUE);   g2d.fillRect(screenX+offset, screenY+offset, size, size); }
+                case POWER_RADIUS -> { g2d.setColor(Color.RED);    g2d.fillRect(screenX+offset, screenY+offset, size, size); }
+                case POWER_SPEED  -> { g2d.setColor(Color.YELLOW); g2d.fillRect(screenX+offset, screenY+offset, size, size); }
+            }
+        }
+    }
 }

@@ -569,49 +569,6 @@ public class ConcreteDrawer extends AbstractDrawer {
             g2d.drawImage(sprite, drawX, drawY, Config.ENTITY_FRAME_SIZE, Config.ENTITY_FRAME_SIZE, null);
         }
     }
-
-    private void drawCollectibles(Graphics2D g2d) {
-        // Recuperiamo la lista degli oggetti a terra dal Model
-        for (model.Collectible item : model.Model.getInstance().getActiveItems()) {
-
-            // Calcoliamo le coordinate a schermo
-            int screenX = (int) (item.getX() * utils.Config.TILE_SIZE) + utils.Config.GRID_OFFSET_X;
-            int screenY = (int) (item.getY() * utils.Config.TILE_SIZE) + utils.Config.GRID_OFFSET_Y;
-
-            // Grandezza della forma (metà di una tile per centrarla bene)
-            int size = utils.Config.TILE_SIZE / 2;
-            int offset = (utils.Config.TILE_SIZE - size) / 2;
-
-            int drawX = screenX + offset;
-            int drawY = screenY + offset;
-
-            // Scegliamo colore e forma in base al tipo
-            switch (item.getType()) {
-                case AMMO_BOMB -> {
-                    g2d.setColor(Color.BLACK); // Bomba = Cerchio Nero
-                    g2d.fillOval(drawX, drawY, size, size);
-                    g2d.setColor(Color.WHITE);
-                    g2d.drawOval(drawX, drawY, size, size);
-                }
-                case AMMO_AURA -> {
-                    g2d.setColor(Color.CYAN); // Aura = Cerchio Azzurro
-                    g2d.fillOval(drawX, drawY, size, size);
-                }
-                case POWER_SHIELD -> {
-                    g2d.setColor(Color.BLUE); // Scudo = Quadrato Blu
-                    g2d.fillRect(drawX, drawY, size, size);
-                }
-                case POWER_RADIUS -> {
-                    g2d.setColor(Color.RED); // Fuoco/Raggio = Quadrato Rosso
-                    g2d.fillRect(drawX, drawY, size, size);
-                }
-                case POWER_SPEED -> {
-                    g2d.setColor(Color.YELLOW); // Velocità = Quadrato Giallo
-                    g2d.fillRect(drawX, drawY, size, size);
-                }
-            }
-        }
-    }
     public void drawTransition(Graphics2D g2d) {
 
         // --- 1. AGGIORNAMENTO TRASPARENZA ---

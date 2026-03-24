@@ -1505,6 +1505,30 @@ public class Model implements IModel {
     public void setTransitioning(boolean transitioning) {
         this.isTransitioning = transitioning;
     }
+    // --- COLLECTIBLES ---
+    @Override
+    public int getCollectibleCount() {
+        return activeItems.size();
+    }
+
+    @Override
+    public double getCollectibleX(int index) {
+        return isValidItemIndex(index) ? activeItems.get(index).getX() : 0;
+    }
+
+    @Override
+    public double getCollectibleY(int index) {
+        return isValidItemIndex(index) ? activeItems.get(index).getY() : 0;
+    }
+
+    @Override
+    public utils.ItemType getCollectibleType(int index) {
+        return isValidItemIndex(index) ? activeItems.get(index).getType() : utils.ItemType.AMMO_BOMB;
+    }
+
+    private boolean isValidItemIndex(int index) {
+        return index >= 0 && index < activeItems.size();
+    }
 
     // --- GETTER IMPLEMENTATI PER L'INTERFACCIA ---
     @Override public int getCurrentZone() { return currentZone; }

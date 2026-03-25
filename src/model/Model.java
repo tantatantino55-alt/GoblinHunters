@@ -40,7 +40,7 @@ public class Model implements IModel {
     private final List<Collectible> activeItems = new ArrayList<>();
     private boolean isTransitioning = false;
     // --- VARIABILI PROGRESSIONE LIVELLI (GATE) ---
-    public static final int GATE_ID = 9;   // Il valore logico per il Gate di fine livello
+    public static final int GATE_ID = 25;   // Il valore logico per il Gate di fine livello
     private int currentZone = 0;           // 0 = Village, 1 = Forest, 2 = Cave
     private int difficultyCycle = 1;       // Moltiplicatore di difficoltà post-boss
     private boolean gateActive = false;    // Diventa true quando i nemici muoiono
@@ -100,10 +100,10 @@ public class Model implements IModel {
         this.lastSpawnTime = System.currentTimeMillis();
     }
 
+    // --- METODO PER GENERARE MAPPE PROCEDURALI (Utile per il cambio livello) ---
+    // --- METODO PER GENERARE MAPPE PROCEDURALI (Utile per il cambio livello) ---
+    // --- METODO PER GENERARE MAPPE PROCEDURALI (Utile per il cambio livello) ---
     @Override
-    // --- METODO PER GENERARE MAPPE PROCEDURALI (Utile per il cambio livello) ---
-    // --- METODO PER GENERARE MAPPE PROCEDURALI (Utile per il cambio livello) ---
-    // --- METODO PER GENERARE MAPPE PROCEDURALI (Utile per il cambio livello) ---
     public int[][] generateProceduralMap() {
         int[][] nextMap = new int[Config.GRID_HEIGHT][Config.GRID_WIDTH];
         List<int[]> emptyCells = new ArrayList<>();
@@ -113,14 +113,13 @@ public class Model implements IModel {
 
         int buildingID = (currentZone == 2) ? Config.CELL_SKELETON_START : Config.CELL_ORNAMENT;
 
-        // --- PASSO 1 & 2: PILASTRI FISSI, BUNKER E EDIFICI ---
+        // --- PASSO 1 & 2: PILASTRI FISSI E EDIFICI ---
         for (int r = 0; r < Config.GRID_HEIGHT; r++) {
             for (int c = 0; c < Config.GRID_WIDTH; c++) {
 
                 boolean isSafeZone = (r == 0 && c == 0) || (r == 0 && c == 1) || (r == 1 && c == 0);
                 boolean isBunkerWall = (r == 0 && c == 2) || (r == 2 && c == 0);
 
-                // NOVITÀ: Gli edifici occupano la base SOLO nella RIGA 0!
                 boolean isLeftBuildingBase = (r == 0) && (c == 3 || c == 4);
                 boolean isRightBuildingBase = (r == 0) && (c == 8 || c == 9);
 
@@ -128,9 +127,16 @@ public class Model implements IModel {
                     if (c == 3 || c == 8) {
                         nextMap[r][c] = buildingID;
                     } else {
-                        // Cella invisibile a destra per bloccare il passaggio orizzontale
                         nextMap[r][c] = Config.CELL_INDESTRUCTIBLE_BLOCK;
                     }
+                }
+                else if (r == 0 && c == 6) { // <--- MODIFICATO IN 0,6
+                    // CELLA PORTALE: LIBERA
+                    nextMap[r][c] = Config.CELL_EMPTY;
+                }
+                else if (r == 1 && c == 6) { // <--- MODIFICATO IN 1,6
+                    // ACCESSO PORTALE: LIBERO
+                    nextMap[r][c] = Config.CELL_EMPTY;
                 }
                 else if (isSafeZone) {
                     nextMap[r][c] = Config.CELL_EMPTY;
@@ -140,7 +146,6 @@ public class Model implements IModel {
                     cratePositions.add(new int[]{r, c});
                 }
                 else if (r == 1) {
-                    // RIGA 1: È COMPLETAMENTE LIBERA! (Puoi camminarci) eccetto i 3 pilastri
                     if (c == 1 || c == 6 || c == 11) {
                         nextMap[r][c] = Config.CELL_INDESTRUCTIBLE_BLOCK;
                     } else {
@@ -168,21 +173,21 @@ public class Model implements IModel {
             cratePositions.add(pos);
         }
 
-        // --- PASSO 4: IL MAZZO DEL BOTTINO ---
+        // --- PASSO 4: BOTTINO E COORDINATE PORTALE ---
         java.util.Collections.shuffle(cratePositions, randomGenerator);
 
-        if (cratePositions.size() > 0) {
-            int[] pCoords = cratePositions.get(0);
-            portalRow = pCoords[0];
-            portalCol = pCoords[1];
-            System.out.println("DEBUG: Portale nascosto in [" + portalRow + ", " + portalCol + "]");
+        // --- IMPOSTAZIONE PORTALE FISSO IN 0,6 ---
+        portalRow = 0;
+        portalCol = 6;
+        portalRevealed = false; // Resta invisibile finché non muoiono i goblin
 
-            for (int i = 1; i <= 10 && i < cratePositions.size(); i++) {
+        if (cratePositions.size() > 0) {
+            for (int i = 0; i < 10 && i < cratePositions.size(); i++) {
                 int[] cCoords = cratePositions.get(i);
                 hiddenLoot.put(cCoords[0] + "," + cCoords[1], ItemType.AMMO_BOMB);
             }
 
-            for (int i = 11; i <= 20 && i < cratePositions.size(); i++) {
+            for (int i = 10; i < 20 && i < cratePositions.size(); i++) {
                 int[] cCoords = cratePositions.get(i);
                 hiddenLoot.put(cCoords[0] + "," + cCoords[1], ItemType.AMMO_AURA);
             }
@@ -684,50 +689,6 @@ public class Model implements IModel {
      * Controlla se ci sono nemici nella cella (row, col) colpita dall'esplosione
      * e li elimina se presenti.
      */
-    private void checkExplosionDamage(int row, int col) {
-        // Usiamo un iteratore per poter rimuovere elementi dalla lista mentre cicliamo in sicurezza
-        Iterator<Enemy> it = enemies.iterator();
-
-        // Area dell'esplosione (la cella intera 1x1)
-        double expX = col;
-        double expY = row;
-        double expSize = 1.0;
-
-        while (it.hasNext()) {
-            Enemy e = it.next();
-
-            // Coordinate e Hitbox del nemico
-            double eX = e.getX();
-            double eY = e.getY();
-            double eW = Config.GOBLIN_HITBOX_WIDTH;
-            double eH = Config.GOBLIN_HITBOX_HEIGHT;
-
-            // Intersezione tra Rettangoli (AABB)
-            boolean hitX = eX < expX + expSize && eX + eW > expX;
-            boolean hitY = eY < expY + expSize && eY + eH > expY;
-
-            if (hitX && hitY) {
-                it.remove(); // RIMUOVI IL NEMICO DALLA LISTA
-
-                // --- AGGIUNTA DROP GOBLIN ---
-                generateGoblinDrop(eX, eY);
-
-                System.out.println("Goblin eliminato dall'esplosione in [" + row + "," + col + "]!");
-            }
-        }
-
-        // --- DANNO AL PLAYER ---
-        if (!player.isInvincible()) {
-            double pX = player.getXCoordinate();
-            double pY = player.getYCoordinate();
-            double pW = Config.ENTITY_LOGICAL_HITBOX_WIDTH;
-            double pH = Config.ENTITY_LOGICAL_HITBOX_HEIGHT;
-
-            if (pX < expX + expSize && pX + pW > expX && pY < expY + expSize && pY + pH > expY) {
-                handlePlayerHit();
-            }
-        }
-    }
 
 
     // 3. (OPZIONALE) Getter per l'interfaccia
@@ -889,6 +850,70 @@ public class Model implements IModel {
         }
     }
 
+    /**
+     * Controlla se ci sono nemici o il player nella cella colpita dall'esplosione.
+     */
+    private void checkExplosionDamage(int row, int col) {
+        Iterator<Enemy> it = enemies.iterator();
+
+        // Area perfetta dell'esplosione (la cella intera 1x1)
+        double expLeft = col;
+        double expRight = col + 1.0;
+        double expTop = row;
+        double expBottom = row + 1.0;
+
+        // --- 1. HITBOX CORRETTA DEI NEMICI ---
+        while (it.hasNext()) {
+            Enemy e = it.next();
+
+            double eW = Config.GOBLIN_HITBOX_WIDTH;
+            double eH = Config.GOBLIN_HITBOX_HEIGHT;
+
+            // Usiamo l'offset esatto per centrare la loro hitbox!
+            double eLeft = e.getX() + (1.0 - eW) / 2.0;
+            double eRight = eLeft + eW;
+            double eBottom = e.getY() + 1.0 - 0.4;
+            double eTop = eBottom - eH;
+
+            boolean hitX = eLeft < expRight && eRight > expLeft;
+            boolean hitY = eTop < expBottom && eBottom > expTop;
+
+            if (hitX && hitY) {
+                it.remove(); // Rimuovi il nemico
+
+                // --- AGGIUNTA DROP GOBLIN ---
+                generateGoblinDrop(e.getX(), e.getY());
+
+                System.out.println("Goblin eliminato dall'esplosione in [" + row + "," + col + "]!");
+            }
+        }
+
+        // --- 2. HITBOX CORRETTA E "PERMISSIVA" DEL PLAYER ---
+        if (!player.isInvincible()) {
+            double pX = player.getXCoordinate();
+            double pY = player.getYCoordinate();
+            double pW = Config.ENTITY_LOGICAL_HITBOX_WIDTH;
+            double pH = Config.ENTITY_LOGICAL_HITBOX_HEIGHT;
+
+            // Offset corretto (come nel movimento)
+            double pLeft = pX + (1.0 - pW) / 2.0;
+            double pRight = pLeft + pW;
+            double pBottom = pY + 1.0 - 0.4;
+            double pTop = pBottom - pH;
+
+            // "HITBOX PERDONO": Riduciamo leggermente l'area sensibile ai bordi
+            // così non muori per un millimetro incastrato tra le casse!
+            double margin = 0.1;
+
+            boolean hitX = (pLeft + margin) < expRight && (pRight - margin) > expLeft;
+            boolean hitY = (pTop + margin) < expBottom && (pBottom - margin) > expTop;
+
+            if (hitX && hitY) {
+                handlePlayerHit();
+            }
+        }
+    }
+
     @Override
     public void updateGameLogic() {
         elapsedTicks++;
@@ -916,16 +941,25 @@ public class Model implements IModel {
         checkCollisions();
         manageSpawning();
 
-        // 4. PULIZIA GRAFICA (Fuoco e Casse)
+        // 4. PULIZIA GRAFICA E DANNO CONTINUO DEL FUOCO (Casse e Fuoco)
         java.util.Iterator<int[]> it = activeFire.iterator();
         while (it.hasNext()) {
             int[] f = it.next();
-            f[3]--;
-            if (f[3] <= 0) it.remove();
+            f[3]--; // Decrementa il timer del fuoco
+
+            if (f[3] <= 0) {
+                it.remove(); // Il fuoco si spegne e scompare dallo schermo
+            } else {
+                // --- NOVITÀ: DANNO CONTINUO ---
+                // Finché il fuoco è fisicamente sulla mappa, continua a fare danno
+                // a chiunque (Player o Goblin) si trovi sopra le sue coordinate!
+                checkExplosionDamage(f[0], f[1]);
+            }
         }
 
         long now = System.currentTimeMillis();
         destructionEffects.removeIf(bd -> (now - bd.getCreationTime()) > 500);
+
         // --- AGGIUNTA: CONTROLLO GATE E FINE LIVELLO ---
         if (!levelCompletedFlag) {
             checkGateCollision();
@@ -1425,12 +1459,25 @@ public class Model implements IModel {
             if (!gateActive) {
                 gateActive = true;
 
-                // ...facciamo apparire dinamicamente il Gate alle coordinate 0,0!
-                gameAreaArray[0][0] = GATE_ID;
-                System.out.println("Tutti i nemici sconfitti! Il Gate di uscita è apparso in [0, 0]!");
+                // 1. DICIAMO ALLA VIEW DI DISEGNARE IL RETTANGOLO ROSA
+                portalRevealed = true;
+
+                // 2. CREIAMO LA VIA D'USCITA LOGICA IN 0,6
+                gameAreaArray[0][6] = GATE_ID; // <--- MODIFICATO IN 0,6
+
+                // 3. DISTRUGGIAMO EVENTUALI VECCHI GATE CHE POTREBBERO CAUSARE TELETRASPORTI ERRATI
+                if (gameAreaArray[0][0] == GATE_ID) {
+                    gameAreaArray[0][0] = Config.CELL_EMPTY;
+                }
+                // Nel caso fosse rimasto qualcosa in 0,7 dal test precedente
+                if (gameAreaArray[0][7] == GATE_ID) {
+                    gameAreaArray[0][7] = Config.CELL_EMPTY;
+                }
+
+                System.out.println("Tutti i nemici sconfitti! Il Portale è apparso in [0, 6]!");
             }
 
-            // Convertiamo le coordinate in indici di matrice per il Player
+            // Controlliamo i piedi del player
             double centerX = player.getXCoordinate() + (Config.ENTITY_LOGICAL_HITBOX_WIDTH / 2.0);
             double centerY = player.getYCoordinate() + 0.35;
 
@@ -1439,7 +1486,7 @@ public class Model implements IModel {
 
             // Sicurezza: controlliamo di non essere fuori dai bordi
             if (row >= 0 && row < Config.GRID_HEIGHT && col >= 0 && col < Config.GRID_WIDTH) {
-                // Se il Player calpesta l'ID del Gate (9) in 0,0... Livello completato!
+                // Se il Player calpesta l'ID del Gate (9) in 0,6... Livello completato!
                 if (gameAreaArray[row][col] == GATE_ID) {
                     levelCompletedFlag = true;
                 }

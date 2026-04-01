@@ -72,7 +72,7 @@ public class Config {
     public static final String SHOOTERGOBLIN_SHEET = "/ShooterGoblin.png";
     public static final String CHASING_GOBLIN_SHEET = "/ChasingGoblin.png";
     public static final String COMMON_GOBLIN = "/CommonGoblin.png";
-    public static final String BOSS_GOBLIN_SHEET = "/GoblinBoss.jpg";
+    public static final String BOSS_GOBLIN_SHEET = "/GoblinBoss.png";
 
     public static final String FOREST_SHEET = "/Forest.png";
     public static final String FOREST_FRAME="/ForestFrame.png";
@@ -350,5 +350,8 @@ public class Config {
     public static final float FADE_SPEED = 0.02f; // Velocità della sfumatura
     public static final float MAX_ALPHA = 1.0f;   // Opacità massima (tutto nero)
     public static final float MIN_ALPHA = 0.0f;   // Trasparenza totale
+
+    //Exit Gate
+
 }
 

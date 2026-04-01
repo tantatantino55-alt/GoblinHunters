@@ -83,4 +83,14 @@ public interface IControllerForView {
     double getCollectibleX(int index);
     double getCollectibleY(int index);
     ItemType getCollectibleType(int index);
+
+    long getPortalRevealTime();
+
+    boolean isGateActive();
+
+    long getGateActivationTime();
+
+    int getExitGateCol();
+
+    int getExitGateRow();
 }

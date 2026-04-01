@@ -25,6 +25,9 @@ public class ResourceLoader {
         loadBossGoblinAnimations(sm);
         loadProjectiles(sm);
         loadMapThemes(sm);
+        loadPortalAnimation(sm);
+        loadPowerUps(sm);
+        loadConsumables(sm);
 
 
 
@@ -298,6 +301,38 @@ public class ResourceLoader {
 
         // Salviamo tutto nel TileManager
         TileManager.getInstance().loadTheme("CAVE", caveTiles);
+    }
+    private void loadPortalAnimation(SpriteManager sm) {
+        sm.loadAnimation(
+                "PORTAL_ANIM",                // Chiave univoca per l'animazione del portale
+                Config.ITEM_SHEET,            // File (/Items.png)
+                69,                           // Indice lineare di partenza
+                6,                            // Quanti frame caricare (56, 57, 58, 59)
+                64                            // Dimensione Tile in pixel
+        );
+        System.out.println("ResourceLoader: Animazione Portale caricata (Frame 56-59).");
+    }
+
+    private void loadPowerUps(SpriteManager sm) {
+        sm.loadAnimation(
+                "POWER_UPS",                  // Chiave univoca (indici 0, 1, 2)
+                Config.ITEM_SHEET,            // File (/Items.png)
+                75,                           // Indice lineare di partenza
+                3,                            // Quanti frame caricare (60, 61, 62)
+                64                            // Dimensione Tile in pixel
+        );
+        System.out.println("ResourceLoader: Power Ups caricati (Frame 60-62).");
+    }
+
+    private void loadConsumables(SpriteManager sm) {
+        sm.loadAnimation(
+                "CONSUMABLES",                // Chiave univoca (indici 0, 1)
+                Config.ITEM_SHEET,            // File (/Items.png)
+                78,                           // Indice lineare di partenza
+                2,                            // Quanti frame caricare (63, 64)
+                64                            // Dimensione Tile in pixel
+        );
+        System.out.println("ResourceLoader: Consumabili caricati (Frame 63-64).");
     }
 
 }

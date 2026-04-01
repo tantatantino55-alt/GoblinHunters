@@ -40,10 +40,10 @@ public class Model implements IModel {
     private final List<Collectible> activeItems = new ArrayList<>();
     private boolean isTransitioning = false;
     // --- VARIABILI PROGRESSIONE LIVELLI (GATE) ---
-    public static final int GATE_ID = 25;   // Il valore logico per il Gate di fine livello
+    public static final int EXIT_GATE_ID = 25;   // Il valore logico per il Gate di fine livello
     private int currentZone = 0;           // 0 = Village, 1 = Forest, 2 = Cave
     private int difficultyCycle = 1;       // Moltiplicatore di difficoltà post-boss
-    private boolean gateActive = false;    // Diventa true quando i nemici muoiono
+    private boolean exitGateActive = false;    // Diventa true quando i nemici muoiono
     private boolean levelCompletedFlag = false; // Avvisa il Controller del cambio mappa
     private String currentTheme = "VILLAGE"; // <-- AGGIUNTO: Tema iniziale
 
@@ -53,10 +53,19 @@ public class Model implements IModel {
     private int portalCol = -1;
     private boolean portalRevealed = false;
     private long lastPortalSpawnTime = 0;
+    private int exitGateRow = 0;
+    private int exitGateCol = 6;
+    private boolean exitGateRevealed ;
+    private long lastExitGateSpawnTime = System.currentTimeMillis();
 
     // --- MAPPA DEL TESORO (Loot pre-calcolato) ---
     // Usa una stringa "riga,colonna" come chiave per trovare l'oggetto
     private final java.util.Map<String, utils.ItemType> hiddenLoot = new java.util.HashMap<>();
+
+    //preparazione arrivo boss
+    private int bossPreparationTimer; // Espresso in "tick" di gioco
+    private boolean isPreparationPhase;
+    private static final int PREP_TIME_SECONDS = 15;
 
     private static final int[][] testMap = {
             {0, 0, 0, 2, 0, 2, 2, 0, 2, 2, 0, 0, 0}, // Riga 0: Angolo player sicuro
@@ -103,7 +112,7 @@ public class Model implements IModel {
     // --- METODO PER GENERARE MAPPE PROCEDURALI (Utile per il cambio livello) ---
     // --- METODO PER GENERARE MAPPE PROCEDURALI (Utile per il cambio livello) ---
     // --- METODO PER GENERARE MAPPE PROCEDURALI (Utile per il cambio livello) ---
-    @Override
+    /*@Override
     public int[][] generateProceduralMap() {
         int[][] nextMap = new int[Config.GRID_HEIGHT][Config.GRID_WIDTH];
         List<int[]> emptyCells = new ArrayList<>();
@@ -195,7 +204,137 @@ public class Model implements IModel {
 
         return nextMap;
     }
+    */
 
+//v2
+@Override
+public int[][] generateProceduralMap() {
+    int[][] nextMap = new int[Config.GRID_HEIGHT][Config.GRID_WIDTH];
+    List<int[]> emptyCells = new ArrayList<>();
+    List<int[]> cratePositions = new ArrayList<>();
+
+    hiddenLoot.clear();
+
+    // ==========================================================
+    // 1. GENERAZIONE MAPPE STANDARD (Villaggio e Foresta)
+    // ==========================================================
+    if (currentZone < 2) {
+        for (int r = 0; r < Config.GRID_HEIGHT; r++) {
+            for (int c = 0; c < Config.GRID_WIDTH; c++) {
+
+                boolean isSafeZone = (r == 0 && c == 0) || (r == 0 && c == 1) || (r == 1 && c == 0);
+                boolean isBunkerWall = (r == 0 && c == 2) || (r == 2 && c == 0);
+                boolean isLeftBuildingBase = (r == 0) && (c == 3 || c == 4);
+                boolean isRightBuildingBase = (r == 0) && (c == 8 || c == 9);
+
+                if (isLeftBuildingBase || isRightBuildingBase) {
+                    if (c == 3 || c == 8) nextMap[r][c] = Config.CELL_ORNAMENT;
+                    else nextMap[r][c] = Config.CELL_INDESTRUCTIBLE_BLOCK;
+                }
+                else if (isSafeZone) {
+                    nextMap[r][c] = Config.CELL_EMPTY;
+                }
+                else if (isBunkerWall) {
+                    nextMap[r][c] = Config.CELL_DESTRUCTIBLE_BLOCK;
+                    cratePositions.add(new int[]{r, c});
+                }
+                else if (r == 1) {
+                    // RIGA 1: È COMPLETAMENTE LIBERA! (Puoi camminarci) eccetto i 3 pilastri
+                    if (c == 1 || c == 6 || c == 11) nextMap[r][c] = Config.CELL_INDESTRUCTIBLE_BLOCK;
+                    else {
+                        nextMap[r][c] = Config.CELL_EMPTY;
+                        emptyCells.add(new int[]{r, c});
+                    }
+                }
+                else if (r % 2 != 0 && c % 2 != 0) {
+                    nextMap[r][c] = Config.CELL_INDESTRUCTIBLE_BLOCK;
+                }
+                else {
+                    nextMap[r][c] = Config.CELL_EMPTY;
+                    emptyCells.add(new int[]{r, c});
+                }
+            }
+        }
+    }
+    // ==========================================================
+    // 2. GENERAZIONE ARENA BOSS (Mappa 3 - Caverna)
+    // ==========================================================
+    else {
+        for (int r = 0; r < Config.GRID_HEIGHT; r++) {
+            for (int c = 0; c < Config.GRID_WIDTH; c++) {
+
+                boolean isSafeZone = (r == 0 && c == 0) || (r == 0 && c == 1) || (r == 1 && c == 0);
+                boolean isLeftBuildingBase = (r == 0) && (c == 3 || c == 4);
+                boolean isRightBuildingBase = (r == 0) && (c == 8 || c == 9);
+
+                // A. Manteniamo gli Edifici Decorativi per estetica
+                if (isLeftBuildingBase || isRightBuildingBase) {
+                    if (c == 3 || c == 8) nextMap[r][c] = Config.CELL_ORNAMENT;
+                    else nextMap[r][c] = Config.CELL_INDESTRUCTIBLE_BLOCK;
+                    continue;
+                }
+
+                // B. Manteniamo la Safe Zone in alto a sinistra
+                if (isSafeZone) {
+                    nextMap[r][c] = Config.CELL_EMPTY;
+                    continue;
+                }
+
+                // C. I 16 TESCHI (I confini dell'Arena)
+                // Righe orizzontali in alto (Riga 1) e in basso (Riga 9)
+                boolean isTopOrBottomEdge = (r == 1 || r == 9) && (c >= 2 && c <= 10) && (c % 2 == 0);
+                // Righe verticali a sinistra (Colonna 2) e a destra (Colonna 10)
+                boolean isLeftOrRightEdge = (c == 2 || c == 10) && (r >= 3 && r <= 7) && (r % 2 != 0);
+
+                if (isTopOrBottomEdge || isLeftOrRightEdge) {
+                    nextMap[r][c] = Config.CELL_INDESTRUCTIBLE_BLOCK;
+                    continue;
+                }
+
+                // D. Tutto il resto è pavimento vuoto
+                // MODIFICA: Ora inseriamo TUTTE le celle vuote, sia esterne che interne all'arena,
+                // in modo che il generatore casuale possa posizionarci le casse!
+                nextMap[r][c] = Config.CELL_EMPTY;
+                emptyCells.add(new int[]{r, c});
+            }
+        }
+    }
+
+    // ==========================================================
+    // 3. GENERAZIONE CASSE CASUALI E LOOT
+    // ==========================================================
+    // MODIFICA: Impostiamo 35 casse in tutte le mappe così l'arena sarà ricca di bottino
+    int NUM_RANDOM_CRATES = 35;
+    java.util.Collections.shuffle(emptyCells, randomGenerator);
+
+    for (int i = 0; i < NUM_RANDOM_CRATES && i < emptyCells.size(); i++) {
+        int[] pos = emptyCells.get(i);
+        nextMap[pos[0]][pos[1]] = Config.CELL_DESTRUCTIBLE_BLOCK;
+        cratePositions.add(pos);
+    }
+
+    // Il mazzo del bottino e posizionamento Portale
+    java.util.Collections.shuffle(cratePositions, randomGenerator);
+
+    if (cratePositions.size() > 0) {
+        int[] pCoords = cratePositions.get(0);
+        portalRow = pCoords[0];
+        portalCol = pCoords[1];
+        System.out.println("DEBUG: Portale nascosto in [" + portalRow + ", " + portalCol + "]");
+
+        for (int i = 1; i <= 10 && i < cratePositions.size(); i++) {
+            int[] cCoords = cratePositions.get(i);
+            hiddenLoot.put(cCoords[0] + "," + cCoords[1], ItemType.AMMO_BOMB);
+        }
+
+        for (int i = 11; i <= 20 && i < cratePositions.size(); i++) {
+            int[] cCoords = cratePositions.get(i);
+            hiddenLoot.put(cCoords[0] + "," + cCoords[1], ItemType.AMMO_AURA);
+        }
+    }
+
+    return nextMap;
+}
 
     // Sostituisci il vecchio isWalkable con questo basato su GRIGLIA RIGIDA
     // In src/model/Model.java
@@ -914,9 +1053,51 @@ public class Model implements IModel {
         }
     }
 
+    // ==========================================================
+    // EVENTO ARRIVO DEL BOSS
+    // ==========================================================
+    private void triggerGlobalExplosion() {
+        System.out.println("DEBUG: Preparazione finita! Esplosione di tutte le casse in corso...");
+
+        for (int r = 0; r < Config.GRID_HEIGHT; r++) {
+            for (int c = 0; c < Config.GRID_WIDTH; c++) {
+                // Se c'è una cassa distruttibile, la eliminiamo
+                if (gameAreaArray[r][c] == Config.CELL_DESTRUCTIBLE_BLOCK) {
+                    gameAreaArray[r][c] = Config.CELL_EMPTY;
+
+                    // Aggiungiamo l'effetto di distruzione per la View
+                    // (Vedrai decine di nuvole di fumo sollevarsi simultaneamente!)
+                    destructionEffects.add(new BlockDestruction(r, c));
+                }
+            }
+        }
+
+        // Polverizziamo tutto il bottino a terra e quello ancora nascosto
+        activeItems.clear();
+        hiddenLoot.clear();
+
+        // Qui in futuro metteremo la riga: spawnBoss();
+        System.out.println("Il Boss è sceso nell'arena!");
+    }
+
     @Override
     public void updateGameLogic() {
         elapsedTicks++;
+
+        // --- AGGIUNTA LOGICA PREPARAZIONE BOSS ---
+        if (currentZone == 2 && isPreparationPhase) {
+            bossPreparationTimer--;
+
+            // Aggiungiamo un feedback in console ogni secondo per farti capire che funziona
+            if (bossPreparationTimer % Config.FPS == 0 && bossPreparationTimer > 0) {
+                System.out.println("Boss in arrivo tra: " + (bossPreparationTimer / Config.FPS) + "s");
+            }
+
+            if (bossPreparationTimer <= 0) {
+                triggerGlobalExplosion();
+                isPreparationPhase = false;
+            }
+        }
 
         // 1. GESTIONE PLAYER (O si muove, O spara)
         if (player.isCasting()) {
@@ -951,8 +1132,6 @@ public class Model implements IModel {
                 it.remove(); // Il fuoco si spegne e scompare dallo schermo
             } else {
                 // --- NOVITÀ: DANNO CONTINUO ---
-                // Finché il fuoco è fisicamente sulla mappa, continua a fare danno
-                // a chiunque (Player o Goblin) si trovi sopra le sue coordinate!
                 checkExplosionDamage(f[0], f[1]);
             }
         }
@@ -962,7 +1141,7 @@ public class Model implements IModel {
 
         // --- AGGIUNTA: CONTROLLO GATE E FINE LIVELLO ---
         if (!levelCompletedFlag) {
-            checkGateCollision();
+            checkExitGateCollision();
         }
     }
 
@@ -1446,31 +1625,53 @@ public class Model implements IModel {
     @Override public int getPortalRow() { return portalRow; }
     @Override public int getPortalCol() { return portalCol; }
     @Override public boolean isPortalRevealed() { return portalRevealed; }
+    // AGGIUNGI QUESTO QUI:
+    @Override
+    public long getPortalRevealTime() {
+        return lastPortalSpawnTime;
+    }
+
+    @Override
+    public long getExitGateActivationTime() {
+        return lastExitGateSpawnTime;
+    }
+
+    @Override
+    public int getExitGateRow() {
+        return exitGateRow;
+    }
+
+    @Override
+    public int getExitGateCol() {
+        return exitGateCol;
+    }
+
 
 // ==========================================================
     // METODI PER LOGICA DEL GATE E CAMBIO LIVELLO
     // ==========================================================
 
-    private void checkGateCollision() {
+    private void checkExitGateCollision() {
         // Il Gate si attiva SOLO se non ci sono più nemici
         if (enemies.isEmpty()) {
 
             // Se è la prima volta che ci accorgiamo che non ci sono nemici...
-            if (!gateActive) {
-                gateActive = true;
+            if (!exitGateActive) {
+                exitGateActive= true;
 
                 // 1. DICIAMO ALLA VIEW DI DISEGNARE IL RETTANGOLO ROSA
-                portalRevealed = true;
+                exitGateRevealed = true;
+                lastExitGateSpawnTime = System.currentTimeMillis();
 
                 // 2. CREIAMO LA VIA D'USCITA LOGICA IN 0,6
-                gameAreaArray[0][6] = GATE_ID; // <--- MODIFICATO IN 0,6
+                gameAreaArray[0][6] = EXIT_GATE_ID; // <--- MODIFICATO IN 0,6
 
                 // 3. DISTRUGGIAMO EVENTUALI VECCHI GATE CHE POTREBBERO CAUSARE TELETRASPORTI ERRATI
-                if (gameAreaArray[0][0] == GATE_ID) {
+                if (gameAreaArray[0][0] == EXIT_GATE_ID) {
                     gameAreaArray[0][0] = Config.CELL_EMPTY;
                 }
                 // Nel caso fosse rimasto qualcosa in 0,7 dal test precedente
-                if (gameAreaArray[0][7] == GATE_ID) {
+                if (gameAreaArray[0][7] == EXIT_GATE_ID) {
                     gameAreaArray[0][7] = Config.CELL_EMPTY;
                 }
 
@@ -1487,17 +1688,21 @@ public class Model implements IModel {
             // Sicurezza: controlliamo di non essere fuori dai bordi
             if (row >= 0 && row < Config.GRID_HEIGHT && col >= 0 && col < Config.GRID_WIDTH) {
                 // Se il Player calpesta l'ID del Gate (9) in 0,6... Livello completato!
-                if (gameAreaArray[row][col] == GATE_ID) {
+                if (gameAreaArray[row][col] == EXIT_GATE_ID) {
                     levelCompletedFlag = true;
                 }
             }
         }
     }
     @Override
+    public long getGateExitActivationTime() {
+        return model.Model.getInstance().getExitGateActivationTime();
+    }
+    @Override
     public void prepareNextLevel(int[][] newMap) {
         // 1. Reset flag del Gate
         levelCompletedFlag = false;
-        gateActive = false;
+        exitGateActive = false;
         portalRevealed = false; // <--- AGGIUNGI QUESTA RIGA QUI!
 
         // 2. Progressione Zona e Tema
@@ -1508,6 +1713,15 @@ public class Model implements IModel {
             System.out.println("VITTORIA GLOBALE! Inizio ciclo di difficoltà: " + difficultyCycle);
         } else {
             System.out.println("Avanzamento al livello: " + currentZone);
+        }
+
+        // --- AGGIUNTA LOGICA TIMER BOSS ---
+        if (currentZone == 2) {
+            bossPreparationTimer = PREP_TIME_SECONDS * Config.FPS;
+            isPreparationPhase = true;
+            System.out.println("Fase di preparazione Boss avviata! Hai " + PREP_TIME_SECONDS + " secondi!");
+        } else {
+            isPreparationPhase = false;
         }
 
         // --- AGGIUNTA: AGGIORNAMENTO DEL TEMA LOGICO ---
@@ -1523,8 +1737,6 @@ public class Model implements IModel {
             System.arraycopy(newMap[r], 0, this.gameAreaArray[r], 0, utils.Config.GRID_WIDTH);
         }
 
-
-
         // 4. Svuota le vecchie entità dal campo per il nuovo livello
         activeBombs.clear();
         projectiles.clear();
@@ -1538,11 +1750,14 @@ public class Model implements IModel {
         player.setDelta(0, 0);
         player.setState(utils.PlayerState.IDLE_FRONT);
 
-        // 6. Spawn iniziale dei nuovi nemici per la nuova mappa
-        for (int i = 0; i < 1; i++) {
-            spawnEnemy();
+        // 6. Spawn iniziale dei nuovi nemici (NON NELLA MAPPA DEL BOSS!)
+        if (currentZone != 2) {
+            for (int i = 0; i < 1; i++) {
+                spawnEnemy();
+            }
         }
     }
+
     @Override
     public boolean isTransitioning() {
         return this.isTransitioning;
@@ -1580,7 +1795,14 @@ public class Model implements IModel {
     // --- GETTER IMPLEMENTATI PER L'INTERFACCIA ---
     @Override public int getCurrentZone() { return currentZone; }
     @Override public int getDifficultyCycle() { return difficultyCycle; }
-    @Override public boolean isGateActive() { return gateActive; }
+
+    @Override
+    public boolean isExitGateActive() {
+        return exitGateActive;
+    }
+
+    @Override
+    public boolean isGateActive() { return exitGateActive; }
     @Override public boolean isLevelCompletedFlag() { return levelCompletedFlag; }
     @Override public String getCurrentTheme() { return currentTheme; }
 

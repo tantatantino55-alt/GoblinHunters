@@ -2,6 +2,7 @@ package model;
 
 import utils.Direction;
 import utils.EnemyType;
+import utils.ItemType;
 import utils.PlayerState;
 
 public interface IModel {
@@ -85,9 +86,15 @@ public interface IModel {
     // --- GESTIONE LIVELLI E CAMBIO MAPPA (GATE) ---
     int getCurrentZone();
     int getDifficultyCycle();
-    boolean isGateActive();
+    boolean isExitGateActive();
     String getCurrentTheme();
+
+    boolean isGateActive();
+
     boolean isLevelCompletedFlag();
+
+    long getGateExitActivationTime();
+
     void prepareNextLevel(int[][] newMap);
     boolean isTransitioning();
     void setTransitioning(boolean transitioning);
@@ -95,5 +102,11 @@ public interface IModel {
     int getCollectibleCount();
     double getCollectibleX(int index);
     double getCollectibleY(int index);
-    utils.ItemType getCollectibleType(int index);
+    ItemType getCollectibleType(int index);
+    // AGGIUNGI QUESTO QUI:
+    public long getPortalRevealTime() ;
+
+    long getExitGateActivationTime();
+    int getExitGateRow();
+    int getExitGateCol();
 }

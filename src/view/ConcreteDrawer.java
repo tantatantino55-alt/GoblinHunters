@@ -28,9 +28,9 @@ public class ConcreteDrawer extends AbstractDrawer {
         Graphics2D g2d = (Graphics2D) g;
         g2d.setColor(Color.BLACK);
         g2d.fillRect(0, 0, getDrawingWidth(), getDrawingHeight());
-
         drawMap(g2d);
-        drawPortal(g2d);
+        drawPortal(g2d); // 1. Disegna l'allarme se scopri il portale spawner
+        drawLevelExitGate(g2d);
         drawDestructions(g2d); // Qui vengono disegnati i blocchi che esplodono
         drawFire(g2d);
         drawBombs(g2d);
@@ -50,30 +50,57 @@ public class ConcreteDrawer extends AbstractDrawer {
         drawDebugGrid(g2d);
         drawHUD(g2d);
     }
-
     private void drawPortal(Graphics2D g2d) {
-        // Chiediamo al Controller se il portale è stato scoperto
-        if (controller.ControllerForView.getInstance().isPortalRevealed()) {
+        if (ControllerForView.getInstance().isPortalRevealed()) {
+            int pCol = ControllerForView.getInstance().getPortalCol();
+            int pRow = ControllerForView.getInstance().getPortalRow();
 
-            // Recuperiamo le coordinate sempre tramite il Controller
-            int pCol = controller.ControllerForView.getInstance().getPortalCol();
-            int pRow = controller.ControllerForView.getInstance().getPortalRow();
+            int screenX = (pCol * Config.TILE_SIZE) + Config.GRID_OFFSET_X;
+            int screenY = (pRow * Config.TILE_SIZE) + Config.GRID_OFFSET_Y;
 
-            int screenX = (pCol * utils.Config.TILE_SIZE) + utils.Config.GRID_OFFSET_X;
-            int screenY = (pRow * utils.Config.TILE_SIZE) + utils.Config.GRID_OFFSET_Y;
+            g2d.setColor(new Color(138, 43, 226, 180)); // Viola semi-trasparente
+            g2d.fillRect(screenX, screenY, Config.TILE_SIZE, Config.TILE_SIZE);
 
-            // Colore di sfondo del portale (Viola scuro)
-            g2d.setColor(new Color(138, 43, 226));
-            g2d.fillRect(screenX, screenY, utils.Config.TILE_SIZE, utils.Config.TILE_SIZE);
-
-            // Bordo lampeggiante per dare l'idea di "Allarme" (Lampeggia ogni mezzo secondo)
             if (System.currentTimeMillis() % 1000 < 500) {
                 g2d.setColor(Color.MAGENTA);
-                g2d.drawRect(screenX + 4, screenY + 4, utils.Config.TILE_SIZE - 8, utils.Config.TILE_SIZE - 8);
-                g2d.drawRect(screenX + 5, screenY + 5, utils.Config.TILE_SIZE - 10, utils.Config.TILE_SIZE - 10);
+                g2d.drawRect(screenX + 4, screenY + 4, Config.TILE_SIZE - 8, Config.TILE_SIZE - 8);
             }
         }
     }
+
+    // --- 2. LOGICA PER IL GATE DI USCITA (Animazione sprite in [0, 6]) ---
+    private void drawLevelExitGate(Graphics2D g2d) {
+        if (ControllerForView.getInstance().isGateActive()) {
+
+            // POSIZIONE FISSA COME DA TUO MODEL
+            int gateCol = ControllerForView.getInstance().getExitGateCol();
+            int gateRow = ControllerForView.getInstance().getExitGateRow();
+
+            int screenX = (gateCol * Config.TILE_SIZE) + Config.GRID_OFFSET_X;
+            int screenY = (gateRow * Config.TILE_SIZE) + Config.GRID_OFFSET_Y;
+
+            // Calcolo animazione: deve fermarsi all'ultimo frame
+            long startTime = ControllerForView.getInstance().getGateActivationTime();
+            long elapsed = System.currentTimeMillis() - startTime;
+
+            int totalFrames = 3; // Quelli caricati (72, 73, 74)
+            int currentFrame = (int) (elapsed / 150);
+
+            // STOP ALL'ULTIMO FRAME: se superiamo l'indice 2, resta fisso a 2
+            if (currentFrame >= totalFrames) {
+                currentFrame = totalFrames - 1;
+            }
+
+            BufferedImage sprite = SpriteManager.getInstance().getSprite("PORTAL_ANIM", currentFrame);
+
+            if (sprite != null) {
+                g2d.drawImage(sprite, screenX, screenY, Config.TILE_SIZE, Config.TILE_SIZE, null);
+            }
+        }
+    }
+
+
+
 
     private void drawHUD(Graphics2D g2d) {
         // --- 1. CALCOLO FPS ---
@@ -614,29 +641,33 @@ public class ConcreteDrawer extends AbstractDrawer {
         else return Config.PLAYER_IDLE_FRAMES;
     }
     private void drawCollectibles(Graphics2D g2d) {
-        int count = ControllerForView.getInstance().getCollectibleCount();
+        int count = controller.ControllerForView.getInstance().getCollectibleCount();
+        view.SpriteManager sm = view.SpriteManager.getInstance(); // Recuperiamo lo SpriteManager
 
         for (int i = 0; i < count; i++) {
-            int screenX = (int)(ControllerForView.getInstance().getCollectibleX(i)
-                    * Config.TILE_SIZE) + Config.GRID_OFFSET_X;
-            int screenY = (int)(ControllerForView.getInstance().getCollectibleY(i)
-                    * Config.TILE_SIZE) + Config.GRID_OFFSET_Y;
+            // Calcolo delle coordinate mantenuto identico al tuo
+            int screenX = (int)(controller.ControllerForView.getInstance().getCollectibleX(i)
+                    * utils.Config.TILE_SIZE) + utils.Config.GRID_OFFSET_X;
+            int screenY = (int)(controller.ControllerForView.getInstance().getCollectibleY(i)
+                    * utils.Config.TILE_SIZE) + utils.Config.GRID_OFFSET_Y;
 
-            utils.ItemType type = ControllerForView.getInstance().getCollectibleType(i);
-            int size = Config.TILE_SIZE / 2;
-            int offset = (Config.TILE_SIZE - size) / 2;
+            utils.ItemType type = controller.ControllerForView.getInstance().getCollectibleType(i);
 
+            java.awt.image.BufferedImage sprite = null;
+
+            // Associamo ogni ItemType allo sprite corretto caricato nel ResourceLoader
             switch (type) {
-                case AMMO_BOMB -> {
-                    g2d.setColor(Color.BLACK);
-                    g2d.fillOval(screenX + offset, screenY + offset, size, size);
-                    g2d.setColor(Color.WHITE);
-                    g2d.drawOval(screenX + offset, screenY + offset, size, size);
-                }
-                case AMMO_AURA    -> { g2d.setColor(Color.CYAN);   g2d.fillOval(screenX+offset, screenY+offset, size, size); }
-                case POWER_SHIELD -> { g2d.setColor(Color.BLUE);   g2d.fillRect(screenX+offset, screenY+offset, size, size); }
-                case POWER_RADIUS -> { g2d.setColor(Color.RED);    g2d.fillRect(screenX+offset, screenY+offset, size, size); }
-                case POWER_SPEED  -> { g2d.setColor(Color.YELLOW); g2d.fillRect(screenX+offset, screenY+offset, size, size); }
+                case AMMO_BOMB -> sprite = sm.getSprite("CONSUMABLES", 0);
+                case AMMO_AURA -> sprite = sm.getSprite("CONSUMABLES", 1);
+                case POWER_SHIELD -> sprite = sm.getSprite("POWER_UPS", 0);
+                case POWER_RADIUS -> sprite = sm.getSprite("POWER_UPS", 1);
+                case POWER_SPEED -> sprite = sm.getSprite("POWER_UPS", 2);
+            }
+
+            // Se lo sprite è stato trovato, lo disegniamo sulla mappa
+            if (sprite != null) {
+                // Disegniamo lo sprite forzandolo alla dimensione del TILE_SIZE
+                g2d.drawImage(sprite, screenX, screenY, utils.Config.TILE_SIZE, utils.Config.TILE_SIZE, null);
             }
         }
     }

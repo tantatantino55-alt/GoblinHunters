@@ -125,6 +125,31 @@ public class ControllerForView implements IControllerForView {
         return Model.getInstance().getActiveItems().get(index).getType();
     }
 
+    @Override
+    public long getPortalRevealTime() {
+        return Model.getInstance().getPortalRevealTime();
+    }
+
+    @Override
+    public boolean isGateActive() {
+        return Model.getInstance().isExitGateActive();
+    }
+
+    @Override
+    public long getGateActivationTime() {
+        return Model.getInstance().getExitGateActivationTime();
+    }
+
+    @Override
+    public int getExitGateCol() {
+        return  Model.getInstance().getExitGateRow();
+    }
+
+    @Override
+    public int getExitGateRow() {
+        return  Model.getInstance().getExitGateCol();
+    }
+
 
     public static IControllerForView getInstance() {
         if (instance == null) instance = new ControllerForView();

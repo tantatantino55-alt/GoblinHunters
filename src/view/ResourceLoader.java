@@ -22,6 +22,7 @@ public class ResourceLoader {
         loadShooterGoblinAnimations(sm);
         loadChasingGoblinAnimations(sm);
         loadCommonGoblinAnimations(sm);
+        loadBossGoblinAnimations(sm);
         loadProjectiles(sm);
         loadMapThemes(sm);
 
@@ -168,6 +169,34 @@ public class ResourceLoader {
         // --- RIGHT ---
         sm.loadAnimation("HUNTER_IDLE_RIGHT", sheet, Config.CHASING_IDLE_RIGHT_START, idleFrames, size);
         sm.loadAnimation("HUNTER_RUN_RIGHT",  sheet, Config.CHASING_RUN_RIGHT_START,  runFrames,  size);
+    }
+    private void loadBossGoblinAnimations(SpriteManager sm) {
+        String sheet = Config.BOSS_GOBLIN_SHEET;
+        int size = Config.BOSS_FRAME_SIZE; // Dimensione specifica dei frame del Boss
+
+        // --- BACK (SU) ---
+        sm.loadAnimation("BOSS_ATTACK_UP",   sheet, Config.BOSS_ATTACK_BACK_START, Config.BOSS_ATTACK_FRAMES, size);
+        sm.loadAnimation("BOSS_IDLE_UP",     sheet, Config.BOSS_IDLE_BACK_START,   Config.BOSS_IDLE_FRAMES,   size);
+        sm.loadAnimation("BOSS_RUN_UP",      sheet, Config.BOSS_RUN_BACK_START,    Config.BOSS_RUN_FRAMES,    size);
+
+        // --- DYING (MORTE) ---
+        // Aggiunta specifica per il boss, indipendente dalla direzione
+        sm.loadAnimation("BOSS_DYING",       sheet, Config.BOSS_DYING_START,       Config.BOSS_DYING_FRAMES,  size);
+
+        // --- FRONT (GIÙ) ---
+        sm.loadAnimation("BOSS_ATTACK_DOWN", sheet, Config.BOSS_ATTACK_FRONT_START, Config.BOSS_ATTACK_FRAMES, size);
+        sm.loadAnimation("BOSS_IDLE_DOWN",   sheet, Config.BOSS_IDLE_FRONT_START,   Config.BOSS_IDLE_FRAMES,   size);
+        sm.loadAnimation("BOSS_RUN_DOWN",    sheet, Config.BOSS_RUN_FRONT_START,    Config.BOSS_RUN_FRAMES,    size);
+
+        // --- LEFT (SINISTRA) ---
+        sm.loadAnimation("BOSS_ATTACK_LEFT", sheet, Config.BOSS_ATTACK_LEFT_START, Config.BOSS_ATTACK_FRAMES, size);
+        sm.loadAnimation("BOSS_IDLE_LEFT",   sheet, Config.BOSS_IDLE_LEFT_START,   Config.BOSS_IDLE_FRAMES,   size);
+        sm.loadAnimation("BOSS_RUN_LEFT",    sheet, Config.BOSS_RUN_LEFT_START,    Config.BOSS_RUN_FRAMES,    size);
+
+        // --- RIGHT (DESTRA) ---
+        sm.loadAnimation("BOSS_ATTACK_RIGHT", sheet, Config.BOSS_ATTACK_RIGHT_START, Config.BOSS_ATTACK_FRAMES, size);
+        sm.loadAnimation("BOSS_IDLE_RIGHT",   sheet, Config.BOSS_IDLE_RIGHT_START,   Config.BOSS_IDLE_FRAMES,   size);
+        sm.loadAnimation("BOSS_RUN_RIGHT",    sheet, Config.BOSS_RUN_RIGHT_START,    Config.BOSS_RUN_FRAMES,    size);
     }
     private void loadProjectiles(SpriteManager sm) {
         String sheet = Config.ITEM_SHEET; // "/Items.png"

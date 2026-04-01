@@ -72,6 +72,7 @@ public class Config {
     public static final String SHOOTERGOBLIN_SHEET = "/ShooterGoblin.png";
     public static final String CHASING_GOBLIN_SHEET = "/ChasingGoblin.png";
     public static final String COMMON_GOBLIN = "/CommonGoblin.png";
+    public static final String BOSS_GOBLIN_SHEET = "/GoblinBoss.jpg";
 
     public static final String FOREST_SHEET = "/Forest.png";
     public static final String FOREST_FRAME="/ForestFrame.png";
@@ -144,6 +145,44 @@ public class Config {
     public static final int SHOOTER_ATTACK_RIGHT_START = 90;
     public static final int SHOOTER_IDLE_RIGHT_START   = 92;
     public static final int SHOOTER_RUN_RIGHT_START    = 108;
+
+    // ==========================================================
+    // --- 4. BOSS GOBLIN (File: GoblinBoss.jpg) ---
+    // ==========================================================
+    // ATTENZIONE: Indici calcolati in base all'ordine alfabetico del packing
+
+    // 1. NUMERO DI FRAME PER AZIONE
+    public static final int BOSS_ATTACK_FRAMES = 10;
+    public static final int BOSS_IDLE_FRAMES   = 16;
+    public static final int BOSS_RUN_FRAMES    = 12;
+    public static final int BOSS_DYING_FRAMES  = 10;
+
+    // --- BACK (SU) --- -> Indice 0
+    public static final int BOSS_ATTACK_BACK_START = 0;
+    public static final int BOSS_IDLE_BACK_START   = 10;  // 0 + 10
+    public static final int BOSS_RUN_BACK_START    = 26;  // 10 + 16
+
+    // --- DYING (MORTE) ---
+    // Si trova qui in mezzo perché alfabeticamente "Dying" viene dopo "Back" e prima di "Front"
+    public static final int BOSS_DYING_START       = 38;  // 26 + 12
+
+    // --- FRONT (GIÙ) ---
+    public static final int BOSS_ATTACK_FRONT_START = 48; // 38 + 10
+    public static final int BOSS_IDLE_FRONT_START   = 58; // 48 + 10
+    public static final int BOSS_RUN_FRONT_START    = 74; // 58 + 16
+
+    // --- LEFT (SINISTRA) ---
+    public static final int BOSS_ATTACK_LEFT_START  = 86; // 74 + 12
+    public static final int BOSS_IDLE_LEFT_START    = 96; // 86 + 10
+    public static final int BOSS_RUN_LEFT_START     = 112;// 96 + 16
+
+    // --- RIGHT (DESTRA) ---
+    public static final int BOSS_ATTACK_RIGHT_START = 124;// 112 + 12
+    public static final int BOSS_IDLE_RIGHT_START   = 134;// 124 + 10
+    public static final int BOSS_RUN_RIGHT_START    = 150;// 134 + 16
+
+
+    public static final int BOSS_FRAME_SIZE = 192;
 
     
     public static final int CELL_EMPTY = 0;

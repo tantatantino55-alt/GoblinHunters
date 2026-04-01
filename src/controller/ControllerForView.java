@@ -142,12 +142,12 @@ public class ControllerForView implements IControllerForView {
 
     @Override
     public int getExitGateCol() {
-        return  Model.getInstance().getExitGateRow();
+        return  Model.getInstance().getExitGateCol();
     }
 
     @Override
     public int getExitGateRow() {
-        return  Model.getInstance().getExitGateCol();
+        return  Model.getInstance().getExitGateRow();
     }
 
 

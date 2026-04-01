@@ -68,25 +68,26 @@ public class ConcreteDrawer extends AbstractDrawer {
         }
     }
 
-    // --- 2. LOGICA PER IL GATE DI USCITA (Animazione sprite in [0, 6]) ---
+// In ConcreteDrawer.java
+
     private void drawLevelExitGate(Graphics2D g2d) {
         if (ControllerForView.getInstance().isGateActive()) {
 
-            // POSIZIONE FISSA COME DA TUO MODEL
+            // Recuperiamo le coordinate corrette (ora fisse 0, 6 tramite Controller)
             int gateCol = ControllerForView.getInstance().getExitGateCol();
             int gateRow = ControllerForView.getInstance().getExitGateRow();
 
             int screenX = (gateCol * Config.TILE_SIZE) + Config.GRID_OFFSET_X;
             int screenY = (gateRow * Config.TILE_SIZE) + Config.GRID_OFFSET_Y;
 
-            // Calcolo animazione: deve fermarsi all'ultimo frame
+            // Recuperiamo il tempo di attivazione dal Controller
             long startTime = ControllerForView.getInstance().getGateActivationTime();
             long elapsed = System.currentTimeMillis() - startTime;
 
-            int totalFrames = 3; // Quelli caricati (72, 73, 74)
-            int currentFrame = (int) (elapsed / 150);
+            int totalFrames = 6;
+            int currentFrame = (int) (elapsed / 150); // Velocità animazione
 
-            // STOP ALL'ULTIMO FRAME: se superiamo l'indice 2, resta fisso a 2
+            // BLOCCA L'ANIMAZIONE ALL'ULTIMO FRAME
             if (currentFrame >= totalFrames) {
                 currentFrame = totalFrames - 1;
             }

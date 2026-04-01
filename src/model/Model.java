@@ -56,7 +56,7 @@ public class Model implements IModel {
     private int exitGateRow = 0;
     private int exitGateCol = 6;
     private boolean exitGateRevealed ;
-    private long lastExitGateSpawnTime = System.currentTimeMillis();
+    private long lastExitGateSpawnTime = 0;
 
     // --- MAPPA DEL TESORO (Loot pre-calcolato) ---
     // Usa una stringa "riga,colonna" come chiave per trovare l'oggetto
@@ -207,134 +207,141 @@ public class Model implements IModel {
     */
 
 //v2
-@Override
-public int[][] generateProceduralMap() {
-    int[][] nextMap = new int[Config.GRID_HEIGHT][Config.GRID_WIDTH];
-    List<int[]> emptyCells = new ArrayList<>();
-    List<int[]> cratePositions = new ArrayList<>();
+    @Override
+    public int[][] generateProceduralMap() {
+        int[][] nextMap = new int[Config.GRID_HEIGHT][Config.GRID_WIDTH];
+        List<int[]> emptyCells = new ArrayList<>();
+        List<int[]> cratePositions = new ArrayList<>();
 
-    hiddenLoot.clear();
+        hiddenLoot.clear();
 
-    // ==========================================================
-    // 1. GENERAZIONE MAPPE STANDARD (Villaggio e Foresta)
-    // ==========================================================
-    if (currentZone < 2) {
-        for (int r = 0; r < Config.GRID_HEIGHT; r++) {
-            for (int c = 0; c < Config.GRID_WIDTH; c++) {
+        // Decidiamo quale ID usare per gli edifici (Animato per la Mappa 3)
+        int buildingID = (currentZone == 2) ? Config.CELL_SKELETON_START : Config.CELL_ORNAMENT;
 
-                boolean isSafeZone = (r == 0 && c == 0) || (r == 0 && c == 1) || (r == 1 && c == 0);
-                boolean isBunkerWall = (r == 0 && c == 2) || (r == 2 && c == 0);
-                boolean isLeftBuildingBase = (r == 0) && (c == 3 || c == 4);
-                boolean isRightBuildingBase = (r == 0) && (c == 8 || c == 9);
+        // ==========================================================
+        // 1. GENERAZIONE MAPPE STANDARD (Villaggio e Foresta)
+        // ==========================================================
+        if (currentZone < 2) {
+            for (int r = 0; r < Config.GRID_HEIGHT; r++) {
+                for (int c = 0; c < Config.GRID_WIDTH; c++) {
 
-                if (isLeftBuildingBase || isRightBuildingBase) {
-                    if (c == 3 || c == 8) nextMap[r][c] = Config.CELL_ORNAMENT;
-                    else nextMap[r][c] = Config.CELL_INDESTRUCTIBLE_BLOCK;
-                }
-                else if (isSafeZone) {
-                    nextMap[r][c] = Config.CELL_EMPTY;
-                }
-                else if (isBunkerWall) {
-                    nextMap[r][c] = Config.CELL_DESTRUCTIBLE_BLOCK;
-                    cratePositions.add(new int[]{r, c});
-                }
-                else if (r == 1) {
-                    // RIGA 1: È COMPLETAMENTE LIBERA! (Puoi camminarci) eccetto i 3 pilastri
-                    if (c == 1 || c == 6 || c == 11) nextMap[r][c] = Config.CELL_INDESTRUCTIBLE_BLOCK;
+                    boolean isSafeZone = (r == 0 && c == 0) || (r == 0 && c == 1) || (r == 1 && c == 0);
+                    boolean isBunkerWall = (r == 0 && c == 2) || (r == 2 && c == 0);
+                    boolean isLeftBuildingBase = (r == 0) && (c == 3 || c == 4);
+                    boolean isRightBuildingBase = (r == 0) && (c == 8 || c == 9);
+
+                    if (isLeftBuildingBase || isRightBuildingBase) {
+                        if (c == 3 || c == 8) nextMap[r][c] = buildingID;
+                        else nextMap[r][c] = Config.CELL_INDESTRUCTIBLE_BLOCK;
+                    }
+                    else if (isSafeZone) {
+                        nextMap[r][c] = Config.CELL_EMPTY;
+                    }
+                    else if (isBunkerWall) {
+                        nextMap[r][c] = Config.CELL_DESTRUCTIBLE_BLOCK;
+                        cratePositions.add(new int[]{r, c});
+                    }
+                    else if (r == 1) {
+                        if (c == 1 || c == 6 || c == 11) nextMap[r][c] = Config.CELL_INDESTRUCTIBLE_BLOCK;
+                        else {
+                            nextMap[r][c] = Config.CELL_EMPTY;
+                            emptyCells.add(new int[]{r, c});
+                        }
+                    }
+                    else if (r % 2 != 0 && c % 2 != 0) {
+                        nextMap[r][c] = Config.CELL_INDESTRUCTIBLE_BLOCK;
+                    }
                     else {
                         nextMap[r][c] = Config.CELL_EMPTY;
                         emptyCells.add(new int[]{r, c});
                     }
                 }
-                else if (r % 2 != 0 && c % 2 != 0) {
-                    nextMap[r][c] = Config.CELL_INDESTRUCTIBLE_BLOCK;
-                }
-                else {
+            }
+        }
+        // ==========================================================
+        // 2. GENERAZIONE ARENA BOSS (Mappa 3 - Caverna)
+        // ==========================================================
+        else {
+            // Svuotiamo preventivamente tutta la griglia
+            for (int r = 0; r < Config.GRID_HEIGHT; r++) {
+                for (int c = 0; c < Config.GRID_WIDTH; c++) {
                     nextMap[r][c] = Config.CELL_EMPTY;
-                    emptyCells.add(new int[]{r, c});
+                }
+            }
+
+            // A. Ripristiniamo gli Edifici Decorativi Animati (Solo Riga 0)
+            for (int r = 0; r < Config.GRID_HEIGHT; r++) {
+                for (int c = 0; c < Config.GRID_WIDTH; c++) {
+                    boolean isLeftBuildingBase = (r == 0) && (c == 3 || c == 4);
+                    boolean isRightBuildingBase = (r == 0) && (c == 8 || c == 9);
+
+                    if (isLeftBuildingBase || isRightBuildingBase) {
+                        if (c == 3 || c == 8) nextMap[r][c] = buildingID;
+                        else nextMap[r][c] = Config.CELL_INDESTRUCTIBLE_BLOCK;
+                    }
+                }
+            }
+
+            // B. Coordinate ESATTE dei 16 teschi richieste da te (riga, colonna)
+            int[][] arenaBlocks = {
+                    {1, 2}, {1, 4}, {1, 6}, {1, 8}, {1, 10},
+                    {3, 2}, {5, 2}, {7, 2},
+                    {3, 10}, {5, 10}, {7, 10},
+                    {9, 2}, {9, 4}, {9, 6}, {9, 8}, {9, 10}
+            };
+
+            // C. Piazziamo solo e unicamente i 16 blocchi dell'arena
+            for (int[] block : arenaBlocks) {
+                nextMap[block[0]][block[1]] = Config.CELL_INDESTRUCTIBLE_BLOCK;
+            }
+
+            // D. Popoliamo la lista delle emptyCells per le casse (escludendo la safe zone e i blocchi)
+            for (int r = 0; r < Config.GRID_HEIGHT; r++) {
+                for (int c = 0; c < Config.GRID_WIDTH; c++) {
+                    boolean isSafeZone = (r == 0 && c == 0) || (r == 0 && c == 1) || (r == 1 && c == 0);
+
+                    if (nextMap[r][c] == Config.CELL_EMPTY && !isSafeZone) {
+                        emptyCells.add(new int[]{r, c});
+                    }
                 }
             }
         }
-    }
-    // ==========================================================
-    // 2. GENERAZIONE ARENA BOSS (Mappa 3 - Caverna)
-    // ==========================================================
-    else {
-        for (int r = 0; r < Config.GRID_HEIGHT; r++) {
-            for (int c = 0; c < Config.GRID_WIDTH; c++) {
 
-                boolean isSafeZone = (r == 0 && c == 0) || (r == 0 && c == 1) || (r == 1 && c == 0);
-                boolean isLeftBuildingBase = (r == 0) && (c == 3 || c == 4);
-                boolean isRightBuildingBase = (r == 0) && (c == 8 || c == 9);
+        // ==========================================================
+        // 3. GENERAZIONE CASSE CASUALI E LOOT
+        // ==========================================================
+        int NUM_RANDOM_CRATES = 35;
+        java.util.Collections.shuffle(emptyCells, randomGenerator);
 
-                // A. Manteniamo gli Edifici Decorativi per estetica
-                if (isLeftBuildingBase || isRightBuildingBase) {
-                    if (c == 3 || c == 8) nextMap[r][c] = Config.CELL_ORNAMENT;
-                    else nextMap[r][c] = Config.CELL_INDESTRUCTIBLE_BLOCK;
-                    continue;
-                }
+        for (int i = 0; i < NUM_RANDOM_CRATES && i < emptyCells.size(); i++) {
+            int[] pos = emptyCells.get(i);
+            nextMap[pos[0]][pos[1]] = Config.CELL_DESTRUCTIBLE_BLOCK;
+            cratePositions.add(pos);
+        }
 
-                // B. Manteniamo la Safe Zone in alto a sinistra
-                if (isSafeZone) {
-                    nextMap[r][c] = Config.CELL_EMPTY;
-                    continue;
-                }
+        // Il mazzo del bottino e posizionamento Portale
+        java.util.Collections.shuffle(cratePositions, randomGenerator);
 
-                // C. I 16 TESCHI (I confini dell'Arena)
-                // Righe orizzontali in alto (Riga 1) e in basso (Riga 9)
-                boolean isTopOrBottomEdge = (r == 1 || r == 9) && (c >= 2 && c <= 10) && (c % 2 == 0);
-                // Righe verticali a sinistra (Colonna 2) e a destra (Colonna 10)
-                boolean isLeftOrRightEdge = (c == 2 || c == 10) && (r >= 3 && r <= 7) && (r % 2 != 0);
+        // --- IMPOSTAZIONE PORTALE FISSO IN 0,6 ---
+        portalRow = 0;
+        portalCol = 6;
+        portalRevealed = false; // Resta invisibile finché non muoiono i goblin
 
-                if (isTopOrBottomEdge || isLeftOrRightEdge) {
-                    nextMap[r][c] = Config.CELL_INDESTRUCTIBLE_BLOCK;
-                    continue;
-                }
+        if (cratePositions.size() > 0) {
+            for (int i = 0; i < 10 && i < cratePositions.size(); i++) {
+                int[] cCoords = cratePositions.get(i);
+                hiddenLoot.put(cCoords[0] + "," + cCoords[1], ItemType.AMMO_BOMB);
+            }
 
-                // D. Tutto il resto è pavimento vuoto
-                // MODIFICA: Ora inseriamo TUTTE le celle vuote, sia esterne che interne all'arena,
-                // in modo che il generatore casuale possa posizionarci le casse!
-                nextMap[r][c] = Config.CELL_EMPTY;
-                emptyCells.add(new int[]{r, c});
+            for (int i = 10; i < 20 && i < cratePositions.size(); i++) {
+                int[] cCoords = cratePositions.get(i);
+                hiddenLoot.put(cCoords[0] + "," + cCoords[1], ItemType.AMMO_AURA);
             }
         }
+
+        return nextMap;
     }
 
-    // ==========================================================
-    // 3. GENERAZIONE CASSE CASUALI E LOOT
-    // ==========================================================
-    // MODIFICA: Impostiamo 35 casse in tutte le mappe così l'arena sarà ricca di bottino
-    int NUM_RANDOM_CRATES = 35;
-    java.util.Collections.shuffle(emptyCells, randomGenerator);
-
-    for (int i = 0; i < NUM_RANDOM_CRATES && i < emptyCells.size(); i++) {
-        int[] pos = emptyCells.get(i);
-        nextMap[pos[0]][pos[1]] = Config.CELL_DESTRUCTIBLE_BLOCK;
-        cratePositions.add(pos);
-    }
-
-    // Il mazzo del bottino e posizionamento Portale
-    java.util.Collections.shuffle(cratePositions, randomGenerator);
-
-    if (cratePositions.size() > 0) {
-        int[] pCoords = cratePositions.get(0);
-        portalRow = pCoords[0];
-        portalCol = pCoords[1];
-        System.out.println("DEBUG: Portale nascosto in [" + portalRow + ", " + portalCol + "]");
-
-        for (int i = 1; i <= 10 && i < cratePositions.size(); i++) {
-            int[] cCoords = cratePositions.get(i);
-            hiddenLoot.put(cCoords[0] + "," + cCoords[1], ItemType.AMMO_BOMB);
-        }
-
-        for (int i = 11; i <= 20 && i < cratePositions.size(); i++) {
-            int[] cCoords = cratePositions.get(i);
-            hiddenLoot.put(cCoords[0] + "," + cCoords[1], ItemType.AMMO_AURA);
-        }
-    }
-
-    return nextMap;
-}
 
     // Sostituisci il vecchio isWalkable con questo basato su GRIGLIA RIGIDA
     // In src/model/Model.java
@@ -1698,14 +1705,16 @@ public int[][] generateProceduralMap() {
     public long getGateExitActivationTime() {
         return model.Model.getInstance().getExitGateActivationTime();
     }
+
     @Override
-    public void prepareNextLevel(int[][] newMap) {
+    public void prepareNextLevel(int[][] ignoredMap) {
         // 1. Reset flag del Gate
         levelCompletedFlag = false;
         exitGateActive = false;
-        portalRevealed = false; // <--- AGGIUNGI QUESTA RIGA QUI!
+        portalRevealed = false;
+        exitGateRevealed = false;
 
-        // 2. Progressione Zona e Tema
+        // 2. Progressione Zona (FONDAMENTALE: Lo facciamo PRIMA di generare la mappa)
         currentZone++;
         if (currentZone > 2) {
             currentZone = 0;   // Ricomincia dal Villaggio
@@ -1713,6 +1722,14 @@ public int[][] generateProceduralMap() {
             System.out.println("VITTORIA GLOBALE! Inizio ciclo di difficoltà: " + difficultyCycle);
         } else {
             System.out.println("Avanzamento al livello: " + currentZone);
+        }
+
+        // --- AGGIORNAMENTO DEL TEMA LOGICO ---
+        switch (currentZone) {
+            case 1:  currentTheme = "FOREST"; break;
+            case 2:  currentTheme = "CAVE"; break;
+            case 0:
+            default: currentTheme = "VILLAGE"; break;
         }
 
         // --- AGGIUNTA LOGICA TIMER BOSS ---
@@ -1724,17 +1741,15 @@ public int[][] generateProceduralMap() {
             isPreparationPhase = false;
         }
 
-        // --- AGGIUNTA: AGGIORNAMENTO DEL TEMA LOGICO ---
-        switch (currentZone) {
-            case 1:  currentTheme = "FOREST"; break;
-            case 2:  currentTheme = "CAVE"; break;
-            case 0:
-            default: currentTheme = "VILLAGE"; break;
-        }
+        // =======================================================
+        // LA VERA SOLUZIONE: Generiamo la mappa QUI,
+        // adesso che currentZone vale effettivamente 2!
+        // =======================================================
+        int[][] correctMap = generateProceduralMap();
 
-        // 3. Copia la nuova mappa generata
+        // 3. Copia la mappa CORRETTA appena generata
         for (int r = 0; r < utils.Config.GRID_HEIGHT; r++) {
-            System.arraycopy(newMap[r], 0, this.gameAreaArray[r], 0, utils.Config.GRID_WIDTH);
+            System.arraycopy(correctMap[r], 0, this.gameAreaArray[r], 0, utils.Config.GRID_WIDTH);
         }
 
         // 4. Svuota le vecchie entità dal campo per il nuovo livello
@@ -1744,7 +1759,7 @@ public int[][] generateProceduralMap() {
         activeItems.clear();
         enemies.clear();
 
-        // 5. Riposiziona il Player (nella safe-zone iniziale del bunker [0,0])
+        // 5. Riposiziona il Player
         player.setXCoordinate(0.0);
         player.setYCoordinate(0.0);
         player.setDelta(0, 0);

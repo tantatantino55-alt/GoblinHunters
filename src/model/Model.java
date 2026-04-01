@@ -205,8 +205,6 @@ public class Model implements IModel {
         return nextMap;
     }
     */
-
-//v2
     @Override
     public int[][] generateProceduralMap() {
         int[][] nextMap = new int[Config.GRID_HEIGHT][Config.GRID_WIDTH];
@@ -253,7 +251,11 @@ public class Model implements IModel {
                     }
                     else {
                         nextMap[r][c] = Config.CELL_EMPTY;
-                        emptyCells.add(new int[]{r, c});
+
+                        // --- MODIFICA: Proteggiamo la (0,6) per l'Exit Gate ---
+                        if (!(r == 0 && c == 6)) {
+                            emptyCells.add(new int[]{r, c});
+                        }
                     }
                 }
             }
@@ -301,7 +303,11 @@ public class Model implements IModel {
                     boolean isSafeZone = (r == 0 && c == 0) || (r == 0 && c == 1) || (r == 1 && c == 0);
 
                     if (nextMap[r][c] == Config.CELL_EMPTY && !isSafeZone) {
-                        emptyCells.add(new int[]{r, c});
+
+                        // --- MODIFICA: Proteggiamo la (0,6) anche nella mappa Boss ---
+                        if (!(r == 0 && c == 6)) {
+                            emptyCells.add(new int[]{r, c});
+                        }
                     }
                 }
             }
@@ -313,19 +319,28 @@ public class Model implements IModel {
         int NUM_RANDOM_CRATES = 35;
         java.util.Collections.shuffle(emptyCells, randomGenerator);
 
+        // --- MODIFICA: IMPOSTAZIONE PORTALE RANDOM ---
+        if (!emptyCells.isEmpty()) {
+            // Prendiamo la prima cella casuale e la togliamo dalla lista
+            // così la cassa successiva non finirà in questa posizione.
+            int[] portalPos = emptyCells.remove(0);
+            portalRow = portalPos[0];
+            portalCol = portalPos[1];
+        } else {
+            // Fallback estremo in caso non ci siano celle
+            portalRow = 1;
+            portalCol = 1;
+        }
+        portalRevealed = false; // Resta invisibile finché non muoiono i goblin
+
         for (int i = 0; i < NUM_RANDOM_CRATES && i < emptyCells.size(); i++) {
             int[] pos = emptyCells.get(i);
             nextMap[pos[0]][pos[1]] = Config.CELL_DESTRUCTIBLE_BLOCK;
             cratePositions.add(pos);
         }
 
-        // Il mazzo del bottino e posizionamento Portale
+        // Il mazzo del bottino
         java.util.Collections.shuffle(cratePositions, randomGenerator);
-
-        // --- IMPOSTAZIONE PORTALE FISSO IN 0,6 ---
-        portalRow = 0;
-        portalCol = 6;
-        portalRevealed = false; // Resta invisibile finché non muoiono i goblin
 
         if (cratePositions.size() > 0) {
             for (int i = 0; i < 10 && i < cratePositions.size(); i++) {
@@ -343,16 +358,8 @@ public class Model implements IModel {
     }
 
 
-    // Sostituisci il vecchio isWalkable con questo basato su GRIGLIA RIGIDA
-    // In src/model/Model.java
-
-    // Sostituisci il vecchio isWalkable
-    // In src/model/Model.java
 
 
-// In src/model/Model.java
-
-    // In src/model/Model.java
 
     // --- A. LOGICA DI MOVIMENTO RIGIDO (BOMBERMAN STYLE) ---
     // src/model/Model.java
@@ -1083,7 +1090,9 @@ public class Model implements IModel {
         activeItems.clear();
         hiddenLoot.clear();
 
-        // Qui in futuro metteremo la riga: spawnBoss();
+        // --- FAI NASCERE IL BOSS AL CENTRO ---
+        enemies.add(new BossGoblin(6.0, 5.0));
+
         System.out.println("Il Boss è sceso nell'arena!");
     }
 
@@ -1679,7 +1688,7 @@ public class Model implements IModel {
                 }
                 // Nel caso fosse rimasto qualcosa in 0,7 dal test precedente
                 if (gameAreaArray[0][7] == EXIT_GATE_ID) {
-                    gameAreaArray[0][7] = Config.CELL_EMPTY;
+                    gameAreaArray[0][6] = Config.CELL_EMPTY;
                 }
 
                 System.out.println("Tutti i nemici sconfitti! Il Portale è apparso in [0, 6]!");

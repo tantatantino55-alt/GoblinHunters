@@ -93,4 +93,7 @@ public interface IControllerForView {
     int getExitGateCol();
 
     int getExitGateRow();
+
+    String getEnemyState(int index);
+    boolean isEnemyInvincible(int index);
 }

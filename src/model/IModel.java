@@ -109,4 +109,9 @@ public interface IModel {
     long getExitGateActivationTime();
     int getExitGateRow();
     int getExitGateCol();
+
+    int getScore();
+
+    String getEnemyState(int index);
+    boolean isEnemyInvincible(int index);
 }

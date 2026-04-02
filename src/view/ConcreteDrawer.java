@@ -380,59 +380,83 @@ public class ConcreteDrawer extends AbstractDrawer {
 */
 
     private void drawEnemies(Graphics2D g2d) {
-        int count = ControllerForView.getInstance().getEnemyCount();
+        int count = controller.ControllerForView.getInstance().getEnemyCount();
 
         for (int i = 0; i < count; i++) {
-            double x = ControllerForView.getInstance().getEnemyX(i);
-            double y = ControllerForView.getInstance().getEnemyY(i);
-            utils.Direction dir = ControllerForView.getInstance().getEnemyDirection(i);
-            utils.EnemyType type = ControllerForView.getInstance().getEnemyType(i);
+            double x = controller.ControllerForView.getInstance().getEnemyX(i);
+            double y = controller.ControllerForView.getInstance().getEnemyY(i);
+            utils.Direction dir = controller.ControllerForView.getInstance().getEnemyDirection(i);
+            utils.EnemyType type = controller.ControllerForView.getInstance().getEnemyType(i);
 
-            // 1. IL PREFISSO DEVE RICONOSCERE IL BOSS
+            // --- FLICKERING (Lampeggio se in I-Frames) ---
+            if (controller.ControllerForView.getInstance().isEnemyInvincible(i)) {
+                if ((System.currentTimeMillis() / utils.Config.FLICKER_DELAY_MS) % 2 == 0) {
+                    continue; // Salta il disegno = invisibile questo frame
+                }
+            }
+
             String prefix = switch (type) {
                 case COMMON -> "COMMON";
                 case HUNTER -> "HUNTER";
                 case SHOOTER -> "SHOOTER";
-                case BOSS -> "BOSS"; // <--- FONDAMENTALE!
+                case BOSS -> "BOSS";
                 default -> "COMMON";
             };
 
-            String state = "RUN";
-            int frames = Config.GOBLIN_RUN_FRAMES;
+            // LEGGIAMO IL VERO STATO DAL MODEL!
+            String state = controller.ControllerForView.getInstance().getEnemyState(i);
+            int frames = utils.Config.GOBLIN_RUN_FRAMES;
 
-            if (type == utils.EnemyType.SHOOTER) {
-                // ... logica shooter esistente ...
-            }
-            else if (type == utils.EnemyType.BOSS) {
-                frames = Config.BOSS_RUN_FRAMES; // Usa i 12 frame del Boss
+            // Ricalcolo i frame in base allo stato del Boss
+            if (type == utils.EnemyType.BOSS) {
+                if (state.equals("FURY") || state.equals("EXHAUSTED")) {
+                    state = "RUN";
+                    frames = utils.Config.BOSS_RUN_FRAMES;
+                }
+                else if (state.equals("TELEGRAPH")) {
+                    state = "IDLE";
+                    frames = utils.Config.BOSS_IDLE_FRAMES;
+                }
+                else if (state.equals("DYING")) {
+                    frames = utils.Config.BOSS_DYING_FRAMES;
+                }
             }
 
-            int currentFrame = (int) (System.currentTimeMillis() / 80) % frames;
-            String spriteKey = prefix + "_" + state + "_" + dir.name();
-            BufferedImage sprite = SpriteManager.getInstance().getSprite(spriteKey, currentFrame);
+            // Calcolo del frame corrente
+            int currentFrame = 0;
+            if (state.equals("DYING")) {
+                // Animazione di morte lenta e progressiva (non ciclica)
+                long timePassed = System.currentTimeMillis() - controller.ControllerForView.getInstance().getEnemyStateStartTime(i);
+                currentFrame = (int) (timePassed / 150); // Più lenta per godersela
+                if (currentFrame >= frames) {
+                    currentFrame = frames - 1; // SI FERMA SULL'ULTIMO FRAME!
+                }
+            } else {
+                currentFrame = (int) (System.currentTimeMillis() / 80) % frames;
+            }
+
+            // Se è DYING, la sprite sheet non ha la direzione (BOSS_DYING)
+            String spriteKey = prefix + "_" + state + (state.equals("DYING") ? "" : "_" + dir.name());
+            java.awt.image.BufferedImage sprite = view.SpriteManager.getInstance().getSprite(spriteKey, currentFrame);
 
             // Fallback
             if (sprite == null && state.equals("IDLE")) {
                 spriteKey = prefix + "_RUN_" + dir.name();
-                sprite = SpriteManager.getInstance().getSprite(spriteKey, 0);
+                sprite = view.SpriteManager.getInstance().getSprite(spriteKey, 0);
             }
 
             if (sprite != null) {
-                int screenX = (int) (x * Config.TILE_SIZE) + Config.GRID_OFFSET_X;
-                int screenY = (int) (y * Config.TILE_SIZE) + Config.GRID_OFFSET_Y;
+                int screenX = (int) (x * utils.Config.TILE_SIZE) + utils.Config.GRID_OFFSET_X;
+                int screenY = (int) (y * utils.Config.TILE_SIZE) + utils.Config.GRID_OFFSET_Y;
 
-                // 2. IL DISEGNO CON IL PIVOT CORRETTO (Dati Python)
                 if (type == utils.EnemyType.BOSS) {
-                    // Hitbox logica 64x64. Centro-basso: +32 X, +64 Y.
-                    // Pivot calcolato da te: 96 X, 149 Y.
+                    // --- CALCOLO PIVOT BOSS ---
                     int drawX = (screenX + 32) - 96;
                     int drawY = (screenY + 64) - 149;
-
-                    g2d.drawImage(sprite, drawX, drawY, Config.BOSS_FRAME_SIZE, Config.BOSS_FRAME_SIZE, null);
-                }
-                else {
-                    int drawX = screenX + (Config.TILE_SIZE - 128) / 2;
-                    int drawY = screenY + (Config.TILE_SIZE - 128);
+                    g2d.drawImage(sprite, drawX, drawY, utils.Config.BOSS_FRAME_SIZE, utils.Config.BOSS_FRAME_SIZE, null);
+                } else {
+                    int drawX = screenX + (utils.Config.TILE_SIZE - 128) / 2;
+                    int drawY = screenY + (utils.Config.TILE_SIZE - 128);
                     g2d.drawImage(sprite, drawX, drawY, 128, 128, null);
                 }
             }

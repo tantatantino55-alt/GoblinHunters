@@ -349,7 +349,30 @@ public class Config {
     // Configurazione della transizione
     public static final float FADE_SPEED = 0.02f; // Velocità della sfumatura
     public static final float MAX_ALPHA = 1.0f;   // Opacità massima (tutto nero)
-    public static final float MIN_ALPHA = 0.0f;   // Trasparenza totale
+    public static final float MIN_ALPHA = 0.0f;
+    // Trasparenza totale
+
+    // ==========================================================
+    // --- SISTEMA DI PUNTEGGIO ARCADE ---
+    // ==========================================================
+    public static final int SCORE_CRATE = 20;
+    public static final int SCORE_COMMON_GOBLIN = 100;
+    public static final int SCORE_CHASING_GOBLIN = 200;
+    public static final int SCORE_SHOOTER_GOBLIN = 300;
+
+    // Soglia massima di punti ottenibile dai nemici in una zona (Cap)
+    public static final int SCORE_ZONE_CAP = 1500;
+
+    // Bonus speciali
+    public static final int PERFECT_LEVEL_BONUS = 2000;
+    public static final int SCORE_BOSS_BASE = 5000;
+    public static final int MAX_BOSS_TIME_BONUS = 5000;
+    public static final int BOSS_BONUS_DECAY_PER_SEC = 50; // Quanti punti perde il bonus ogni secondo
+
+
+
+
+
 
     //Exit Gate
 

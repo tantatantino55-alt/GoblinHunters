@@ -37,6 +37,9 @@ public class Player extends Entity {
     private boolean hasMaxRadius = false;
     private boolean hasMaxSpeed = false;
 
+    // Traccia se ha preso danni nel livello corrente per il Perfect Bonus
+    private boolean perfectLevel = true;
+
     public Player(double startX, double startY) {
         this.xCoordinate = startX;
         this.yCoordinate = startY;
@@ -98,20 +101,23 @@ public class Player extends Entity {
     public boolean takeDamage() {
         if (isInvincible() || lives <= 0) return false;
 
+        // Al primo danno (scudo o vita), addio perfect level!
+        this.perfectLevel = false;
+
         if (hasShield) {
             hasShield = false;
-            // 2 secondi di invincibilità per scappare!
             invincibilityEndTime = System.currentTimeMillis() + 2000;
             System.out.println("Scudo distrutto! Nessuna vita persa.");
-            return false; // Ritorna false perché NON ha perso vite
+            return false;
         }
 
         lives--;
         invincibilityEndTime = System.currentTimeMillis() + 2000;
         setState(PlayerState.HURT_FRONT);
         System.out.println("Player colpito! Vite rimaste: " + lives);
-        return true; // Ritorna true perché ha perso una vita
+        return true;
     }
+
     public int getLives() { return lives; }
     public double getXCoordinate() { return xCoordinate; }
     public double getYCoordinate() { return yCoordinate; }
@@ -166,11 +172,31 @@ public class Player extends Entity {
         // Se max è true, la bomba fa un'esplosione più grande (+2 caselle)
         this.bombRadius = max ? Config.DEFAULT_BOMB_RADIUS + 1 : Config.DEFAULT_BOMB_RADIUS;
     }
+    public boolean isPerfectLevel() { return perfectLevel; }
+    public void resetPerfectLevel() { this.perfectLevel = true; }
 
     public boolean hasMaxSpeed() { return hasMaxSpeed; }
     public void setMaxSpeed(boolean max) {
         this.hasMaxSpeed = max;
         // Se max è true, aumenta la velocità del 50%
         this.speed = max ? Config.ENTITY_LOGICAL_SPEED * 1.2 : Config.ENTITY_LOGICAL_SPEED;
+    }
+    // In src/model/Player.java
+
+    public void resetPowerUps() {
+        // Reset degli stati logici (booleani)
+        this.hasShield = false;
+        this.hasMaxRadius = false;
+        this.hasMaxSpeed = false;
+
+        // Reset degli attributi fisici ai valori di default della Config
+        this.bombRadius = Config.DEFAULT_BOMB_RADIUS;
+        this.speed = Config.ENTITY_LOGICAL_SPEED;
+
+        // Opzionale: puoi decidere se resettare o meno anche le munizioni
+        // this.bombAmmo = 5;
+        // this.auraAmmo = 10;
+
+        System.out.println("Power-up resettati per il nuovo livello.");
     }
 }

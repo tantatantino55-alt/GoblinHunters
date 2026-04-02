@@ -66,6 +66,10 @@ public class Model implements IModel {
     private int bossPreparationTimer; // Espresso in "tick" di gioco
     private boolean isPreparationPhase;
     private static final int PREP_TIME_SECONDS = 15;
+    // --- VARIABILI PUNTEGGIO ---
+    private int totalScore = 0;
+    private int currentZoneScore = 0;
+    private long bossFightStartTime = 0;
 
     private static final int[][] testMap = {
             {0, 0, 0, 2, 0, 2, 2, 0, 2, 2, 0, 0, 0}, // Riga 0: Angolo player sicuro
@@ -955,28 +959,27 @@ public class Model implements IModel {
     // --- DA INSERIRE IN Model.java ---
 
 
-    // Metodo interno per gestire le collisioni (Player vs Nemici)
     private void checkCollisions() {
-        // Recuperiamo le dimensioni delle hitbox da Config
         double pX = player.getXCoordinate();
         double pY = player.getYCoordinate();
         double pHW = Config.ENTITY_LOGICAL_HITBOX_WIDTH;
         double pHH = Config.ENTITY_LOGICAL_HITBOX_HEIGHT;
 
         for (Enemy e : enemies) {
+            // --- MODIFICA: Un cadavere non fa male! ---
+            if (e.isDead()) continue;
+
             double eX = e.getX();
             double eY = e.getY();
             double eHW = Config.ENTITY_LOGICAL_HITBOX_WIDTH;
             double eHH = Config.ENTITY_LOGICAL_HITBOX_HEIGHT;
 
-            // Logica di intersezione AABB (Axis-Aligned Bounding Box)
-            // Due rettangoli si toccano se si sovrappongono sia in orizzontale che verticale
             boolean collisionX = pX < eX + eHW && pX + pHW > eX;
             boolean collisionY = pY < eY + eHH && pY + pHH > eY;
 
             if (collisionX && collisionY) {
                 handlePlayerHit();
-                break; // Basta essere colpiti da uno solo per volta
+                break;
             }
         }
     }
@@ -1007,22 +1010,21 @@ public class Model implements IModel {
      * Controlla se ci sono nemici o il player nella cella colpita dall'esplosione.
      */
     private void checkExplosionDamage(int row, int col) {
-        Iterator<Enemy> it = enemies.iterator();
+        java.util.Iterator<Enemy> it = enemies.iterator();
 
-        // Area perfetta dell'esplosione (la cella intera 1x1)
         double expLeft = col;
         double expRight = col + 1.0;
         double expTop = row;
         double expBottom = row + 1.0;
 
-        // --- 1. HITBOX CORRETTA DEI NEMICI ---
         while (it.hasNext()) {
             Enemy e = it.next();
+            // --- MODIFICA: Ignora i cadaveri! ---
+            if (e.isDead()) continue;
 
             double eW = Config.GOBLIN_HITBOX_WIDTH;
             double eH = Config.GOBLIN_HITBOX_HEIGHT;
 
-            // Usiamo l'offset esatto per centrare la loro hitbox!
             double eLeft = e.getX() + (1.0 - eW) / 2.0;
             double eRight = eLeft + eW;
             double eBottom = e.getY() + 1.0 - 0.4;
@@ -1032,30 +1034,33 @@ public class Model implements IModel {
             boolean hitY = eTop < expBottom && eBottom > expTop;
 
             if (hitX && hitY) {
-                it.remove(); // Rimuovi il nemico
+                // IL NUOVO SISTEMA DI DANNO!
+                boolean fatalBlow = e.takeDamage(1);
 
-                // --- AGGIUNTA DROP GOBLIN ---
-                generateGoblinDrop(e.getX(), e.getY());
-
-                System.out.println("Goblin eliminato dall'esplosione in [" + row + "," + col + "]!");
+                if (fatalBlow) {
+                    if (e.getType() == utils.EnemyType.BOSS) {
+                        System.out.println("IL BOSS È SCONFITTO! (Il corpo rimane)");
+                    } else {
+                        it.remove(); // Solo i goblin normali spariscono
+                        generateGoblinDrop(e.getX(), e.getY());
+                        System.out.println("Goblin eliminato dall'esplosione in [" + row + "," + col + "]!");
+                    }
+                }
             }
         }
 
-        // --- 2. HITBOX CORRETTA E "PERMISSIVA" DEL PLAYER ---
+        // 2. HITBOX CORRETTA E "PERMISSIVA" DEL PLAYER
         if (!player.isInvincible()) {
             double pX = player.getXCoordinate();
             double pY = player.getYCoordinate();
             double pW = Config.ENTITY_LOGICAL_HITBOX_WIDTH;
             double pH = Config.ENTITY_LOGICAL_HITBOX_HEIGHT;
 
-            // Offset corretto (come nel movimento)
             double pLeft = pX + (1.0 - pW) / 2.0;
             double pRight = pLeft + pW;
             double pBottom = pY + 1.0 - 0.4;
             double pTop = pBottom - pH;
 
-            // "HITBOX PERDONO": Riduciamo leggermente l'area sensibile ai bordi
-            // così non muori per un millimetro incastrato tra le casse!
             double margin = 0.1;
 
             boolean hitX = (pLeft + margin) < expRight && (pRight - margin) > expLeft;
@@ -1092,7 +1097,7 @@ public class Model implements IModel {
 
         // --- FAI NASCERE IL BOSS AL CENTRO ---
         enemies.add(new BossGoblin(6.0, 5.0));
-
+        bossFightStartTime = System.currentTimeMillis(); // <--- INIZIA TIMER BOSS
         System.out.println("Il Boss è sceso nell'arena!");
     }
 
@@ -1241,6 +1246,7 @@ public class Model implements IModel {
                     // Tolleranza hitbox 0.6 per centrare il goblin
                     if (Math.abs(p.getX() - e.getX()) < 0.6 && Math.abs(p.getY() - e.getY()) < 0.6) {
                         eIt.remove(); // Elimina il Goblin dalla lista
+                        handleEnemyDeath(e);
 
                         // --- AGGIUNTA DROP GOBLIN ---
                         generateGoblinDrop(e.getX(), e.getY());
@@ -1473,7 +1479,7 @@ public class Model implements IModel {
     public void destroyBlock(int row, int col) {
         if (gameAreaArray[row][col] == Config.CELL_DESTRUCTIBLE_BLOCK) {
             gameAreaArray[row][col] = Config.CELL_EMPTY;
-
+            addScore(Config.SCORE_CRATE, false); // <--- PUNTI PER LA CASSA
             // --- PASSO 5: DROP INTELLIGENTE PRECALCOLATO ---
             String key = row + "," + col; // Creiamo la chiave "riga,colonna"
             if (hiddenLoot.containsKey(key)) {
@@ -1533,6 +1539,7 @@ public class Model implements IModel {
             Rectangle2D.Double enemyBox = new Rectangle2D.Double(e.getX(), e.getY(), 0.6, 0.6);
             if (staffHitbox.intersects(enemyBox)) {
                 eIt.remove();
+                handleEnemyDeath(e);
 
                 // MODIFICA: Aggiunto il drop del Power-up quando ucciso col bastone
                 generateGoblinDrop(e.getX(), e.getY());
@@ -1668,19 +1675,35 @@ public class Model implements IModel {
     // ==========================================================
 
     private void checkExitGateCollision() {
-        // Il Gate si attiva SOLO se non ci sono più nemici
-        if (enemies.isEmpty()) {
+        // --- MODIFICA 1: Sicurezza per il Boss! ---
+        // Se siamo nella fase in cui il timer sta scorrendo (le casse non sono ancora esplose),
+        // non dobbiamo assolutamente aprire il portale, anche se la lista nemici è vuota!
+        if (currentZone == 2 && isPreparationPhase) {
+            return;
+        }
+
+        // --- MODIFICA 2: Controlla quanti nemici VIVI ci sono ---
+        int livingEnemies = 0;
+        for (Enemy e : enemies) {
+            // Il cadavere del Boss (isDead = true) non verrà contato come vivo!
+            if (!e.isDead()) {
+                livingEnemies++;
+            }
+        }
+
+        // Il Gate si attiva SOLO se non ci sono più nemici vivi
+        if (livingEnemies == 0) {
 
             // Se è la prima volta che ci accorgiamo che non ci sono nemici...
             if (!exitGateActive) {
-                exitGateActive= true;
+                exitGateActive = true;
 
                 // 1. DICIAMO ALLA VIEW DI DISEGNARE IL RETTANGOLO ROSA
                 exitGateRevealed = true;
                 lastExitGateSpawnTime = System.currentTimeMillis();
 
                 // 2. CREIAMO LA VIA D'USCITA LOGICA IN 0,6
-                gameAreaArray[0][6] = EXIT_GATE_ID; // <--- MODIFICATO IN 0,6
+                gameAreaArray[0][6] = EXIT_GATE_ID;
 
                 // 3. DISTRUGGIAMO EVENTUALI VECCHI GATE CHE POTREBBERO CAUSARE TELETRASPORTI ERRATI
                 if (gameAreaArray[0][0] == EXIT_GATE_ID) {
@@ -1688,10 +1711,10 @@ public class Model implements IModel {
                 }
                 // Nel caso fosse rimasto qualcosa in 0,7 dal test precedente
                 if (gameAreaArray[0][7] == EXIT_GATE_ID) {
-                    gameAreaArray[0][6] = Config.CELL_EMPTY;
+                    gameAreaArray[0][7] = Config.CELL_EMPTY; // Corretto l'indice a 7 (c'era un refuso nel tuo codice)
                 }
 
-                System.out.println("Tutti i nemici sconfitti! Il Portale è apparso in [0, 6]!");
+                System.out.println("Tutti i nemici sconfitti! L'Exit Gate è apparso in [0, 6]!");
             }
 
             // Controlliamo i piedi del player
@@ -1703,13 +1726,14 @@ public class Model implements IModel {
 
             // Sicurezza: controlliamo di non essere fuori dai bordi
             if (row >= 0 && row < Config.GRID_HEIGHT && col >= 0 && col < Config.GRID_WIDTH) {
-                // Se il Player calpesta l'ID del Gate (9) in 0,6... Livello completato!
+                // Se il Player calpesta l'ID del Gate (25) in 0,6... Livello completato!
                 if (gameAreaArray[row][col] == EXIT_GATE_ID) {
                     levelCompletedFlag = true;
                 }
             }
         }
     }
+
     @Override
     public long getGateExitActivationTime() {
         return model.Model.getInstance().getExitGateActivationTime();
@@ -1722,6 +1746,10 @@ public class Model implements IModel {
         exitGateActive = false;
         portalRevealed = false;
         exitGateRevealed = false;
+        // AZZERAMENTI PUNTEGGIO
+        currentZoneScore = 0;// Azzera il cap della zona
+        player.resetPowerUps();
+        player.resetPerfectLevel(); // Ridà la chance per il Perfect Level
 
         // 2. Progressione Zona (FONDAMENTALE: Lo facciamo PRIMA di generare la mappa)
         currentZone++;
@@ -1829,6 +1857,69 @@ public class Model implements IModel {
     public boolean isGateActive() { return exitGateActive; }
     @Override public boolean isLevelCompletedFlag() { return levelCompletedFlag; }
     @Override public String getCurrentTheme() { return currentTheme; }
+    // Gestisce l'aggiunta di punti verificando il "Cap" della zona
+    private void addScore(int points, boolean isEnemyKill) {
+        // Se è un'uccisione, non è il livello del boss, e abbiamo raggiunto la soglia... niente punti!
+        if (isEnemyKill && currentZone != 2 && currentZoneScore >= Config.SCORE_ZONE_CAP) {
+            System.out.println("Cap raggiunto in questa zona! Sbrigati a trovare il portale!");
+            return;
+        }
+
+        if (isEnemyKill && currentZone != 2) {
+            currentZoneScore += points;
+        }
+
+        totalScore += points;
+        System.out.println("SCORE: +" + points + " | Punteggio Totale: " + totalScore);
+    }
+
+    // Gestisce centralmente la morte di qualsiasi nemico, calcolando i punti
+    private void handleEnemyDeath(Enemy e) {
+        if (e instanceof BossGoblin) {
+            // CALCOLO BONUS TEMPO BOSS
+            long timeTakenMs = System.currentTimeMillis() - bossFightStartTime;
+            int secondsTaken = (int) (timeTakenMs / 1000);
+
+            int timeBonus = Config.MAX_BOSS_TIME_BONUS - (secondsTaken * Config.BOSS_BONUS_DECAY_PER_SEC);
+            if (timeBonus < 0) timeBonus = 0; // Mai bonus negativi
+
+            int finalScore = Config.SCORE_BOSS_BASE + timeBonus;
+            totalScore += finalScore; // Si salta addScore per bypassare il cap
+
+            System.out.println("BOSS SCONFITTO IN " + secondsTaken + " SECONDI!");
+            System.out.println("Time Bonus: " + timeBonus + " | Punti Totali Boss: " + finalScore);
+        } else {
+            // CALCOLO PUNTI NEMICI NORMALI
+            int points = 0;
+            if (e instanceof ShooterGoblin) points = Config.SCORE_SHOOTER_GOBLIN;
+            else if (e instanceof ChasingGoblin) points = Config.SCORE_CHASING_GOBLIN;
+            else points = Config.SCORE_COMMON_GOBLIN;
+
+            addScore(points, true);
+        }
+
+        // Fai cadere il drop
+        generateGoblinDrop(e.getX(), e.getY());
+    }
+    @Override
+    public int getScore() {
+        return totalScore;
+    }
+
+    @Override
+    public String getEnemyState(int index) {
+        return isValidIndex(index) ? enemies.get(index).getEnemyState() : "RUN";
+    }
+
+    @Override
+    public boolean isEnemyInvincible(int index) {
+        return isValidIndex(index) && enemies.get(index).isInvincible();
+    }
+
+    @Override
+    public long getEnemyStateStartTime(int index) {
+        return isValidIndex(index) ? enemies.get(index).getStateStartTime() : 0;
+    }
 
     public static IModel getInstance() {
         if (instance == null) instance = new Model();

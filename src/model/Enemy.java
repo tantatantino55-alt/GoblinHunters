@@ -15,28 +15,71 @@ public abstract class Enemy extends Entity {
 
     protected boolean isChasing = false;
     protected Direction telegraphDirection = null; // Se non null, sta mirando
-
     protected boolean recentlyBounced = false;
 
+    // ==========================================
+    // --- NUOVE VARIABILI PER SALUTE E MORTE ---
+    // ==========================================
+    protected int hp = 1;
+    protected boolean isDead = false;
+    protected long lastHitTime = 0;
+    protected long stateStartTime = 0;
+
     public Enemy(double startX, double startY, double speed, EnemyType type) {
+        super(startX, startY); // Se Entity richiede parametri nel super
         this.x = startX;
         this.y = startY;
         this.speed = speed;
         this.random = new Random();
         this.currentDirection = Direction.getRandom();
         this.type = type;
+        this.stateStartTime = System.currentTimeMillis();
     }
 
     public abstract void updateBehavior();
 
-// --- DA INSERIRE IN Enemy.java (sovrascrive il metodo precedente) ---
+    // ==========================================
+    // --- NUOVI METODI PER VITA E MORTE ---
+    // ==========================================
 
-    // In src/model/Enemy.java
-// In Enemy.java
+    public boolean isDead() {
+        return isDead;
+    }
 
-// In src/model/Enemy.java
+    // Di base i goblin normali non hanno I-Frames (muoiono e basta).
+    // Sarà il Boss a fare l'Override di questo metodo!
+    public boolean isInvincible() {
+        return false;
+    }
+
+    // Gestisce il danno e ritorna TRUE se il colpo è stato fatale in questo frame
+    public boolean takeDamage(int damage) {
+        if (isDead || isInvincible()) return false;
+
+        hp -= damage;
+        if (hp <= 0) {
+            isDead = true;
+            return true;
+        }
+
+        lastHitTime = System.currentTimeMillis();
+        return false;
+    }
+
+    // Usato dalla View per capire quale animazione fare
+    public String getEnemyState() { return "RUN"; }
+
+    public long getStateStartTime() { return stateStartTime; }
+
+
+    // ==========================================
+    // --- TUA LOGICA ORIGINALE INTATTA ---
+    // ==========================================
 
     protected void moveInDirection() {
+        // Se è morto, blocca il movimento istantaneamente!
+        if (isDead) return;
+
         Model model = (Model) Model.getInstance();
         double alignSpeed = speed;
 
@@ -94,8 +137,6 @@ public abstract class Enemy extends Entity {
         }
     }
 
-    // --- NUOVI METODI PER GESTIRE LE COLLISIONI ---
-
     protected void handleEnemyCollision() {
         java.util.List<Direction> valid = getValidDirections();
         valid.remove(currentDirection); // Non riprovare la strada bloccata
@@ -122,10 +163,6 @@ public abstract class Enemy extends Entity {
     }
 
     protected void handleWallCollision() {
-        // --- REINSERITO IL MATH.ROUND ---
-        // Ora che i goblin ignorano le bombe sotto ai piedi, questo è sicuro.
-        // Se sbattono, li teletrasporta impercettibilmente al centro della
-        // cella sicura, impedendo del tutto l'incastro sugli angoli!
         this.x = Math.round(this.x);
         this.y = Math.round(this.y);
 
@@ -151,11 +188,8 @@ public abstract class Enemy extends Entity {
         };
     }
 
-    // Metodo vuoto di base, verrà sovrascritto dall'inseguitore
     protected void resetMemory() { }
 
-
-    // NUOVO METODO: Il Goblin si guarda intorno e vede quali strade sono libere
     protected java.util.List<Direction> getValidDirections() {
         java.util.List<Direction> valid = new java.util.ArrayList<>();
         double step = 0.5;
@@ -169,9 +203,6 @@ public abstract class Enemy extends Entity {
         return valid;
     }
 
-
-
-    // AGGIORNATO: Gira a caso, ma MAI contro un muro e MAI tornando indietro se non costretto
     protected void changeDirection() {
         java.util.List<Direction> valid = getValidDirections();
         Direction opposite = switch (currentDirection) {
@@ -179,14 +210,13 @@ public abstract class Enemy extends Entity {
             case LEFT -> Direction.RIGHT; case RIGHT -> Direction.LEFT;
         };
 
-        if (valid.size() > 1) valid.remove(opposite); // Evita l'effetto "cammina avanti e indietro"
+        if (valid.size() > 1) valid.remove(opposite);
 
         if (!valid.isEmpty()) {
             currentDirection = valid.get(random.nextInt(valid.size()));
         }
     }
 
-    // Default: nessun telegraph. ShooterGoblin farà l'override.
     public Direction getTelegraphDirection() {
         return null;
     }

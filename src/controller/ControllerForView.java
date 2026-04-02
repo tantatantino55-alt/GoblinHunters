@@ -149,6 +149,14 @@ public class ControllerForView implements IControllerForView {
     public int getExitGateRow() {
         return  Model.getInstance().getExitGateRow();
     }
+    @Override
+    public String getEnemyState(int index){
+        return Model.getInstance().getEnemyState(index);
+    }
+    @Override
+    public boolean isEnemyInvincible(int index){
+        return Model.getInstance().isEnemyInvincible(index);
+    }
 
 
     public static IControllerForView getInstance() {

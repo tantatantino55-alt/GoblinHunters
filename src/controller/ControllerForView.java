@@ -85,11 +85,11 @@ public class ControllerForView implements IControllerForView {
         Model.getInstance().staffAttack();
     }
 
-    @Override public int getPlayerBombAmmo() { return model.Model.getInstance().getPlayerBombAmmo(); }
-    @Override public int getPlayerAuraAmmo() { return model.Model.getInstance().getPlayerAuraAmmo(); }
-    @Override public boolean hasPlayerShield() { return model.Model.getInstance().hasPlayerShield(); }
-    @Override public boolean hasPlayerMaxRadius() { return model.Model.getInstance().hasPlayerMaxRadius(); }
-    @Override public boolean hasPlayerMaxSpeed() { return model.Model.getInstance().hasPlayerMaxSpeed(); }
+    @Override public int getPlayerBombAmmo() { return Model.getInstance().getPlayerBombAmmo(); }
+    @Override public int getPlayerAuraAmmo() { return Model.getInstance().getPlayerAuraAmmo(); }
+    @Override public boolean hasPlayerShield() { return Model.getInstance().hasPlayerShield(); }
+    @Override public boolean hasPlayerMaxRadius() { return Model.getInstance().hasPlayerMaxRadius(); }
+    @Override public boolean hasPlayerMaxSpeed() { return Model.getInstance().hasPlayerMaxSpeed(); }
 
     @Override
     public int getPortalRow() {
@@ -113,16 +113,19 @@ public class ControllerForView implements IControllerForView {
         return Model.getInstance().isTransitioning();
     }
     @Override public int getCollectibleCount() {
-        return Model.getInstance().getActiveItems().size();
+        return Model.getInstance().getCollectibleCount();
     }
     @Override public double getCollectibleX(int index) {
-        return Model.getInstance().getActiveItems().get(index).getX();
+        return Model.getInstance().getCollectibleX(index);
     }
     @Override public double getCollectibleY(int index) {
-        return Model.getInstance().getActiveItems().get(index).getY();
+        return Model.getInstance().getCollectibleY(index);
     }
     @Override public utils.ItemType getCollectibleType(int index) {
-        return Model.getInstance().getActiveItems().get(index).getType();
+        return Model.getInstance().getCollectibleType(index);
+    }
+    @Override public long getCollectibleSpawnTime(int index) {
+        return Model.getInstance().getCollectibleSpawnTime(index);
     }
 
     @Override
@@ -156,6 +159,10 @@ public class ControllerForView implements IControllerForView {
     @Override
     public boolean isEnemyInvincible(int index){
         return Model.getInstance().isEnemyInvincible(index);
+    }
+    @Override
+    public long getEnemyStateStartTime(int index){
+        return Model.getInstance().getEnemyStateStartTime(index);
     }
 
 

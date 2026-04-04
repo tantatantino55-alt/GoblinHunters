@@ -4,23 +4,21 @@ import utils.Config;
 import utils.Direction;
 
 public abstract class Projectile extends Entity {
-    protected double x, y;
+    // x, y, speed sono ora ereditati da Entity
+
     protected Direction direction;
-    protected double speed;
-    protected boolean active; // Se false, il Model lo rimuove
-    protected boolean isEnemyProjectile; // Per sapere chi colpire (Player o Nemici)
+    protected boolean active;
+    protected boolean isEnemyProjectile;
     protected long creationTime;
 
     public Projectile(double startX, double startY, Direction dir, double speedMult, boolean isEnemy) {
-        this.x = startX;
-        this.y = startY;
+        super(startX, startY); // delega x, y a Entity
         this.direction = dir;
         this.speed = Config.ENTITY_LOGICAL_SPEED * speedMult;
         this.active = true;
         this.isEnemyProjectile = isEnemy;
     }
 
-    // Template Method: La logica di base è uguale, ma l'impatto cambia
     public void update() {
         if (!active) return;
 
@@ -34,20 +32,14 @@ public abstract class Projectile extends Entity {
             case RIGHT: nextX += speed; break;
         }
 
-        // Delegiamo la gestione della collisione alle sottoclassi
         handleCollision(nextX, nextY);
     }
 
-    // Metodo Astratto: Ogni proiettile decide cosa fare quando tocca qualcosa
     protected abstract void handleCollision(double nextX, double nextY);
 
     public boolean isActive() { return active; }
     public void setActive(boolean active) { this.active = active; }
-    public double getX() { return x; }
-    public double getY() { return y; }
+    // getX() e getY() ereditati da Entity
     public boolean isEnemyProjectile() { return isEnemyProjectile; }
-    // In Projectile.java, aggiungi questo metodo:
-    public Direction getDirection() {
-        return direction;
-    }
+    public Direction getDirection() { return direction; }
 }

@@ -6,29 +6,24 @@ import utils.EnemyType;
 import java.util.Random;
 
 public abstract class Enemy extends Entity {
-    protected double x;
-    protected double y;
-    protected double speed;
+    // x, y, speed sono ora ereditati da Entity
+
     protected Direction currentDirection;
     protected EnemyType type;
     protected Random random;
 
     protected boolean isChasing = false;
-    protected Direction telegraphDirection = null; // Se non null, sta mirando
+    protected Direction telegraphDirection = null;
     protected boolean recentlyBounced = false;
 
-    // ==========================================
-    // --- NUOVE VARIABILI PER SALUTE E MORTE ---
-    // ==========================================
+    // --- VARIABILI PER SALUTE E MORTE ---
     protected int hp = 1;
     protected boolean isDead = false;
     protected long lastHitTime = 0;
     protected long stateStartTime = 0;
 
     public Enemy(double startX, double startY, double speed, EnemyType type) {
-        super(startX, startY); // Se Entity richiede parametri nel super
-        this.x = startX;
-        this.y = startY;
+        super(startX, startY); // delega x, y a Entity
         this.speed = speed;
         this.random = new Random();
         this.currentDirection = Direction.getRandom();
@@ -38,21 +33,16 @@ public abstract class Enemy extends Entity {
 
     public abstract void updateBehavior();
 
-    // ==========================================
-    // --- NUOVI METODI PER VITA E MORTE ---
-    // ==========================================
+    // --- METODI VITA E MORTE ---
 
     public boolean isDead() {
         return isDead;
     }
 
-    // Di base i goblin normali non hanno I-Frames (muoiono e basta).
-    // Sarà il Boss a fare l'Override di questo metodo!
     public boolean isInvincible() {
         return false;
     }
 
-    // Gestisce il danno e ritorna TRUE se il colpo è stato fatale in questo frame
     public boolean takeDamage(int damage) {
         if (isDead || isInvincible()) return false;
 
@@ -66,18 +56,14 @@ public abstract class Enemy extends Entity {
         return false;
     }
 
-    // Usato dalla View per capire quale animazione fare
     public String getEnemyState() { return "RUN"; }
 
     public long getStateStartTime() { return stateStartTime; }
 
 
-    // ==========================================
-    // --- TUA LOGICA ORIGINALE INTATTA ---
-    // ==========================================
+    // --- LOGICA DI MOVIMENTO ---
 
     protected void moveInDirection() {
-        // Se è morto, blocca il movimento istantaneamente!
         if (isDead) return;
 
         Model model = (Model) Model.getInstance();
@@ -87,16 +73,16 @@ public abstract class Enemy extends Entity {
         double deltaY = 0;
 
         switch (currentDirection) {
-            case UP -> deltaY = -speed;
-            case DOWN -> deltaY = speed;
-            case LEFT -> deltaX = -speed;
+            case UP    -> deltaY = -speed;
+            case DOWN  -> deltaY = speed;
+            case LEFT  -> deltaX = -speed;
             case RIGHT -> deltaX = speed;
         }
 
-        // --- MOVIMENTO ORIZZONTALE ---
+        // MOVIMENTO ORIZZONTALE
         if (deltaX != 0) {
             double nextX = x + deltaX;
-            boolean hitWall = !model.isWalkable(nextX, y);
+            boolean hitWall  = !model.isWalkable(nextX, y);
             boolean hitEnemy = model.isAreaOccupiedByOtherEnemy(nextX, y, this);
 
             if (!hitWall && !hitEnemy) {
@@ -106,18 +92,18 @@ public abstract class Enemy extends Entity {
                 if (Math.abs(diffY) > 0.001) {
                     double step = Math.min(alignSpeed, Math.abs(diffY));
                     if (diffY > 0) this.y -= step;
-                    else this.y += step;
+                    else           this.y += step;
                 }
             } else if (hitEnemy) {
-                handleEnemyCollision(); // Scontro tra Goblin!
+                handleEnemyCollision();
             } else {
-                handleWallCollision();  // Scontro col muro!
+                handleWallCollision();
             }
         }
-        // --- MOVIMENTO VERTICALE ---
+        // MOVIMENTO VERTICALE
         else if (deltaY != 0) {
             double nextY = y + deltaY;
-            boolean hitWall = !model.isWalkable(x, nextY);
+            boolean hitWall  = !model.isWalkable(x, nextY);
             boolean hitEnemy = model.isAreaOccupiedByOtherEnemy(x, nextY, this);
 
             if (!hitWall && !hitEnemy) {
@@ -127,38 +113,35 @@ public abstract class Enemy extends Entity {
                 if (Math.abs(diffX) > 0.001) {
                     double step = Math.min(alignSpeed, Math.abs(diffX));
                     if (diffX > 0) this.x -= step;
-                    else this.x += step;
+                    else           this.x += step;
                 }
             } else if (hitEnemy) {
-                handleEnemyCollision(); // Scontro tra Goblin!
+                handleEnemyCollision();
             } else {
-                handleWallCollision();  // Scontro col muro!
+                handleWallCollision();
             }
         }
     }
 
     protected void handleEnemyCollision() {
         java.util.List<Direction> valid = getValidDirections();
-        valid.remove(currentDirection); // Non riprovare la strada bloccata
+        valid.remove(currentDirection);
 
         if (!valid.isEmpty()) {
             Direction opp = getOppositeDirection();
-
-            // Cerchiamo le strade "Laterali" (escludendo l'inversione a U se possibile)
             java.util.List<Direction> laterali = new java.util.ArrayList<>(valid);
             laterali.remove(opp);
 
-            // Se c'è una via laterale libera, al 50% di probabilità la prende per sgombrare il corridoio!
             if (!laterali.isEmpty() && random.nextBoolean()) {
                 currentDirection = laterali.get(random.nextInt(laterali.size()));
             } else if (valid.contains(opp)) {
-                currentDirection = opp; // Altrimenti fa retromarcia
+                currentDirection = opp;
             } else {
                 currentDirection = valid.get(0);
             }
         }
 
-        recentlyBounced = true; // Si segna che è in stato di "Fuga dal traffico"
+        recentlyBounced = true;
         resetMemory();
     }
 
@@ -181,9 +164,9 @@ public abstract class Enemy extends Entity {
 
     protected Direction getOppositeDirection() {
         return switch (currentDirection) {
-            case UP -> Direction.DOWN;
-            case DOWN -> Direction.UP;
-            case LEFT -> Direction.RIGHT;
+            case UP    -> Direction.DOWN;
+            case DOWN  -> Direction.UP;
+            case LEFT  -> Direction.RIGHT;
             case RIGHT -> Direction.LEFT;
         };
     }
@@ -206,12 +189,13 @@ public abstract class Enemy extends Entity {
     protected void changeDirection() {
         java.util.List<Direction> valid = getValidDirections();
         Direction opposite = switch (currentDirection) {
-            case UP -> Direction.DOWN;   case DOWN -> Direction.UP;
-            case LEFT -> Direction.RIGHT; case RIGHT -> Direction.LEFT;
+            case UP    -> Direction.DOWN;
+            case DOWN  -> Direction.UP;
+            case LEFT  -> Direction.RIGHT;
+            case RIGHT -> Direction.LEFT;
         };
 
         if (valid.size() > 1) valid.remove(opposite);
-
         if (!valid.isEmpty()) {
             currentDirection = valid.get(random.nextInt(valid.size()));
         }
@@ -221,8 +205,7 @@ public abstract class Enemy extends Entity {
         return null;
     }
 
-    public double getX() { return x; }
-    public double getY() { return y; }
+    // getX() e getY() sono ereditati da Entity
     public Direction getDirection() { return currentDirection; }
-    public EnemyType getType() { return type; }
+    public EnemyType getType()      { return type; }
 }

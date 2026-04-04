@@ -1,0 +1,173 @@
+package model;
+
+import utils.Config;
+
+import java.util.List;
+
+/**
+ * Gestisce la progressione dei livelli: zone, gate di uscita, portale,
+ * timer boss e transizioni tra mappe.
+ */
+class LevelManager {
+
+    private final Model model;
+
+    // Progressione
+    private int currentZone = 0;
+    private int difficultyCycle = 1;
+    private String currentTheme = "VILLAGE";
+
+    // Flag transizione
+    private boolean exitGateActive = false;
+    private boolean levelCompletedFlag = false;
+    private boolean isTransitioning = false;
+    private long lastExitGateSpawnTime = 0;
+
+    // Portale
+    private int portalRow = -1;
+    private int portalCol = -1;
+    private boolean portalRevealed = false;
+    private long lastPortalRevealTime = 0;
+
+    // Exit gate fisso in (0,6)
+    private final int exitGateRow = 0;
+    private final int exitGateCol = 6;
+
+    // Timer boss
+    private int bossPreparationTimer;
+    private boolean isPreparationPhase = false;
+    private static final int PREP_TIME_SECONDS = 15;
+
+    LevelManager(Model model) {
+        this.model = model;
+    }
+
+    // ==========================================================
+    // GETTERS
+    // ==========================================================
+
+    int getCurrentZone()         { return currentZone; }
+    int getDifficultyCycle()     { return difficultyCycle; }
+    String getCurrentTheme()     { return currentTheme; }
+    boolean isExitGateActive()   { return exitGateActive; }
+    boolean isLevelCompletedFlag(){ return levelCompletedFlag; }
+    boolean isTransitioning()    { return isTransitioning; }
+    void setTransitioning(boolean t) { isTransitioning = t; }
+    int getPortalRow()           { return portalRow; }
+    int getPortalCol()           { return portalCol; }
+    boolean isPortalRevealed()   { return portalRevealed; }
+    long getPortalRevealTime()   { return lastPortalRevealTime; }
+    int getExitGateRow()         { return exitGateRow; }
+    int getExitGateCol()         { return exitGateCol; }
+    long getExitGateActivationTime() { return lastExitGateSpawnTime; }
+    boolean isPreparationPhase() { return isPreparationPhase; }
+    int getBossPreparationTimer(){ return bossPreparationTimer; }
+
+    // ==========================================================
+    // PORTALE
+    // ==========================================================
+
+    void setPortal(int row, int col) {
+        this.portalRow = row;
+        this.portalCol = col;
+        this.portalRevealed = false;
+    }
+
+    /** Chiamato da MapManager quando un blocco viene distrutto. */
+    void onBlockDestroyed(int row, int col) {
+        if (row == portalRow && col == portalCol) {
+            portalRevealed = true;
+            lastPortalRevealTime = System.currentTimeMillis();
+            model.getSpawnManager().resetPortalTimer();
+            System.out.println("ALLARME! Portale scoperto in [" + row + ", " + col + "]!");
+        }
+    }
+
+    // ==========================================================
+    // EXIT GATE
+    // ==========================================================
+
+    void checkExitGateCollision(List<Enemy> enemies, Player player, int[][] map) {
+        // Durante la preparazione boss non aprire il gate
+        if (currentZone == 2 && isPreparationPhase) return;
+
+        // Conta nemici vivi
+        long livingEnemies = enemies.stream().filter(e -> !e.isDead()).count();
+
+        if (livingEnemies == 0) {
+            if (!exitGateActive) {
+                exitGateActive = true;
+                lastExitGateSpawnTime = System.currentTimeMillis();
+                map[0][6] = Model.EXIT_GATE_ID;
+                if (map[0][0] == Model.EXIT_GATE_ID) map[0][0] = Config.CELL_EMPTY;
+                if (map[0][7] == Model.EXIT_GATE_ID) map[0][7] = Config.CELL_EMPTY;
+                System.out.println("Tutti i nemici sconfitti! L'Exit Gate è apparso in [0, 6]!");
+            }
+
+            // Controlla se il player ha calpestato il gate
+            double centerX = player.getXCoordinate() + (Config.ENTITY_LOGICAL_HITBOX_WIDTH / 2.0);
+            double centerY = player.getYCoordinate() + 0.35;
+            int col = (int) Math.floor(centerX);
+            int row = (int) Math.floor(centerY);
+
+            if (row >= 0 && row < Config.GRID_HEIGHT && col >= 0 && col < Config.GRID_WIDTH) {
+                if (map[row][col] == Model.EXIT_GATE_ID) {
+                    levelCompletedFlag = true;
+                }
+            }
+        }
+    }
+
+    // ==========================================================
+    // BOSS TIMER
+    // ==========================================================
+
+    /** Decrementa il timer di preparazione boss. Ritorna true se il timer è scaduto. */
+    boolean tickBossPreparation() {
+        if (!isPreparationPhase) return false;
+        bossPreparationTimer--;
+
+        if (bossPreparationTimer % Config.FPS == 0 && bossPreparationTimer > 0) {
+            System.out.println("Boss in arrivo tra: " + (bossPreparationTimer / Config.FPS) + "s");
+        }
+
+        if (bossPreparationTimer <= 0) {
+            isPreparationPhase = false;
+            return true; // segnala che l'esplosione deve avvenire
+        }
+        return false;
+    }
+
+    // ==========================================================
+    // AVANZAMENTO LIVELLO
+    // ==========================================================
+
+    void prepareNextLevel() {
+        levelCompletedFlag = false;
+        exitGateActive = false;
+        portalRevealed = false;
+
+        currentZone++;
+        if (currentZone > 2) {
+            currentZone = 0;
+            difficultyCycle++;
+            System.out.println("VITTORIA GLOBALE! Inizio ciclo difficoltà: " + difficultyCycle);
+        } else {
+            System.out.println("Avanzamento al livello: " + currentZone);
+        }
+
+        switch (currentZone) {
+            case 1  -> currentTheme = "FOREST";
+            case 2  -> currentTheme = "CAVE";
+            default -> currentTheme = "VILLAGE";
+        }
+
+        if (currentZone == 2) {
+            bossPreparationTimer = PREP_TIME_SECONDS * Config.FPS;
+            isPreparationPhase = true;
+            System.out.println("Fase preparazione Boss avviata! Hai " + PREP_TIME_SECONDS + " secondi!");
+        } else {
+            isPreparationPhase = false;
+        }
+    }
+}

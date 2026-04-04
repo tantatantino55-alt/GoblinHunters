@@ -83,6 +83,7 @@ public interface IControllerForView {
     double getCollectibleX(int index);
     double getCollectibleY(int index);
     ItemType getCollectibleType(int index);
+    long getCollectibleSpawnTime(int index);
 
     long getPortalRevealTime();
 
@@ -96,4 +97,5 @@ public interface IControllerForView {
 
     String getEnemyState(int index);
     boolean isEnemyInvincible(int index);
+    long getEnemyStateStartTime(int index);
 }

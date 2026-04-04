@@ -71,7 +71,8 @@ public interface IModel {
 
     void resetPlayerStateAfterAction();
 
-    java.util.List<model.Collectible> getActiveItems();
+    // Accesso ai collectible tramite indice (nessuna esposizione del tipo concreto)
+    long getCollectibleSpawnTime(int index);
 
     int getPlayerBombAmmo();
     int getPlayerAuraAmmo();
@@ -98,13 +99,12 @@ public interface IModel {
     void prepareNextLevel(int[][] newMap);
     boolean isTransitioning();
     void setTransitioning(boolean transitioning);
-    // Collectibles (oggetti a terra)
+    // Collectibles (oggetti a terra) – accesso esclusivamente tramite indice
     int getCollectibleCount();
     double getCollectibleX(int index);
     double getCollectibleY(int index);
     ItemType getCollectibleType(int index);
-    // AGGIUNGI QUESTO QUI:
-    public long getPortalRevealTime() ;
+    long getPortalRevealTime();
 
     long getExitGateActivationTime();
     int getExitGateRow();
@@ -114,4 +114,5 @@ public interface IModel {
 
     String getEnemyState(int index);
     boolean isEnemyInvincible(int index);
+    long getEnemyStateStartTime(int index);
 }

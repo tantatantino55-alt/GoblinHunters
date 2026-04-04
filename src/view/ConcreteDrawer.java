@@ -50,6 +50,7 @@ public class ConcreteDrawer extends AbstractDrawer {
         drawDebugGrid(g2d);
         drawHUD(g2d);
     }
+
     private void drawPortal(Graphics2D g2d) {
         if (ControllerForView.getInstance().isPortalRevealed()) {
             int pCol = ControllerForView.getInstance().getPortalCol();
@@ -68,7 +69,7 @@ public class ConcreteDrawer extends AbstractDrawer {
         }
     }
 
-// In ConcreteDrawer.java
+    // In ConcreteDrawer.java
 
     private void drawLevelExitGate(Graphics2D g2d) {
         if (ControllerForView.getInstance().isGateActive()) {
@@ -100,16 +101,13 @@ public class ConcreteDrawer extends AbstractDrawer {
         }
     }
 
-
-
-
     private void drawHUD(Graphics2D g2d) {
         // --- 1. CALCOLO FPS ---
         frameCount++;
         long currentTime = System.currentTimeMillis();
         if (currentTime - lastFpsTime >= 1000) {
             currentFPS = frameCount; // Salva i frame accumulati nell'ultimo secondo
-            frameCount = 0;          // Azzera il contatore
+            frameCount = 0; // Azzera il contatore
             lastFpsTime = currentTime; // Resetta il timer
         }
 
@@ -135,8 +133,8 @@ public class ConcreteDrawer extends AbstractDrawer {
                 + utils.Config.TILE_SIZE // <--- Salto della cornice!
                 + 30; // Margine di respiro dalla cornice al testo
 
-        int currentY = 60;   // Punto di partenza dall'alto
-        int lineGap = 30;    // Spazio standard tra una riga di testo e l'altra
+        int currentY = 60; // Punto di partenza dall'alto
+        int lineGap = 30; // Spazio standard tra una riga di testo e l'altra
         int sectionGap = 20; // Spazio extra per separare le diverse sezioni
 
         // --- 4. DISEGNO STATISTICHE BASE (Spostate a destra!) ---
@@ -220,7 +218,8 @@ public class ConcreteDrawer extends AbstractDrawer {
                 // Escludiamo gli edifici (che ora usano tutti l'ID 5) e i blocchi vuoti
                 if (cellType != utils.Config.CELL_EMPTY && cellType != utils.Config.CELL_ORNAMENT) {
 
-                    // NON disegniamo nulla nella cella (0,4) e (0,9) perché ci andrà sopra l'edificio
+                    // NON disegniamo nulla nella cella (0,4) e (0,9) perché ci andrà sopra
+                    // l'edificio
                     if (row == 0 && (col == 4 || col == 9)) {
                         continue;
                     }
@@ -238,7 +237,8 @@ public class ConcreteDrawer extends AbstractDrawer {
             for (int col = 0; col < utils.Config.GRID_WIDTH; col++) {
                 int cellType = gameAreaArray[row][col];
 
-                // Nella mappa, tutti i grandi edifici sono segnati con il numero 5 (CELL_ORNAMENT)
+                // Nella mappa, tutti i grandi edifici sono segnati con il numero 5
+                // (CELL_ORNAMENT)
                 if (cellType == utils.Config.CELL_ORNAMENT) {
                     int tileX = utils.Config.GRID_OFFSET_X + col * utils.Config.TILE_SIZE;
 
@@ -248,9 +248,12 @@ public class ConcreteDrawer extends AbstractDrawer {
 
                     // MAGIA: Scegliamo COSA disegnare basandoci sul tema caricato!
                     if ("CAVE".equals(theme)) {
-                        // Animazione Caverna: Calcola il frame index e sommalo a CELL_SKELETON_START (5)
-                        int frameIndex = (int) ((System.currentTimeMillis() / 100) % utils.Config.SKELETON_FRAMES_COUNT);
-                        BufferedImage skeletonFrame = tileManager.getTileImage(utils.Config.CELL_SKELETON_START + frameIndex);
+                        // Animazione Caverna: Calcola il frame index e sommalo a CELL_SKELETON_START
+                        // (5)
+                        int frameIndex = (int) ((System.currentTimeMillis() / 100)
+                                % utils.Config.SKELETON_FRAMES_COUNT);
+                        BufferedImage skeletonFrame = tileManager
+                                .getTileImage(utils.Config.CELL_SKELETON_START + frameIndex);
                         if (skeletonFrame != null) {
                             g2d.drawImage(skeletonFrame, tileX, tileY, 128, 128, null);
                         }
@@ -265,7 +268,6 @@ public class ConcreteDrawer extends AbstractDrawer {
             }
         }
     }
-
 
     private void drawPlayer(Graphics2D g2d) {
         // 1. RECUPERO STATO INVINCIBILITÀ
@@ -301,7 +303,8 @@ public class ConcreteDrawer extends AbstractDrawer {
 
         if (state == PlayerState.DYING) {
             currentFrame = (int) (timePassed / Config.ANIMATION_DELAY);
-            if (currentFrame >= totalFrames) currentFrame = totalFrames - 1;
+            if (currentFrame >= totalFrames)
+                currentFrame = totalFrames - 1;
         } else {
             currentFrame = (int) (timePassed / Config.ANIMATION_DELAY) % totalFrames;
         }
@@ -323,61 +326,66 @@ public class ConcreteDrawer extends AbstractDrawer {
     }
     // In src/view/ConcreteDrawer.java
 
-/*versione 1
-    private void drawEnemies(Graphics2D g2d) {
-        int count = ControllerForView.getInstance().getEnemyCount();
-
-        for (int i = 0; i < count; i++) {
-            // 1. Recupero dati logici dal Controller
-            double x = ControllerForView.getInstance().getEnemyX(i);
-            double y = ControllerForView.getInstance().getEnemyY(i);
-            utils.Direction dir = ControllerForView.getInstance().getEnemyDirection(i);
-            utils.EnemyType type = ControllerForView.getInstance().getEnemyType(i);
-
-            // 2. Definizione del prefisso per lo SpriteManager
-            String prefix = switch (type) {
-                case COMMON -> "COMMON";
-                case HUNTER -> "HUNTER";
-                case SHOOTER -> "SHOOTER";
-                default -> "COMMON";
-            };
-
-            // 3. Gestione degli stati e delle animazioni
-            String state = "RUN";
-            int frames = Config.GOBLIN_RUN_FRAMES;
-
-            // Se lo Shooter sta mirando (telegraph != null), usiamo l'animazione di attacco
-            if (type == utils.EnemyType.SHOOTER && ControllerForView.getInstance().getEnemyTelegraph(i) != null) {
-                state = "ATTACK";
-                frames = Config.SHOOTER_ATTACK_FRAMES;
-            }
-
-            // Calcolo del frame corrente (velocità 80ms)
-            int currentFrame = (int) (System.currentTimeMillis() / 80) % frames;
-            String spriteKey = prefix + "_" + state + "_" + dir.name();
-
-            // 4. Recupero dello sprite caricato
-            BufferedImage sprite = SpriteManager.getInstance().getSprite(spriteKey, currentFrame);
-
-            if (sprite != null) {
-                // 5. CALCOLO COORDINATE SCHERMO (Stessa logica del Player)
-                // Convertiamo la posizione logica in pixel aggiungendo l'offset della griglia
-                int screenX = (int) (x * Config.TILE_SIZE) + Config.GRID_OFFSET_X;
-                int screenY = (int) (y * Config.TILE_SIZE) + Config.GRID_OFFSET_Y;
-
-                // 6. CENTRAMENTO E ALLINEAMENTO (Sprite 128x128 su Tile 64x64)
-                // Centriamo orizzontalmente rispetto alla tile
-                int drawX = screenX + (Config.TILE_SIZE - 128) / 2;
-
-                // Allineiamo i piedi alla base della tile (screenY + 64 - 128)
-                int drawY = screenY + (Config.TILE_SIZE - 128);
-
-                // Disegno finale dello sprite
-                g2d.drawImage(sprite, drawX, drawY, 128, 128, null);
-            }
-        }
-    }
-*/
+    /*
+     * versione 1
+     * private void drawEnemies(Graphics2D g2d) {
+     * int count = ControllerForView.getInstance().getEnemyCount();
+     * 
+     * for (int i = 0; i < count; i++) {
+     * // 1. Recupero dati logici dal Controller
+     * double x = ControllerForView.getInstance().getEnemyX(i);
+     * double y = ControllerForView.getInstance().getEnemyY(i);
+     * utils.Direction dir = ControllerForView.getInstance().getEnemyDirection(i);
+     * utils.EnemyType type = ControllerForView.getInstance().getEnemyType(i);
+     * 
+     * // 2. Definizione del prefisso per lo SpriteManager
+     * String prefix = switch (type) {
+     * case COMMON -> "COMMON";
+     * case HUNTER -> "HUNTER";
+     * case SHOOTER -> "SHOOTER";
+     * default -> "COMMON";
+     * };
+     * 
+     * // 3. Gestione degli stati e delle animazioni
+     * String state = "RUN";
+     * int frames = Config.GOBLIN_RUN_FRAMES;
+     * 
+     * // Se lo Shooter sta mirando (telegraph != null), usiamo l'animazione di
+     * attacco
+     * if (type == utils.EnemyType.SHOOTER &&
+     * ControllerForView.getInstance().getEnemyTelegraph(i) != null) {
+     * state = "ATTACK";
+     * frames = Config.SHOOTER_ATTACK_FRAMES;
+     * }
+     * 
+     * // Calcolo del frame corrente (velocità 80ms)
+     * int currentFrame = (int) (System.currentTimeMillis() / 80) % frames;
+     * String spriteKey = prefix + "_" + state + "_" + dir.name();
+     * 
+     * // 4. Recupero dello sprite caricato
+     * BufferedImage sprite = SpriteManager.getInstance().getSprite(spriteKey,
+     * currentFrame);
+     * 
+     * if (sprite != null) {
+     * // 5. CALCOLO COORDINATE SCHERMO (Stessa logica del Player)
+     * // Convertiamo la posizione logica in pixel aggiungendo l'offset della
+     * griglia
+     * int screenX = (int) (x * Config.TILE_SIZE) + Config.GRID_OFFSET_X;
+     * int screenY = (int) (y * Config.TILE_SIZE) + Config.GRID_OFFSET_Y;
+     * 
+     * // 6. CENTRAMENTO E ALLINEAMENTO (Sprite 128x128 su Tile 64x64)
+     * // Centriamo orizzontalmente rispetto alla tile
+     * int drawX = screenX + (Config.TILE_SIZE - 128) / 2;
+     * 
+     * // Allineiamo i piedi alla base della tile (screenY + 64 - 128)
+     * int drawY = screenY + (Config.TILE_SIZE - 128);
+     * 
+     * // Disegno finale dello sprite
+     * g2d.drawImage(sprite, drawX, drawY, 128, 128, null);
+     * }
+     * }
+     * }
+     */
 
     private void drawEnemies(Graphics2D g2d) {
         int count = controller.ControllerForView.getInstance().getEnemyCount();
@@ -412,12 +420,10 @@ public class ConcreteDrawer extends AbstractDrawer {
                 if (state.equals("FURY") || state.equals("EXHAUSTED")) {
                     state = "RUN";
                     frames = utils.Config.BOSS_RUN_FRAMES;
-                }
-                else if (state.equals("TELEGRAPH")) {
+                } else if (state.equals("TELEGRAPH")) {
                     state = "IDLE";
                     frames = utils.Config.BOSS_IDLE_FRAMES;
-                }
-                else if (state.equals("DYING")) {
+                } else if (state.equals("DYING")) {
                     frames = utils.Config.BOSS_DYING_FRAMES;
                 }
             }
@@ -426,7 +432,8 @@ public class ConcreteDrawer extends AbstractDrawer {
             int currentFrame = 0;
             if (state.equals("DYING")) {
                 // Animazione di morte lenta e progressiva (non ciclica)
-                long timePassed = System.currentTimeMillis() - controller.ControllerForView.getInstance().getEnemyStateStartTime(i);
+                long timePassed = System.currentTimeMillis()
+                        - ControllerForView.getInstance().getEnemyStateStartTime(i);
                 currentFrame = (int) (timePassed / 150); // Più lenta per godersela
                 if (currentFrame >= frames) {
                     currentFrame = frames - 1; // SI FERMA SULL'ULTIMO FRAME!
@@ -453,7 +460,8 @@ public class ConcreteDrawer extends AbstractDrawer {
                     // --- CALCOLO PIVOT BOSS ---
                     int drawX = (screenX + 32) - 96;
                     int drawY = (screenY + 64) - 149;
-                    g2d.drawImage(sprite, drawX, drawY, utils.Config.BOSS_FRAME_SIZE, utils.Config.BOSS_FRAME_SIZE, null);
+                    g2d.drawImage(sprite, drawX, drawY, utils.Config.BOSS_FRAME_SIZE, utils.Config.BOSS_FRAME_SIZE,
+                            null);
                 } else {
                     int drawX = screenX + (utils.Config.TILE_SIZE - 128) / 2;
                     int drawY = screenY + (utils.Config.TILE_SIZE - 128);
@@ -508,7 +516,8 @@ public class ConcreteDrawer extends AbstractDrawer {
             int elapsed = ControllerForView.getInstance().getDestructionElapsedTime(i);
 
             int currentFrame = elapsed / Config.DESTRUCTION_FRAME_DURATION;
-            if (currentFrame >= Config.DESTRUCTION_FRAMES) currentFrame = Config.DESTRUCTION_FRAMES - 1;
+            if (currentFrame >= Config.DESTRUCTION_FRAMES)
+                currentFrame = Config.DESTRUCTION_FRAMES - 1;
 
             int screenX = Config.GRID_OFFSET_X + col * Config.TILE_SIZE;
             int screenY = Config.GRID_OFFSET_Y + row * Config.TILE_SIZE;
@@ -575,8 +584,8 @@ public class ConcreteDrawer extends AbstractDrawer {
                 if (sprite != null) {
                     // Poiché l'immagine PNG è già 64x64 con il proiettile centrato,
                     // calcoliamo solo l'angolo in alto a sinistra della cella.
-                    int screenX = (int)(x * Config.TILE_SIZE) + Config.GRID_OFFSET_X;
-                    int screenY = (int)(y * Config.TILE_SIZE) + Config.GRID_OFFSET_Y;
+                    int screenX = (int) (x * Config.TILE_SIZE) + Config.GRID_OFFSET_X;
+                    int screenY = (int) (y * Config.TILE_SIZE) + Config.GRID_OFFSET_Y;
 
                     // Disegniamo l'immagine a grandezza naturale (64x64) senza alcun offset!
                     g2d.drawImage(sprite, screenX, screenY, Config.TILE_SIZE, Config.TILE_SIZE, null);
@@ -584,6 +593,7 @@ public class ConcreteDrawer extends AbstractDrawer {
             }
         }
     }
+
     private void drawStaffAttack(Graphics2D g2d) {
         PlayerState state = ControllerForView.getInstance().getPlayerState();
         double logX = ControllerForView.getInstance().getXCoordinatePlayer();
@@ -611,18 +621,21 @@ public class ConcreteDrawer extends AbstractDrawer {
             g2d.drawImage(sprite, drawX, drawY, Config.ENTITY_FRAME_SIZE, Config.ENTITY_FRAME_SIZE, null);
         }
     }
+
     public void drawTransition(Graphics2D g2d) {
 
         // --- 1. AGGIORNAMENTO TRASPARENZA ---
         if (ControllerForView.getInstance().isTransitioning()) {
             if (transitionAlpha < Config.MAX_ALPHA) {
                 transitionAlpha += Config.FADE_SPEED;
-                if (transitionAlpha > Config.MAX_ALPHA) transitionAlpha = Config.MAX_ALPHA;
+                if (transitionAlpha > Config.MAX_ALPHA)
+                    transitionAlpha = Config.MAX_ALPHA;
             }
         } else {
             if (transitionAlpha > Config.MIN_ALPHA) {
                 transitionAlpha -= Config.FADE_SPEED;
-                if (transitionAlpha < Config.MIN_ALPHA) transitionAlpha = Config.MIN_ALPHA;
+                if (transitionAlpha < Config.MIN_ALPHA)
+                    transitionAlpha = Config.MIN_ALPHA;
             }
         }
 
@@ -634,36 +647,46 @@ public class ConcreteDrawer extends AbstractDrawer {
             g2d.fillRect(0, 0, Config.WINDOW_PREFERRED_WIDTH, Config.WINDOW_PREFERRED_HEIGHT);
         }
     }
+
     /**
      * Disegna l'effetto di transizione.
      * Da chiamare come ULTIMA istruzione nel tuo metodo di rendering principale.
      */
 
-
-    //@Override public int getDrawingWidth() { return Config.GRID_OFFSET_X + 960 }//Config.GAME_PANEL_WIDTH; }
-   // @Override public int getDrawingHeight() { return Config.GRID_OFFSET_Y +932;} //Config.GAME_PANEL_HEIGHT; }
-
-    @Override
-    public int getDrawingWidth() { return Config.WINDOW_PREFERRED_WIDTH; }
+    // @Override public int getDrawingWidth() { return Config.GRID_OFFSET_X + 960
+    // }//Config.GAME_PANEL_WIDTH; }
+    // @Override public int getDrawingHeight() { return Config.GRID_OFFSET_Y +932;}
+    // //Config.GAME_PANEL_HEIGHT; }
 
     @Override
-    public int getDrawingHeight() { return Config.WINDOW_PREFERRED_HEIGHT; }
+    public int getDrawingWidth() {
+        return Config.WINDOW_PREFERRED_WIDTH;
+    }
+
+    @Override
+    public int getDrawingHeight() {
+        return Config.WINDOW_PREFERRED_HEIGHT;
+    }
 
     private int getFramesForState(PlayerState state) {
         String s = state.name();
-        if (s.contains("ATTACK") || s.contains("HURT") || s.contains("DYING")) return Config.PLAYER_ATTACK_FRAMES;
-        else if (s.contains("RUN")) return Config.PLAYER_RUN_FRAMES;
-        else return Config.PLAYER_IDLE_FRAMES;
+        if (s.contains("ATTACK") || s.contains("HURT") || s.contains("DYING"))
+            return Config.PLAYER_ATTACK_FRAMES;
+        else if (s.contains("RUN"))
+            return Config.PLAYER_RUN_FRAMES;
+        else
+            return Config.PLAYER_IDLE_FRAMES;
     }
+
     private void drawCollectibles(Graphics2D g2d) {
         int count = controller.ControllerForView.getInstance().getCollectibleCount();
         view.SpriteManager sm = view.SpriteManager.getInstance(); // Recuperiamo lo SpriteManager
 
         for (int i = 0; i < count; i++) {
             // Calcolo delle coordinate mantenuto identico al tuo
-            int screenX = (int)(controller.ControllerForView.getInstance().getCollectibleX(i)
+            int screenX = (int) (controller.ControllerForView.getInstance().getCollectibleX(i)
                     * utils.Config.TILE_SIZE) + utils.Config.GRID_OFFSET_X;
-            int screenY = (int)(controller.ControllerForView.getInstance().getCollectibleY(i)
+            int screenY = (int) (controller.ControllerForView.getInstance().getCollectibleY(i)
                     * utils.Config.TILE_SIZE) + utils.Config.GRID_OFFSET_Y;
 
             utils.ItemType type = controller.ControllerForView.getInstance().getCollectibleType(i);

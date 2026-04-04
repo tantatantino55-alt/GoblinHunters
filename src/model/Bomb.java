@@ -2,6 +2,7 @@ package model;
 
 public class Bomb extends Entity {
 
+    // Bomb usa coordinate a griglia (row/col) invece di double x/y
     private final int row;
     private final int col;
     private int timer; // Timer logico per l'esplosione (gameplay)
@@ -13,6 +14,7 @@ public class Bomb extends Entity {
     private final long creationTime;
 
     public Bomb(int row, int col, int timer, int radius) {
+        super(); // Bomb usa row/col a griglia, non coordinate double x/y
         this.row = row;
         this.col = col;
         this.timer = timer;

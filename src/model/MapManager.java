@@ -1,9 +1,11 @@
 package model;
 
 import utils.Config;
+import utils.Direction;
 import utils.ItemType;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
@@ -16,6 +18,9 @@ class MapManager {
     private final java.util.Map<String, ItemType> hiddenLoot = new java.util.HashMap<>();
     private final Random randomGenerator = new Random();
     private final int[][] gameAreaArray;
+
+    // Crepe del Boss: overlay temporaneo (NON modifica gameAreaArray)
+    private final List<FloorCrack> activeCracks = new ArrayList<>();
 
     MapManager() {
         this.gameAreaArray = new int[Config.GRID_HEIGHT][Config.GRID_WIDTH];
@@ -208,5 +213,129 @@ class MapManager {
         for (int r = 0; r < Config.GRID_HEIGHT; r++) {
             System.arraycopy(source[r], 0, gameAreaArray[r], 0, Config.GRID_WIDTH);
         }
+    }
+
+    // ==========================================================
+    // CREPE DEL BOSS (FLOOR CRACK WAVE)
+    // ==========================================================
+
+    /**
+     * Genera un'onda di crepe larga 3 celle centrata sulla posizione del Boss.
+     * L'onda percorre le celle nella direzione indicata finché non incontra
+     * un blocco indistruttibile (si ferma su quella singola corsia).
+     *
+     * @param originRow  Riga del Boss (intero)
+     * @param originCol  Colonna del Boss (intero)
+     * @param dir        Direzione in cui il Boss guarda (e spara)
+     * @param map        La mappa logica corrente (usata solo per leggere i blocchi)
+     */
+    void spawnCrackWave(int originRow, int originCol, Direction dir, int[][] map) {
+        // Evita di aggiungere crepe duplicate nella stessa cella
+        activeCracks.removeIf(c -> (c.row == originRow && c.col == originCol));
+
+        // Calcola i 3 offset laterali (centro, sinistra, destra rispetto alla direzione)
+        int[][] laterals = getLateralOffsets(dir);
+
+        for (int[] lateral : laterals) {
+            int dr = lateral[0];   // offset riga per il lato
+            int dc = lateral[1];   // offset colonna per il lato
+
+            // Direzione frontale di propagazione
+            int[] front = getFrontDelta(dir);
+            int fdr = front[0];
+            int fdc = front[1];
+
+            // Propaga frontalmente dalla cella laterale
+            int startRow = originRow + dr;
+            int startCol = originCol + dc;
+
+            // Propaga dalla posizione di origine in avanti
+            for (int step = 0; step <= 12; step++) {  // 12 = max diagonale arena
+                int r = startRow + fdr * step;
+                int c = startCol + fdc * step;
+
+                // Fuori bounds → fermati
+                if (r < 0 || r >= Config.GRID_HEIGHT || c < 0 || c >= Config.GRID_WIDTH) break;
+
+                int cell = map[r][c];
+
+                // Blocco indistruttibile → questa corsia si ferma qui
+                if (cell == Config.CELL_INDESTRUCTIBLE_BLOCK ||
+                    cell == Config.CELL_ORNAMENT             ||
+                    cell == Config.CELL_SKELETON_START) break;
+
+                // Cella valida: aggiungi la crepa se non esiste già
+                if (!hasCrackAt(r, c)) {
+                    activeCracks.add(new FloorCrack(r, c));
+                }
+
+                // I blocchi distruttibili vengono attraversati (le crepe passano sopra)
+            }
+        }
+
+        System.out.println("BOSS WAVE: " + activeCracks.size() + " celle crepate generate.");
+    }
+
+    /**
+     * Aggiorna tutte le crepe attive: decrementa il timer e rimuove quelle scadute.
+     * Deve essere chiamato ogni tick dal game loop di Model.
+     */
+    void updateCracks() {
+        Iterator<FloorCrack> it = activeCracks.iterator();
+        while (it.hasNext()) {
+            FloorCrack crack = it.next();
+            if (crack.tick()) {
+                it.remove();
+            }
+        }
+    }
+
+    /** Controlla se una cella ha già una crepa attiva. */
+    boolean hasCrackAt(int row, int col) {
+        for (FloorCrack c : activeCracks) {
+            if (c.row == row && c.col == col) return true;
+        }
+        return false;
+    }
+
+    /** Rimuove tutte le crepe (es. al cambio livello). */
+    void clearCracks() {
+        activeCracks.clear();
+    }
+
+    // Getters per l'esposizione alla View tramite Model (pattern uguale ad activeFire)
+    List<FloorCrack> getActiveCracks()   { return activeCracks; }
+    int getCrackCount()                   { return activeCracks.size(); }
+    int getCrackRow(int i)                { return activeCracks.get(i).row; }
+    int getCrackCol(int i)                { return activeCracks.get(i).col; }
+
+    // ==========================================================
+    // HELPER GEOMETRICI
+    // ==========================================================
+
+    /**
+     * Ritorna i 3 offset laterali (dx, dy) rispetto all'origine, in funzione
+     * della direzione di attacco:
+     * - [0]: la corsia centrale (offset 0 rispetto alla direzione laterale)
+     * - [1]: la corsia sinistra (−1 sull'asse perpendicolare)
+     * - [2]: la corsia destra  (+1 sull'asse perpendicolare)
+     */
+    private int[][] getLateralOffsets(Direction dir) {
+        return switch (dir) {
+            // Il Boss guarda UP/DOWN → si muove lungo le RIGHE → offset laterali sono nelle COLONNE
+            case UP, DOWN -> new int[][]{ {0, 0}, {0, -1}, {0, 1} };
+            // Il Boss guarda LEFT/RIGHT → si muove lungo le COLONNE → offset laterali sono nelle RIGHE
+            case LEFT, RIGHT -> new int[][]{ {0, 0}, {-1, 0}, {1, 0} };
+        };
+    }
+
+    /** Ritorna il delta (dr, dc) della direzione frontale di propagazione. */
+    private int[] getFrontDelta(Direction dir) {
+        return switch (dir) {
+            case UP    -> new int[]{-1,  0};
+            case DOWN  -> new int[]{ 1,  0};
+            case LEFT  -> new int[]{ 0, -1};
+            case RIGHT -> new int[]{ 0,  1};
+        };
     }
 }

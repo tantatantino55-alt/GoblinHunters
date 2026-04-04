@@ -98,4 +98,9 @@ public interface IControllerForView {
     String getEnemyState(int index);
     boolean isEnemyInvincible(int index);
     long getEnemyStateStartTime(int index);
+
+    // --- CREPE DEL BOSS ---
+    int getCrackCount();
+    int getCrackRow(int index);
+    int getCrackCol(int index);
 }

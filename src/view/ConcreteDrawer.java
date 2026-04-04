@@ -29,9 +29,10 @@ public class ConcreteDrawer extends AbstractDrawer {
         g2d.setColor(Color.BLACK);
         g2d.fillRect(0, 0, getDrawingWidth(), getDrawingHeight());
         drawMap(g2d);
-        drawPortal(g2d); // 1. Disegna l'allarme se scopri il portale spawner
+        drawCracks(g2d);         // Crepe del Boss: overlay sul pavimento
+        drawPortal(g2d);         // 1. Disegna l'allarme se scopri il portale spawner
         drawLevelExitGate(g2d);
-        drawDestructions(g2d); // Qui vengono disegnati i blocchi che esplodono
+        drawDestructions(g2d);   // Qui vengono disegnati i blocchi che esplodono
         drawFire(g2d);
         drawBombs(g2d);
         drawCollectibles(g2d);
@@ -469,6 +470,45 @@ public class ConcreteDrawer extends AbstractDrawer {
                 }
             }
         }
+    }
+
+    /**
+     * Disegna le crepe del Boss come overlay sopra il pavimento normale.
+     * Usa la tile CAVE_CRACKED_FLOOR (indice 3) con un'alfa oscillante
+     * per evidenziare il pericolo senza oscurare i nemici/player disegnati dopo.
+     */
+    private void drawCracks(Graphics2D g2d) {
+        int count = controller.ControllerForView.getInstance().getCrackCount();
+        if (count == 0) return;
+
+        // Recupera la tile crepata (indice Config.CELL_CRACKED_FLOOR = 3)
+        BufferedImage crackTile = tileManager.getTileImage(utils.Config.CELL_CRACKED_FLOOR);
+
+        // Alpha pulsante (tra 0.55 e 0.85) per dare un effetto "vivo" al pericolo
+        float pulse = 0.55f + 0.30f * (float) Math.abs(Math.sin(System.currentTimeMillis() / 400.0));
+        Composite originalComposite = g2d.getComposite();
+        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, pulse));
+
+        for (int i = 0; i < count; i++) {
+            int row = controller.ControllerForView.getInstance().getCrackRow(i);
+            int col = controller.ControllerForView.getInstance().getCrackCol(i);
+
+            int screenX = utils.Config.GRID_OFFSET_X + col * utils.Config.TILE_SIZE;
+            int screenY = utils.Config.GRID_OFFSET_Y + row * utils.Config.TILE_SIZE;
+
+            if (crackTile != null) {
+                g2d.drawImage(crackTile, screenX, screenY, utils.Config.TILE_SIZE, utils.Config.TILE_SIZE, null);
+            } else {
+                // Fallback grafico: rettangolo arancione semi-trasparente
+                g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.6f));
+                g2d.setColor(new Color(220, 80, 0));
+                g2d.fillRect(screenX + 4, screenY + 4,
+                             utils.Config.TILE_SIZE - 8, utils.Config.TILE_SIZE - 8);
+            }
+        }
+
+        // Ripristina il composite originale per non influenzare il disegno successivo
+        g2d.setComposite(originalComposite);
     }
 
     // Metodo di debug puro: disegna solo le linee della griglia

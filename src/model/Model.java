@@ -84,6 +84,7 @@ public class Model implements IModel {
     List<BlockDestruction> getDestructionEffects() { return destructionEffects; }
     SpawnManager getSpawnManager()      { return spawnManager; }
     LevelManager getLevelManager()      { return levelManager; }
+    MapManager   getMapManager()        { return mapManager; }
 
     // ==========================================================
     // IModel – MAPPA
@@ -300,6 +301,11 @@ public class Model implements IModel {
     @Override public long getCollectibleSpawnTime(int i){ return isValidItemIndex(i) ? activeItems.get(i).getSpawnTime() : 0; }
     private boolean isValidItemIndex(int i)  { return i >= 0 && i < activeItems.size(); }
 
+    // --- CREPE DEL BOSS ---
+    @Override public int getCrackCount()     { return mapManager.getCrackCount(); }
+    @Override public int getCrackRow(int i)  { return (i >= 0 && i < mapManager.getCrackCount()) ? mapManager.getCrackRow(i) : 0; }
+    @Override public int getCrackCol(int i)  { return (i >= 0 && i < mapManager.getCrackCount()) ? mapManager.getCrackCol(i) : 0; }
+
     // ==========================================================
     // IModel – LIVELLI / GATE / PORTALE
     // ==========================================================
@@ -335,12 +341,13 @@ public class Model implements IModel {
         int[][] newMap = mapManager.generateProceduralMap(levelManager.getCurrentZone(), levelManager);
         mapManager.applyMap(newMap);
 
-        // Pulisce entità
+        // Pulisce entità e overlay temporanei
         activeBombs.clear();
         projectiles.clear();
         activeFire.clear();
         activeItems.clear();
         enemies.clear();
+        mapManager.clearCracks();  // Rimuove le crepe del Boss al cambio livello
 
         // Riposiziona player
         player.setXCoordinate(0.0);
@@ -399,6 +406,8 @@ public class Model implements IModel {
         Iterator<Enemy> eIt = enemies.iterator();
         while (eIt.hasNext()) {
             Enemy e = eIt.next();
+            // Il Boss è troppo corazzato: ignorato dallo staff
+            if (e.getType() == EnemyType.BOSS) continue;
             if (hitbox.intersects(new Rectangle2D.Double(e.getX(), e.getY(), 0.6, 0.6))) {
                 eIt.remove();
                 scoreManager.handleEnemyDeath(e, levelManager.getCurrentZone(), activeItems);
@@ -457,6 +466,9 @@ public class Model implements IModel {
         updateEnemies();
         updateBombs();
         updateProjectiles();
+
+        // Aggiorna timer crepe Boss (overlay indipendente dalla mappa)
+        mapManager.updateCracks();
 
         checkCollisions();
         spawnManager.manageSpawning(enemies, levelManager.getPortalCol(), levelManager.getPortalRow(), levelManager.isPortalRevealed());
@@ -587,11 +599,22 @@ public class Model implements IModel {
         double pX = player.getXCoordinate(), pY = player.getYCoordinate();
         double pHW = Config.ENTITY_LOGICAL_HITBOX_WIDTH, pHH = Config.ENTITY_LOGICAL_HITBOX_HEIGHT;
 
+        // --- COLLISIONE CON NEMICI VIVI ---
         for (Enemy e : enemies) {
             if (e.isDead()) continue;
             boolean cx = pX < e.getX() + pHW && pX + pHW > e.getX();
             boolean cy = pY < e.getY() + pHH && pY + pHH > e.getY();
             if (cx && cy) { handlePlayerHit(); break; }
+        }
+
+        // --- DANNO DA CREPE DEL BOSS ---
+        // Le crepe sono un overlay: se il player calpesta una crepa attiva subisce danno
+        if (!player.isInvincible()) {
+            int pCol = (int) Math.floor(pX + pHW / 2.0);
+            int pRow = (int) Math.floor(pY + 0.6);  // punto ai piedi del player
+            if (mapManager.hasCrackAt(pRow, pCol)) {
+                handlePlayerHit();
+            }
         }
     }
 
@@ -657,20 +680,34 @@ public class Model implements IModel {
             if (!p.isActive()) { it.remove(); continue; }
 
             if (p.isEnemyProjectile()) {
+                // Proiettile nemico vs Player
                 if (Math.abs(p.getX() - player.getXCoordinate()) < 0.5 &&
                     Math.abs(p.getY() - player.getYCoordinate()) < 0.5) {
                     handlePlayerHit();
                     p.setActive(false);
                 }
             } else {
+                // Proiettile player (Aura) vs Nemici
                 Iterator<Enemy> eIt = enemies.iterator();
                 boolean hit = false;
                 while (eIt.hasNext()) {
                     Enemy e = eIt.next();
+                    if (e.isDead()) continue;  // non colpisce i cadaveri
                     if (Math.abs(p.getX() - e.getX()) < 0.6 && Math.abs(p.getY() - e.getY()) < 0.6) {
-                        eIt.remove();
-                        scoreManager.handleEnemyDeath(e, levelManager.getCurrentZone(), activeItems);
-                        System.out.println("Goblin fulminato dall'Aura!");
+                        if (e.getType() == EnemyType.BOSS) {
+                            // Il Boss non viene mai rimosso dalla lista:
+                            // takeDamage() gestisce internamente gli I-Frames.
+                            // Il proiettile si distrugge sempre all'impatto.
+                            boolean fatal = e.takeDamage(1);
+                            if (fatal) {
+                                System.out.println("IL BOSS È SCONFITTO! (Aura)");
+                                scoreManager.handleEnemyDeath(e, levelManager.getCurrentZone(), activeItems);
+                            }
+                        } else {
+                            eIt.remove();
+                            scoreManager.handleEnemyDeath(e, levelManager.getCurrentZone(), activeItems);
+                            System.out.println("Goblin fulminato dall'Aura!");
+                        }
                         hit = true;
                         break;
                     }

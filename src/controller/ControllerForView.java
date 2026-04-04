@@ -165,6 +165,10 @@ public class ControllerForView implements IControllerForView {
         return Model.getInstance().getEnemyStateStartTime(index);
     }
 
+    // --- CREPE DEL BOSS ---
+    @Override public int getCrackCount()         { return Model.getInstance().getCrackCount(); }
+    @Override public int getCrackRow(int index)  { return Model.getInstance().getCrackRow(index); }
+    @Override public int getCrackCol(int index)  { return Model.getInstance().getCrackCol(index); }
 
     public static IControllerForView getInstance() {
         if (instance == null) instance = new ControllerForView();

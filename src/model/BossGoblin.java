@@ -106,8 +106,16 @@ public class BossGoblin extends Enemy {
 
             case TELEGRAPH:
                 if (elapsed > 1000) {
-                    // TODO: Metteremo qui lo spawn dell'onda di lava!
-                    System.out.println("BOSS LANCIA LAVA!");
+                    // Scatta nell'attacco: genera l'onda di crepe nella direzione in cui guarda
+                    int bossRow = (int) Math.round(this.y);
+                    int bossCol = (int) Math.round(this.x);
+                    model.getMapManager().spawnCrackWave(
+                        bossRow, bossCol,
+                        this.currentDirection,
+                        model.getGameAreaArray()
+                    );
+                    System.out.println("BOSS WAVE lanciata! Dir: " + this.currentDirection
+                        + " da [" + bossRow + ", " + bossCol + "]");
                     changeState(BossState.EXHAUSTED);
                 }
                 break;

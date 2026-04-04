@@ -115,4 +115,9 @@ public interface IModel {
     String getEnemyState(int index);
     boolean isEnemyInvincible(int index);
     long getEnemyStateStartTime(int index);
+
+    // --- CREPE DEL BOSS (Floor Crack overlay) ---
+    int getCrackCount();
+    int getCrackRow(int index);
+    int getCrackCol(int index);
 }

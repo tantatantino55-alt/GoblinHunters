@@ -230,50 +230,42 @@ class MapManager {
      * @param map        La mappa logica corrente (usata solo per leggere i blocchi)
      */
     void spawnCrackWave(int originRow, int originCol, Direction dir, int[][] map) {
-        // Evita di aggiungere crepe duplicate nella stessa cella
-        activeCracks.removeIf(c -> (c.row == originRow && c.col == originCol));
-
-        // Calcola i 3 offset laterali (centro, sinistra, destra rispetto alla direzione)
         int[][] laterals = getLateralOffsets(dir);
 
         for (int[] lateral : laterals) {
-            int dr = lateral[0];   // offset riga per il lato
-            int dc = lateral[1];   // offset colonna per il lato
+            int dr = lateral[0];
+            int dc = lateral[1];
 
-            // Direzione frontale di propagazione
             int[] front = getFrontDelta(dir);
             int fdr = front[0];
             int fdc = front[1];
 
-            // Propaga frontalmente dalla cella laterale
             int startRow = originRow + dr;
             int startCol = originCol + dc;
 
-            // Propaga dalla posizione di origine in avanti
-            for (int step = 0; step <= 12; step++) {  // 12 = max diagonale arena
+            for (int step = 0; step <= 12; step++) {
                 int r = startRow + fdr * step;
                 int c = startCol + fdc * step;
 
-                // Fuori bounds → fermati
                 if (r < 0 || r >= Config.GRID_HEIGHT || c < 0 || c >= Config.GRID_WIDTH) break;
 
                 int cell = map[r][c];
-
-                // Blocco indistruttibile → questa corsia si ferma qui
                 if (cell == Config.CELL_INDESTRUCTIBLE_BLOCK ||
                     cell == Config.CELL_ORNAMENT             ||
                     cell == Config.CELL_SKELETON_START) break;
 
-                // Cella valida: aggiungi la crepa se non esiste già
-                if (!hasCrackAt(r, c)) {
+                // TASK 3: se la cella ha gia' una crepa, resetta il timer
+                // invece di aggiungerne una duplicata.
+                FloorCrack existing = getCrackAt(r, c);
+                if (existing != null) {
+                    existing.resetTicks(FloorCrack.CRACK_DURATION_TICKS);
+                } else {
                     activeCracks.add(new FloorCrack(r, c));
                 }
-
-                // I blocchi distruttibili vengono attraversati (le crepe passano sopra)
             }
         }
 
-        System.out.println("BOSS WAVE: " + activeCracks.size() + " celle crepate generate.");
+        System.out.println("BOSS WAVE: " + activeCracks.size() + " celle crepate totali.");
     }
 
     /**
@@ -290,12 +282,24 @@ class MapManager {
         }
     }
 
-    /** Controlla se una cella ha già una crepa attiva. */
+    /** Controlla se una cella ha gia' una crepa attiva (booleano). */
     boolean hasCrackAt(int row, int col) {
         for (FloorCrack c : activeCracks) {
             if (c.row == row && c.col == col) return true;
         }
         return false;
+    }
+
+    /**
+     * Ritorna la FloorCrack esistente nella cella indicata, oppure null
+     * se non c'e' nessuna crepa in quella posizione.
+     * Usato da spawnCrackWave per resettare il timer invece di duplicare.
+     */
+    FloorCrack getCrackAt(int row, int col) {
+        for (FloorCrack c : activeCracks) {
+            if (c.row == row && c.col == col) return c;
+        }
+        return null;
     }
 
     /** Rimuove tutte le crepe (es. al cambio livello). */

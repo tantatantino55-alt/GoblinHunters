@@ -442,12 +442,19 @@ public class ConcreteDrawer extends AbstractDrawer {
             // Calcolo del frame corrente
             int currentFrame = 0;
             if (state.equals("DYING")) {
-                // Animazione di morte lenta e progressiva (non ciclica)
                 long timePassed = System.currentTimeMillis()
                         - ControllerForView.getInstance().getEnemyStateStartTime(i);
-                currentFrame = (int) (timePassed / 150); // Più lenta per godersela
+
+                // TASK 4 – Dissolvenza: lampeggio nell'ultimo secondo (1000-2000 ms)
+                if (timePassed > 1000) {
+                    if ((System.currentTimeMillis() / utils.Config.FLICKER_DELAY_MS) % 2 == 0) {
+                        continue; // salta il frame: effetto svanimento
+                    }
+                }
+
+                currentFrame = (int) (timePassed / 150);
                 if (currentFrame >= frames) {
-                    currentFrame = frames - 1; // SI FERMA SULL'ULTIMO FRAME!
+                    currentFrame = frames - 1; // blocca sull'ultimo frame
                 }
             } else {
                 currentFrame = (int) (System.currentTimeMillis() / 80) % frames;

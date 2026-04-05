@@ -648,7 +648,22 @@ public class Model implements IModel {
     }
 
     private void updateEnemies() {
-        for (Enemy e : enemies) e.updateBehavior();
+        Iterator<Enemy> it = enemies.iterator();
+        while (it.hasNext()) {
+            Enemy e = it.next();
+
+            // TASK 4: despawn cadavere Boss dopo 2 secondi nello stato DYING
+            if (e instanceof BossGoblin boss && boss.isReadyToDespawn()) {
+                it.remove();
+                // Il boss e' gia' morto: scoreManager.handleEnemyDeath e' gia' stato
+                // chiamato in checkExplosionDamage / updateProjectiles al momento del
+                // colpo fatale, quindi qui non lo richiamiamo.
+                System.out.println("Boss rimosso dalla lista (despawn).");
+                continue;
+            }
+
+            e.updateBehavior();
+        }
     }
 
     private void checkExplosionDamage(int row, int col) {

@@ -26,8 +26,19 @@ class FloorCrack {
         return remainingTicks <= 0;
     }
 
-    /** Ritorna il numero di tick già trascorsi (utile per animazioni View, se necessario). */
+    /** Ritorna il numero di tick gia' trascorsi (utile per animazioni View). */
     int getElapsedTicks() {
         return CRACK_DURATION_TICKS - remainingTicks;
+    }
+
+    /**
+     * Resetta il timer della crepa al valore indicato.
+     * Usato da MapManager quando un nuovo attacco sovrascrive una crepa esistente
+     * sulla stessa cella: il timer riparte da capo invece di essere ignorato.
+     *
+     * @param ticks nuova durata in tick (tipicamente CRACK_DURATION_TICKS)
+     */
+    void resetTicks(int ticks) {
+        this.remainingTicks = ticks;
     }
 }

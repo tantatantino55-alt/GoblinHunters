@@ -103,82 +103,169 @@ public class ConcreteDrawer extends AbstractDrawer {
         }
     }
 
+    // =========================================================================
+    // HUD GRAFICO
+    // =========================================================================
+
+    /**
+     * Disegna l'HUD laterale destro con:
+     * - Statistiche testuali (FPS, vite, tempo)
+     * - Icone grafiche per consumabili e power-up con:
+     *     • Scala di grigi + alpha 50% quando non attivi
+     *     • Colori pieni quando attivi
+     *     • Contatore testo per i consumabili
+     *     • Animazione "scale-up" al momento della raccolta
+     */
     private void drawHUD(Graphics2D g2d) {
         // --- 1. CALCOLO FPS ---
         frameCount++;
         long currentTime = System.currentTimeMillis();
         if (currentTime - lastFpsTime >= 1000) {
-            currentFPS = frameCount; // Salva i frame accumulati nell'ultimo secondo
-            frameCount = 0; // Azzera il contatore
-            lastFpsTime = currentTime; // Resetta il timer
+            currentFPS = frameCount;
+            frameCount = 0;
+            lastFpsTime = currentTime;
         }
 
-        // --- 2. RECUPERO DATI TRAMITE CONTROLLER ---
-        int lives = controller.ControllerForView.getInstance().getPlayerLives();
-        int totalSeconds = controller.ControllerForView.getInstance().getElapsedTimeInSeconds();
+        // --- 2. RECUPERO DATI ---
+        controller.IControllerForView ctrl = controller.ControllerForView.getInstance();
+        int lives       = ctrl.getPlayerLives();
+        int totalSec    = ctrl.getElapsedTimeInSeconds();
+        int bombAmmo    = ctrl.getPlayerBombAmmo();
+        int auraAmmo    = ctrl.getPlayerAuraAmmo();
+        boolean shield  = ctrl.hasPlayerShield();
+        boolean radius  = ctrl.hasPlayerMaxRadius();
+        boolean speed   = ctrl.hasPlayerMaxSpeed();
 
-        // Calcolo minuti e secondi formattati (es. 01:05)
-        int minutes = totalSeconds / 60;
-        int seconds = totalSeconds % 60;
-        String timeString = String.format("%02d:%02d", minutes, seconds);
+        String timeString = String.format("%02d:%02d", totalSec / 60, totalSec % 60);
 
-        int bombAmmo = controller.ControllerForView.getInstance().getPlayerBombAmmo();
-        int auraAmmo = controller.ControllerForView.getInstance().getPlayerAuraAmmo();
-        boolean hasShield = controller.ControllerForView.getInstance().hasPlayerShield();
-        boolean hasMaxRadius = controller.ControllerForView.getInstance().hasPlayerMaxRadius();
-        boolean hasMaxSpeed = controller.ControllerForView.getInstance().hasPlayerMaxSpeed();
-
-        // --- 3. IMPOSTAZIONI DI LAYOUT (TUTTO A DESTRA) ---
-        // Calcoliamo la X saltando la griglia E la cornice (che è larga 1 TILE_SIZE)
+        // --- 3. LAYOUT ---
         int panelX = utils.Config.GRID_OFFSET_X
                 + (utils.Config.GRID_WIDTH * utils.Config.TILE_SIZE)
-                + utils.Config.TILE_SIZE // <--- Salto della cornice!
-                + 30; // Margine di respiro dalla cornice al testo
+                + utils.Config.TILE_SIZE
+                + 18;
 
-        int currentY = 60; // Punto di partenza dall'alto
-        int lineGap = 30; // Spazio standard tra una riga di testo e l'altra
-        int sectionGap = 20; // Spazio extra per separare le diverse sezioni
+        int currentY = 55;
+        int lineGap  = 28;
 
-        // --- 4. DISEGNO STATISTICHE BASE (Spostate a destra!) ---
+        // --- 4. TESTO STATISTICHE ---
         g2d.setColor(Color.WHITE);
-        g2d.setFont(new Font("Arial", Font.BOLD, 20));
-
-        g2d.drawString("FPS: " + currentFPS, panelX, currentY);
-        currentY += lineGap;
-        g2d.drawString("VITE: " + lives, panelX, currentY);
-        currentY += lineGap;
-        g2d.drawString("TEMPO: " + timeString, panelX, currentY);
-
-        currentY += lineGap + sectionGap;
-
-        // --- 5. DISEGNO MUNIZIONI ---
         g2d.setFont(new Font("Arial", Font.BOLD, 18));
-        g2d.setColor(Color.YELLOW);
-        g2d.drawString("MUNIZIONI:", panelX, currentY);
-        currentY += lineGap;
+        g2d.drawString("FPS: "   + currentFPS, panelX, currentY);  currentY += lineGap;
+        g2d.drawString("VITE: "  + lives,      panelX, currentY);  currentY += lineGap;
+        g2d.drawString("TEMPO: " + timeString,  panelX, currentY);  currentY += lineGap + 14;
 
-        g2d.setFont(new Font("Arial", Font.PLAIN, 16));
-        g2d.setColor(Color.WHITE);
-        g2d.drawString("Bombe: " + bombAmmo, panelX, currentY);
-        currentY += lineGap;
-        g2d.drawString("Magia: " + auraAmmo, panelX, currentY);
+        // --- 5. SEZIONE CONSUMABILI ---
+        g2d.setFont(new Font("Arial", Font.BOLD, 14));
+        g2d.setColor(new Color(255, 220, 80));
+        g2d.drawString("MUNIZIONI", panelX, currentY);
+        currentY += 20;
 
-        currentY += lineGap + sectionGap;
+        drawHudIcon(g2d, panelX, currentY,
+                utils.ItemType.AMMO_BOMB, "CONSUMABLES", 0,
+                "CONSUMABLES_0_gray",
+                bombAmmo > 0, "x" + bombAmmo);
+        currentY += 60;
 
-        // --- 6. DISEGNO POTENZIAMENTI ---
-        g2d.setFont(new Font("Arial", Font.BOLD, 18));
-        g2d.setColor(Color.CYAN);
-        g2d.drawString("POTENZIAMENTI:", panelX, currentY);
-        currentY += lineGap;
+        drawHudIcon(g2d, panelX, currentY,
+                utils.ItemType.AMMO_AURA, "CONSUMABLES", 1,
+                "CONSUMABLES_1_gray",
+                auraAmmo > 0, "x" + auraAmmo);
+        currentY += 68;
 
-        g2d.setFont(new Font("Arial", Font.PLAIN, 16));
-        g2d.setColor(Color.WHITE);
-        g2d.drawString("Scudo: " + (hasShield ? "ATTIVO" : "NO"), panelX, currentY);
-        currentY += lineGap;
-        g2d.drawString("Raggio Max: " + (hasMaxRadius ? "SI" : "NO"), panelX, currentY);
-        currentY += lineGap;
-        g2d.drawString("Velocità Max: " + (hasMaxSpeed ? "SI" : "NO"), panelX, currentY);
+        // --- 6. SEZIONE POWER-UP ---
+        g2d.setFont(new Font("Arial", Font.BOLD, 14));
+        g2d.setColor(new Color(100, 220, 255));
+        g2d.drawString("POTENZIAMENTI", panelX, currentY);
+        currentY += 20;
+
+        drawHudIcon(g2d, panelX, currentY,
+                utils.ItemType.POWER_SHIELD, "POWER_UPS", 0,
+                "POWER_UPS_0_gray",
+                shield, null);
+        currentY += 60;
+
+        drawHudIcon(g2d, panelX, currentY,
+                utils.ItemType.POWER_RADIUS, "POWER_UPS", 1,
+                "POWER_UPS_1_gray",
+                radius, null);
+        currentY += 60;
+
+        drawHudIcon(g2d, panelX, currentY,
+                utils.ItemType.POWER_SPEED, "POWER_UPS", 2,
+                "POWER_UPS_2_gray",
+                speed, null);
     }
+
+    /**
+     * Disegna una singola icona HUD con stato inattivo/attivo e animazione juicy.
+     *
+     * @param g2d         contesto grafico
+     * @param x           X angolo in alto a sinistra dell'icona nella sua dimensione base
+     * @param y           Y angolo in alto a sinistra
+     * @param itemType    tipo item (per HudItemAnimator)
+     * @param colorKey    chiave SpriteManager per la versione a colori
+     * @param colorFrame  frame index per la versione a colori
+     * @param grayKey     chiave grayscale cache
+     * @param active      true = colorato/opaco, false = grigio/semitrasparente
+     * @param counter     stringa contatore (es. "x3") o null se non serve
+     */
+    private void drawHudIcon(Graphics2D g2d,
+                              int x, int y,
+                              utils.ItemType itemType,
+                              String colorKey, int colorFrame,
+                              String grayKey,
+                              boolean active,
+                              String counter) {
+
+        final int BASE_SIZE = 48; // dimensione base dell'icona in pixel
+
+        // A. Scegli l'immagine giusta
+        BufferedImage img;
+        Composite originalComposite = g2d.getComposite();
+
+        if (active) {
+            img = spriteManager.getSprite(colorKey, colorFrame);
+            // Opacità 100%
+            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
+        } else {
+            img = spriteManager.getGrayscale(grayKey);
+            if (img == null) img = spriteManager.getSprite(colorKey, colorFrame); // fallback
+            // Opacità 50% per icone inattive
+            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.50f));
+        }
+
+        // B. Scala "juicy" dall'HudItemAnimator
+        float scale = HudItemAnimator.getInstance().getScaleFactor(itemType);
+        int drawSize = Math.round(BASE_SIZE * scale);
+
+        // Centra l'icona ingrandita/rimpicciolita rispetto alla posizione base
+        int offset = (drawSize - BASE_SIZE) / 2;
+        int drawX  = x - offset;
+        int drawY  = y - offset;
+
+        // C. Disegna immagine
+        if (img != null) {
+            g2d.drawImage(img, drawX, drawY, drawSize, drawSize, null);
+        }
+
+        // D. Ripristina composite originale
+        g2d.setComposite(originalComposite);
+
+        // E. Contatore testo (solo per consumabili attivi)
+        if (counter != null) {
+            int textX = x + BASE_SIZE + 4;
+            int textY = y + BASE_SIZE / 2 + 6;
+            if (active) {
+                g2d.setFont(new Font("Arial", Font.BOLD, 15));
+                g2d.setColor(Color.WHITE);
+            } else {
+                g2d.setFont(new Font("Arial", Font.PLAIN, 14));
+                g2d.setColor(new Color(140, 140, 140));
+            }
+            g2d.drawString(counter, textX, textY);
+        }
+    }
+
 
     /**
      * Disegna la mappa a strati:

@@ -767,6 +767,9 @@ public class Model implements IModel {
             case POWER_RADIUS -> player.setMaxRadius(true);
             case POWER_SPEED  -> player.setMaxSpeed(true);
         }
+        // Notifica la View (tramite il Controller) per l'animazione HUD
+        controller.ControllerForView.getInstance().triggerPickupAnimation(type);
         System.out.println("RACCOLTO: " + type.name());
     }
+
 }

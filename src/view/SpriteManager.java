@@ -8,8 +8,10 @@ public class SpriteManager {
 
     private static SpriteManager instance = null;
 
-    private final Map<Object, BufferedImage[]> animations = new HashMap<>();
-    private final Map<String, BufferedImage> sheetsCache = new HashMap<>();
+    private final Map<Object, BufferedImage[]> animations  = new HashMap<>();
+    private final Map<String, BufferedImage>   sheetsCache = new HashMap<>();
+    /** Cache delle versioni in scala di grigi (generate UNA SOLA VOLTA). */
+    private final Map<String, BufferedImage>   grayscaleCache = new HashMap<>();
 
     private SpriteManager() {}
 
@@ -99,4 +101,38 @@ public class SpriteManager {
         }
         return sheetsCache.get(path);
     }
-}
+
+    // ========================================================================
+    // 5. GRAYSCALE CACHE (generata UNA SOLA VOLTA dal ResourceLoader)
+    // ========================================================================
+
+    /**
+     * Genera e memorizza la versione in scala di grigi di un frame già caricato.
+     * Deve essere chiamato SOLO durante il caricamento risorse (non ogni frame).
+     *
+     * @param key      chiave animazione (es. "POWER_UPS", "CONSUMABLES")
+     * @param frameIdx indice del frame da convertire
+     * @param cacheKey chiave univoca per recuperarla dopo (es. "POWER_UPS_0_gray")
+     */
+    public void buildGrayscale(Object key, int frameIdx, String cacheKey) {
+        BufferedImage src = getSprite(key, frameIdx);
+        if (src == null) return;
+
+        // Creiamo l'immagine destinazione ARGB per mantenere il canale alpha
+        BufferedImage gray = new BufferedImage(
+                src.getWidth(), src.getHeight(), BufferedImage.TYPE_INT_ARGB);
+
+        java.awt.image.ColorConvertOp op = new java.awt.image.ColorConvertOp(
+                java.awt.color.ColorSpace.getInstance(java.awt.color.ColorSpace.CS_GRAY), null);
+        op.filter(src, gray);
+        grayscaleCache.put(cacheKey, gray);
+    }
+
+    /**
+     * Recupera l'immagine in scala di grigi precedentemente cachata.
+     * Ritorna null se buildGrayscale non è stato chiamato con questa chiave.
+     */
+    public BufferedImage getGrayscale(String cacheKey) {
+        return grayscaleCache.get(cacheKey);
+    }
+}

@@ -174,8 +174,16 @@ public class ControllerForView implements IControllerForView {
     @Override public int getBossHP()    { return Model.getInstance().getBossHP(); }
     @Override public int getBossMaxHP() { return Model.getInstance().getBossMaxHP(); }
 
+    // --- HUD JUICY ANIMATION TRIGGER ---
+    @Override
+    public void triggerPickupAnimation(utils.ItemType type) {
+        // Il Controller fa da ponte: il Model non conosce la View.
+        // Qui deleghiamo direttamente all'HudItemAnimator (componente View puro).
+        view.HudItemAnimator.getInstance().triggerPickupAnimation(type);
+    }
+
     public static IControllerForView getInstance() {
         if (instance == null) instance = new ControllerForView();
         return instance;
     }
-}
+}

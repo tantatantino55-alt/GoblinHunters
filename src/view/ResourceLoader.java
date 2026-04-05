@@ -29,9 +29,8 @@ public class ResourceLoader {
         loadPowerUps(sm);
         loadConsumables(sm);
 
-
-
-
+        // --- Grayscale HUD: genera una sola volta le versioni "non raccolto" ---
+        buildGrayscaleHudIcons(sm);
     }
 
     private void loadPlayerAnimations(SpriteManager sm) {
@@ -335,6 +334,20 @@ public class ResourceLoader {
         System.out.println("ResourceLoader: Consumabili caricati (Frame 63-64).");
     }
 
+    /**
+     * Pre-genera le versioni in scala di grigi di tutti gli sprite HUD.
+     * Chiamato UNA SOLA VOLTA al termine del caricamento normali risorse.
+     * Convenzione chiave: "CONSUMABLES_0_gray", "POWER_UPS_2_gray", ecc.
+     */
+    private void buildGrayscaleHudIcons(SpriteManager sm) {
+        // Consumabili: frame 0 = bomba extra, frame 1 = aura extra
+        sm.buildGrayscale("CONSUMABLES", 0, "CONSUMABLES_0_gray");
+        sm.buildGrayscale("CONSUMABLES", 1, "CONSUMABLES_1_gray");
+        // Power-up:    frame 0 = scudo,  frame 1 = raggio, frame 2 = velocità
+        sm.buildGrayscale("POWER_UPS",   0, "POWER_UPS_0_gray");
+        sm.buildGrayscale("POWER_UPS",   1, "POWER_UPS_1_gray");
+        sm.buildGrayscale("POWER_UPS",   2, "POWER_UPS_2_gray");
+        System.out.println("ResourceLoader: Icone HUD grayscale generate.");
+    }
+
 }
-
-

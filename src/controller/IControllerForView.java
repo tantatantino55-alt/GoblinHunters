@@ -103,4 +103,8 @@ public interface IControllerForView {
     int getCrackCount();
     int getCrackRow(int index);
     int getCrackCol(int index);
+
+    // --- HUD BOSS ---
+    int getBossHP();
+    int getBossMaxHP();
 }

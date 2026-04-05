@@ -29,10 +29,10 @@ public class ConcreteDrawer extends AbstractDrawer {
         g2d.setColor(Color.BLACK);
         g2d.fillRect(0, 0, getDrawingWidth(), getDrawingHeight());
         drawMap(g2d);
-        drawCracks(g2d);         // Crepe del Boss: overlay sul pavimento
-        drawPortal(g2d);         // 1. Disegna l'allarme se scopri il portale spawner
+        drawCracks(g2d); // Crepe del Boss: overlay sul pavimento
+        drawPortal(g2d); // 1. Disegna l'allarme se scopri il portale spawner
         drawLevelExitGate(g2d);
-        drawDestructions(g2d);   // Qui vengono disegnati i blocchi che esplodono
+        drawDestructions(g2d); // Qui vengono disegnati i blocchi che esplodono
         drawFire(g2d);
         drawBombs(g2d);
         drawCollectibles(g2d);
@@ -49,6 +49,7 @@ public class ConcreteDrawer extends AbstractDrawer {
         }
 
         drawDebugGrid(g2d);
+        drawBossHUD(g2d); // Task 4: barra HP del boss (visibile solo in zona 2)
         drawHUD(g2d);
     }
 
@@ -416,16 +417,25 @@ public class ConcreteDrawer extends AbstractDrawer {
             String state = controller.ControllerForView.getInstance().getEnemyState(i);
             int frames = utils.Config.GOBLIN_RUN_FRAMES;
 
-            // Ricalcolo i frame in base allo stato del Boss
+            // TASK 1 + 3: Mappatura stati Boss → chiave animazione
             if (type == utils.EnemyType.BOSS) {
-                if (state.equals("FURY") || state.equals("EXHAUSTED")) {
-                    state = "RUN";
-                    frames = utils.Config.BOSS_RUN_FRAMES;
-                } else if (state.equals("TELEGRAPH")) {
-                    state = "IDLE";
-                    frames = utils.Config.BOSS_IDLE_FRAMES;
-                } else if (state.equals("DYING")) {
-                    frames = utils.Config.BOSS_DYING_FRAMES;
+                switch (state) {
+                    case "FURY", "EXHAUSTED" -> {
+                        state = "RUN";
+                        frames = utils.Config.BOSS_RUN_FRAMES;
+                    }
+                    case "TELEGRAPH" -> {
+                        // Task 1: TELEGRAPH mostra l'animazione ATTACK (caricamento)
+                        state = "ATTACK";
+                        frames = utils.Config.BOSS_ATTACK_FRAMES;
+                    }
+                    case "IDLE_EXHAUSTED" -> {
+                        // Task 3: IDLE_EXHAUSTED mostra l'animazione IDLE (riposo)
+                        state = "IDLE";
+                        frames = utils.Config.BOSS_IDLE_FRAMES;
+                    }
+                    case "DYING" -> frames = utils.Config.BOSS_DYING_FRAMES;
+                    // default (RUN, IDLE, ATTACK già corretti) → nessun override
                 }
             }
 
@@ -479,7 +489,8 @@ public class ConcreteDrawer extends AbstractDrawer {
      */
     private void drawCracks(Graphics2D g2d) {
         int count = controller.ControllerForView.getInstance().getCrackCount();
-        if (count == 0) return;
+        if (count == 0)
+            return;
 
         // Recupera la tile crepata (indice Config.CELL_CRACKED_FLOOR = 3)
         BufferedImage crackTile = tileManager.getTileImage(utils.Config.CELL_CRACKED_FLOOR);
@@ -503,7 +514,7 @@ public class ConcreteDrawer extends AbstractDrawer {
                 g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.6f));
                 g2d.setColor(new Color(220, 80, 0));
                 g2d.fillRect(screenX + 4, screenY + 4,
-                             utils.Config.TILE_SIZE - 8, utils.Config.TILE_SIZE - 8);
+                        utils.Config.TILE_SIZE - 8, utils.Config.TILE_SIZE - 8);
             }
         }
 
@@ -749,4 +760,51 @@ public class ConcreteDrawer extends AbstractDrawer {
             }
         }
     }
-}
+
+    /**
+     * TASK 4 – Disegna la barra HP del Boss centrata in basso.
+     * Visibile solo in Zona 2 (arena boss) e solo se il Boss è ancora vivo.
+     */
+    private void drawBossHUD(Graphics2D g2d) {
+        // Visibile solo in zona 2
+        if (controller.ControllerForView.getInstance().getCurrentTheme() == null) return;
+
+        int bossHP    = controller.ControllerForView.getInstance().getBossHP();
+        int bossMaxHP = controller.ControllerForView.getInstance().getBossMaxHP();
+        if (bossMaxHP <= 0 || bossHP <= 0) return; // Nessun boss attivo o già sconfitto
+
+        // --- Dimensioni e posizione della barra ---
+        int barW    = 500;   // larghezza totale
+        int barH    = 22;    // altezza barra
+        int barX    = (utils.Config.WINDOW_PREFERRED_WIDTH - barW) / 2;
+        int barY    = utils.Config.WINDOW_PREFERRED_HEIGHT - 55; // 55 px dal basso
+
+        float ratio = Math.max(0f, Math.min(1f, (float) bossHP / bossMaxHP));
+
+        // 1. Sfondo scuro (bordo)
+        g2d.setColor(new Color(10, 10, 10, 210));
+        g2d.fillRoundRect(barX - 4, barY - 26, barW + 8, barH + 34, 12, 12);
+
+        // 2. Etichetta "GOBLIN BOSS"
+        g2d.setColor(Color.WHITE);
+        g2d.setFont(new Font("Arial", Font.BOLD, 14));
+        java.awt.FontMetrics fm = g2d.getFontMetrics();
+        String label = "GOBLIN BOSS  " + bossHP + " / " + bossMaxHP;
+        int labelX = barX + (barW - fm.stringWidth(label)) / 2;
+        g2d.drawString(label, labelX, barY - 6);
+
+        // 3. Sfondo grigio della barra
+        g2d.setColor(new Color(60, 60, 60));
+        g2d.fillRect(barX, barY, barW, barH);
+
+        // 4. Barra rossa proporzionale agli HP rimanenti
+        //    Diventa arancione sotto il 50% (enrage) come segnale visivo
+        Color barColor = (ratio > 0.5f) ? new Color(200, 30, 30) : new Color(220, 100, 0);
+        g2d.setColor(barColor);
+        g2d.fillRect(barX, barY, (int)(barW * ratio), barH);
+
+        // 5. Bordo esterno della barra
+        g2d.setColor(new Color(180, 20, 20));
+        g2d.drawRect(barX, barY, barW, barH);
+    }
+}

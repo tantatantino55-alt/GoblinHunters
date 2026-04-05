@@ -306,6 +306,23 @@ public class Model implements IModel {
     @Override public int getCrackRow(int i)  { return (i >= 0 && i < mapManager.getCrackCount()) ? mapManager.getCrackRow(i) : 0; }
     @Override public int getCrackCol(int i)  { return (i >= 0 && i < mapManager.getCrackCount()) ? mapManager.getCrackCol(i) : 0; }
 
+    // --- HUD BOSS: cerca il BossGoblin nella lista enemies ---
+    @Override
+    public int getBossHP() {
+        for (Enemy e : enemies) {
+            if (e instanceof BossGoblin boss) return boss.getHP();
+        }
+        return 0;
+    }
+
+    @Override
+    public int getBossMaxHP() {
+        for (Enemy e : enemies) {
+            if (e instanceof BossGoblin) return BossGoblin.MAX_HP;
+        }
+        return 0;
+    }
+
     // ==========================================================
     // IModel – LIVELLI / GATE / PORTALE
     // ==========================================================

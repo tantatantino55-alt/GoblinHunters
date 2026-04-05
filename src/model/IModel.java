@@ -120,4 +120,10 @@ public interface IModel {
     int getCrackCount();
     int getCrackRow(int index);
     int getCrackCol(int index);
+
+    // --- HUD BOSS ---
+    /** Ritorna gli HP correnti del Boss (0 se non presente). */
+    int getBossHP();
+    /** Ritorna gli HP massimi del Boss (0 se non presente). */
+    int getBossMaxHP();
 }

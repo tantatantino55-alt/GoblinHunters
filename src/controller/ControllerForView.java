@@ -170,6 +170,10 @@ public class ControllerForView implements IControllerForView {
     @Override public int getCrackRow(int index)  { return Model.getInstance().getCrackRow(index); }
     @Override public int getCrackCol(int index)  { return Model.getInstance().getCrackCol(index); }
 
+    // --- HUD BOSS ---
+    @Override public int getBossHP()    { return Model.getInstance().getBossHP(); }
+    @Override public int getBossMaxHP() { return Model.getInstance().getBossMaxHP(); }
+
     public static IControllerForView getInstance() {
         if (instance == null) instance = new ControllerForView();
         return instance;

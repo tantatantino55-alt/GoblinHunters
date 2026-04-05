@@ -44,7 +44,8 @@ public abstract class Enemy extends Entity {
     }
 
     public boolean takeDamage(int damage) {
-        if (isDead || isInvincible()) return false;
+        if (isDead || isInvincible())
+            return false;
 
         hp -= damage;
         if (hp <= 0) {
@@ -56,33 +57,37 @@ public abstract class Enemy extends Entity {
         return false;
     }
 
-    public String getEnemyState() { return "RUN"; }
+    public String getEnemyState() {
+        return "RUN";
+    }
 
-    public long getStateStartTime() { return stateStartTime; }
-
+    public long getStateStartTime() {
+        return stateStartTime;
+    }
 
     // --- LOGICA DI MOVIMENTO ---
 
     protected void moveInDirection() {
-        if (isDead) return;
+        if (isDead)
+            return;
 
-        Model model = (Model) Model.getInstance();
+        IModel model = Model.getInstance();
         double alignSpeed = speed;
 
         double deltaX = 0;
         double deltaY = 0;
 
         switch (currentDirection) {
-            case UP    -> deltaY = -speed;
-            case DOWN  -> deltaY = speed;
-            case LEFT  -> deltaX = -speed;
+            case UP -> deltaY = -speed;
+            case DOWN -> deltaY = speed;
+            case LEFT -> deltaX = -speed;
             case RIGHT -> deltaX = speed;
         }
 
         // MOVIMENTO ORIZZONTALE
         if (deltaX != 0) {
             double nextX = x + deltaX;
-            boolean hitWall  = !model.isWalkable(nextX, y);
+            boolean hitWall = !model.isWalkable(nextX, y);
             boolean hitEnemy = model.isAreaOccupiedByOtherEnemy(nextX, y, this);
 
             if (!hitWall && !hitEnemy) {
@@ -91,8 +96,10 @@ public abstract class Enemy extends Entity {
                 double diffY = y - idealY;
                 if (Math.abs(diffY) > 0.001) {
                     double step = Math.min(alignSpeed, Math.abs(diffY));
-                    if (diffY > 0) this.y -= step;
-                    else           this.y += step;
+                    if (diffY > 0)
+                        this.y -= step;
+                    else
+                        this.y += step;
                 }
             } else if (hitEnemy) {
                 handleEnemyCollision();
@@ -103,7 +110,7 @@ public abstract class Enemy extends Entity {
         // MOVIMENTO VERTICALE
         else if (deltaY != 0) {
             double nextY = y + deltaY;
-            boolean hitWall  = !model.isWalkable(x, nextY);
+            boolean hitWall = !model.isWalkable(x, nextY);
             boolean hitEnemy = model.isAreaOccupiedByOtherEnemy(x, nextY, this);
 
             if (!hitWall && !hitEnemy) {
@@ -112,8 +119,10 @@ public abstract class Enemy extends Entity {
                 double diffX = x - idealX;
                 if (Math.abs(diffX) > 0.001) {
                     double step = Math.min(alignSpeed, Math.abs(diffX));
-                    if (diffX > 0) this.x -= step;
-                    else           this.x += step;
+                    if (diffX > 0)
+                        this.x -= step;
+                    else
+                        this.x += step;
                 }
             } else if (hitEnemy) {
                 handleEnemyCollision();
@@ -164,24 +173,29 @@ public abstract class Enemy extends Entity {
 
     protected Direction getOppositeDirection() {
         return switch (currentDirection) {
-            case UP    -> Direction.DOWN;
-            case DOWN  -> Direction.UP;
-            case LEFT  -> Direction.RIGHT;
+            case UP -> Direction.DOWN;
+            case DOWN -> Direction.UP;
+            case LEFT -> Direction.RIGHT;
             case RIGHT -> Direction.LEFT;
         };
     }
 
-    protected void resetMemory() { }
+    protected void resetMemory() {
+    }
 
     protected java.util.List<Direction> getValidDirections() {
         java.util.List<Direction> valid = new java.util.ArrayList<>();
         double step = 0.5;
-        Model model = (Model) Model.getInstance();
+        IModel model = Model.getInstance();
 
-        if (model.isWalkable(x, y - step) && !model.isAreaOccupiedByOtherEnemy(x, y - step, this)) valid.add(Direction.UP);
-        if (model.isWalkable(x, y + step) && !model.isAreaOccupiedByOtherEnemy(x, y + step, this)) valid.add(Direction.DOWN);
-        if (model.isWalkable(x - step, y) && !model.isAreaOccupiedByOtherEnemy(x - step, y, this)) valid.add(Direction.LEFT);
-        if (model.isWalkable(x + step, y) && !model.isAreaOccupiedByOtherEnemy(x + step, y, this)) valid.add(Direction.RIGHT);
+        if (model.isWalkable(x, y - step) && !model.isAreaOccupiedByOtherEnemy(x, y - step, this))
+            valid.add(Direction.UP);
+        if (model.isWalkable(x, y + step) && !model.isAreaOccupiedByOtherEnemy(x, y + step, this))
+            valid.add(Direction.DOWN);
+        if (model.isWalkable(x - step, y) && !model.isAreaOccupiedByOtherEnemy(x - step, y, this))
+            valid.add(Direction.LEFT);
+        if (model.isWalkable(x + step, y) && !model.isAreaOccupiedByOtherEnemy(x + step, y, this))
+            valid.add(Direction.RIGHT);
 
         return valid;
     }
@@ -189,13 +203,14 @@ public abstract class Enemy extends Entity {
     protected void changeDirection() {
         java.util.List<Direction> valid = getValidDirections();
         Direction opposite = switch (currentDirection) {
-            case UP    -> Direction.DOWN;
-            case DOWN  -> Direction.UP;
-            case LEFT  -> Direction.RIGHT;
+            case UP -> Direction.DOWN;
+            case DOWN -> Direction.UP;
+            case LEFT -> Direction.RIGHT;
             case RIGHT -> Direction.LEFT;
         };
 
-        if (valid.size() > 1) valid.remove(opposite);
+        if (valid.size() > 1)
+            valid.remove(opposite);
         if (!valid.isEmpty()) {
             currentDirection = valid.get(random.nextInt(valid.size()));
         }
@@ -206,6 +221,11 @@ public abstract class Enemy extends Entity {
     }
 
     // getX() e getY() sono ereditati da Entity
-    public Direction getDirection() { return currentDirection; }
-    public EnemyType getType()      { return type; }
+    public Direction getDirection() {
+        return currentDirection;
+    }
+
+    public EnemyType getType() {
+        return type;
+    }
 }

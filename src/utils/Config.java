@@ -1,380 +1,238 @@
 package utils;
 
+/**
+ * Facade di compatibilità.
+ * Tutte le costanti sono state migrate in:
+ *   - {@link LogicConfig}  → logica di gioco (Model / Controller)
+ *   - {@link ViewConfig}   → rendering e risorse grafiche (View)
+ *
+ * Questa classe reindirizza ogni costante alla nuova sorgente, così
+ * il codice esistente che importa Config.XYZ continua a compilare
+ * senza modifiche. Nel tempo conviene aggiornare i file uno per uno
+ * per importare direttamente LogicConfig o ViewConfig.
+ */
 public class Config {
-    // --- DIMENSIONI GRIGLIA (LOGICHE) ---
-    public static final int GRID_WIDTH = 13;
-    public static final int GRID_HEIGHT = 11;
-
-    // --- DIMENSIONI RENDERIZZAZIONE (FISICHE - Usate solo dalla View) ---
-    public static final int TILE_SIZE = 64;
-    public static final int GAME_PANEL_WIDTH = GRID_WIDTH * TILE_SIZE;
-    public static final int GAME_PANEL_HEIGHT = GRID_HEIGHT * TILE_SIZE;
-  //  public static final int WINDOW_PREFERRED_WIDTH = 1152;
-   // public static final int WINDOW_PREFERRED_HEIGHT = 896;
-
-    // --- LOGICA PLAYER (Unità Mondo - PURE MVC) ---
-    public static final double ENTITY_LOGICAL_SPEED = 0.05;
-
-    // Hitbox espressa in Unità Mondo (es. 0.5 unità = 32 pixel se tile è 64)
-    public static final double ENTITY_LOGICAL_HITBOX_WIDTH = 0.5;
-    public static final double ENTITY_LOGICAL_HITBOX_HEIGHT = 0.3;
-
-    // --- NUOVE COSTANTI DA AGGIUNGERE ---
-    public static final int SMELL_THRESHOLD_DISTANCE = 6; // Distanza massima inseguimento
-    public static final int SHOOTER_TELEGRAPH_TIME = 60;  // Tempo di mira (tick)
-    public static final double MIN_SPAWN_DISTANCE = 5.0;
-
-// src/utils/Config.java
-
-    // --- LANE CENTERING / CORNER CORRECTION ---
-// Quanto vicino al centro (0.0) deve essere l'asse opposto per permettere il movimento (es. 0.05 = 5% di pixel)
-
-    // Entro quale distanza l'entità viene "attratta" dal centro della corsia (0.45 = quasi mezza cella)
-
-    // Velocità di correzione automatica (spesso uguale o leggermente superiore alla velocità di movimento)
-    public static final double CORNER_CORRECTION_SPEED = 0.05;
-
-    // --- LOGICA NEMICI (GOBLIN) ---
-    // HITBOX GOBLIN (Leggermente più piccoli della cella per non incastrarsi)
-    public static final double GOBLIN_HITBOX_WIDTH = 0.8; // BOSS
-    public static final double GOBLIN_HITBOX_HEIGHT = 0.8; //BOSS
-    // Altezza logica
-    // --- PARAMETRI DI SPAWN ---
-    public static final int MAX_ENEMIES_ON_MAP = 1;           // Requisito: Max 4-6
-    public static final long SPAWN_INTERVAL_MS = 3000;        // Ogni 3 secondi
-    public static final int SPAWN_SAFE_DISTANCE = 2;
-
-
-    // Confini logici del mondo (da 0.0 a 13.0/11.0)
-    public static final double MIN_LOGICAL_X = 0.0;
-    public static final double MAX_LOGICAL_X = (double) GRID_WIDTH - 1.0;
-    public static final double MIN_LOGICAL_Y = 0.0;
-    public static final double MAX_LOGICAL_Y = (double) GRID_HEIGHT - 1.0;
-
-    // --- PARAMETRI RENDER (Solo View) ---
-    //public static final int GRID_OFFSET_X = 160;
-    //public static final int GRID_OFFSET_Y = 46;
-    public static final int PLAYER_PIVOT_Y = 102;
-    public static final int FPS = 60;
-    public static final int GAME_LOOP_DELAY_MS = 1000 / FPS;
-
-    // --- CONFIGURAZIONE ANIMAZIONE PLAYER ---
-    public static final int PLAYER_RUN_FRAMES = 12;   // Numero frame corsa
-    public static final int PLAYER_IDLE_FRAMES = 16;  // Numero frame riposo
-    public static final int PLAYER_ATTACK_FRAMES = 10;
-
-    // --- RISORSE ---
-    public static final String PLAYER1_SHEET = "/wizardmale.png";
-    public static final int ENTITY_FRAME_SIZE = 128;
-    public static final String VILLAGE_SHEET = "/Village.png";
-    public static final String VILLAGE_FRAME="/VillageFrame.png";
-    public static final int VILLAGE_FRAME_INDEX = 3;// Il tuo file unico
-    public static final String SHOOTERGOBLIN_SHEET = "/ShooterGoblin.png";
-    public static final String CHASING_GOBLIN_SHEET = "/ChasingGoblin.png";
-    public static final String COMMON_GOBLIN = "/CommonGoblin.png";
-    public static final String BOSS_GOBLIN_SHEET = "/GoblinBoss.png";
-
-    public static final String FOREST_SHEET = "/Forest.png";
-    public static final String FOREST_FRAME="/ForestFrame.png";
-    public static final int FOREST_FRAME_INDEX = 4;// Il tuo file unico
-    public  static final int THEME_FRAME_INDEX = 30;
-
-    public static final String CAVE_SHEET = "/Cave.png";
-    public static final String CAVE_FRAME="/CaveFrame.png";
-
-    public static final String ORNAMENTS_SHEET = "/Ornaments.png";
-    public static final String CAVE_SKELETON_SHEET = "/CaveSkeleton.png";
-    public static final int CELL_ORNAMENT = 5;
-    public static final int CELL_SKELETON_START = 5;
-    public static final int SKELETON_FRAMES_COUNT = 18;
-    // Nel file Config.java aggiungi/modifica:
-    public static final int CAVE_BUILDING_SIZE = 128; // Dimensione dell'edificio animato
-    public static final int SKELETON_SHEET_COLS = 8;
-
-
-
-
-
-
-    // --- 1. COMMON GOBLIN (File: common.png) ---
-// Parte da 0
-    public static final int COMMON_RUN_BACK_START   = 0;
-    public static final int COMMON_RUN_FRONT_START  = 12;
-    public static final int COMMON_RUN_LEFT_START   = 24;
-    public static final int COMMON_RUN_RIGHT_START  = 36;
-// Totale usato: 48 frame. Fine del file.
-
-    // --- 2. CHASING GOBLIN (File: chasing.png) ---
-// ATTENZIONE: Parte da 0, NON da 48! È un file nuovo!
-    public static final int CHASING_IDLE_BACK_START  = 0;  // Era 48 -> Diventa 0
-    public static final int CHASING_RUN_BACK_START   = 16; // 0 + 16
-
-    public static final int CHASING_IDLE_FRONT_START = 28; // 16 + 12
-    public static final int CHASING_RUN_FRONT_START  = 44;
-
-    public static final int CHASING_IDLE_LEFT_START  = 56;
-    public static final int CHASING_RUN_LEFT_START   = 72;
-
-    public static final int CHASING_IDLE_RIGHT_START = 84;
-    public static final int CHASING_RUN_RIGHT_START  = 100;
-
-    // --- 3. SHOOTER GOBLIN (File: shooter.png) ---
-// ATTENZIONE: Parte da 0, NON da 160!
-// Struttura riga: 2 (Attack) + 16 (Idle) + 12 (Run) = 30 frame.
-    public static final int SHOOTER_ROW_WIDTH = 30; // Fondamentale per il calcolo riga
-    // 1. NUMERO DI FRAME PER AZIONE (Le variabili richieste)
-    public static final int SHOOTER_ATTACK_FRAMES = 2;
-    public static final int GOBLIN_IDLE_FRAMES   = 16;
-    public static final int GOBLIN_RUN_FRAMES    = 12;
-    // Riga 0 (Back) -> Indice 0
-    public static final int SHOOTER_ATTACK_BACK_START = 0;
-    public static final int SHOOTER_IDLE_BACK_START   = 2;
-    public static final int SHOOTER_RUN_BACK_START    = 18;
-
-    // Riga 1 (Front) -> Indice 30 (inizio riga successiva)
-    public static final int SHOOTER_ATTACK_FRONT_START = 30;
-    public static final int SHOOTER_IDLE_FRONT_START   = 32;
-    public static final int SHOOTER_RUN_FRONT_START    = 48;
-
-    // Riga 2 (Left) -> Indice 60
-    public static final int SHOOTER_ATTACK_LEFT_START  = 60;
-    public static final int SHOOTER_IDLE_LEFT_START    = 62;
-    public static final int SHOOTER_RUN_LEFT_START     = 78;
-
-    // Riga 3 (Right) -> Indice 90
-    public static final int SHOOTER_ATTACK_RIGHT_START = 90;
-    public static final int SHOOTER_IDLE_RIGHT_START   = 92;
-    public static final int SHOOTER_RUN_RIGHT_START    = 108;
-
-    // ==========================================================
-    // --- 4. BOSS GOBLIN (File: GoblinBoss.jpg) ---
-    // ==========================================================
-    // ATTENZIONE: Indici calcolati in base all'ordine alfabetico del packing
-
-    // 1. NUMERO DI FRAME PER AZIONE
-    public static final int BOSS_ATTACK_FRAMES = 10;
-    public static final int BOSS_IDLE_FRAMES   = 16;
-    public static final int BOSS_RUN_FRAMES    = 12;
-    public static final int BOSS_DYING_FRAMES  = 10;
-
-    // --- BACK (SU) --- -> Indice 0
-    public static final int BOSS_ATTACK_BACK_START = 0;
-    public static final int BOSS_IDLE_BACK_START   = 10;  // 0 + 10
-    public static final int BOSS_RUN_BACK_START    = 26;  // 10 + 16
-
-    // --- DYING (MORTE) ---
-    // Si trova qui in mezzo perché alfabeticamente "Dying" viene dopo "Back" e prima di "Front"
-    public static final int BOSS_DYING_START       = 38;  // 26 + 12
-
-    // --- FRONT (GIÙ) ---
-    public static final int BOSS_ATTACK_FRONT_START = 48; // 38 + 10
-    public static final int BOSS_IDLE_FRONT_START   = 58; // 48 + 10
-    public static final int BOSS_RUN_FRONT_START    = 74; // 58 + 16
-
-    // --- LEFT (SINISTRA) ---
-    public static final int BOSS_ATTACK_LEFT_START  = 86; // 74 + 12
-    public static final int BOSS_IDLE_LEFT_START    = 96; // 86 + 10
-    public static final int BOSS_RUN_LEFT_START     = 112;// 96 + 16
-
-    // --- RIGHT (DESTRA) ---
-    public static final int BOSS_ATTACK_RIGHT_START = 124;// 112 + 12
-    public static final int BOSS_IDLE_RIGHT_START   = 134;// 124 + 10
-    public static final int BOSS_RUN_RIGHT_START    = 150;// 134 + 16
-
-
-    public static final int BOSS_FRAME_SIZE = 192;
-
-    
-    public static final int CELL_EMPTY = 0;
-    public static final int CELL_INDESTRUCTIBLE_BLOCK = 1;
-    public static final int CELL_DESTRUCTIBLE_BLOCK = 2;
-    // NUOVI TIPI DI BLOCCHI
-    public static final int CELL_CRACKED_FLOOR = 3; // Crepe
-    public static final int CELL_LAVA_FLOOR = 4;    // Lava
-    public static final String ITEM_SHEET = "/Items.png";
-    public static final int BOMB_SPRITE_START = 0;
-    public static final int BOMB_FRAMES = 8;
-    public static final int BOMB_ANIM_FRAME_DURATION = 100;
-
-
-
-    // --- PROIETTILI NEMICI (Items.png - Riga 0) ---
-    public static final int BONE_DOWN_INDEX  = 8;
-    public static final int BONE_LEFT_INDEX  = 9;
-    public static final int BONE_RIGHT_INDEX = 10;
-    public static final int BONE_UP_INDEX    = 11;
-
-    // --- PROIETTILI PLAYER (Items.png - Riga 0) ---
-    // Subito dopo le ossa
-    public static final int AURA_DOWN_INDEX  = 12;
-    public static final int AURA_LEFT_INDEX  = 13;
-    public static final int AURA_RIGHT_INDEX = 14;
-    public static final int AURA_UP_INDEX    = 15;
-    public static final int  AuraProjectileSpeed = 2;
-    public static final int  BoneProjectileSpeed = 2;
-
-
-
-    // --- FUOCO ESPLOSIONE (Consumabili.png - Riga 1) ---
-    public static final int DESTRUCTION_START = 3;
-    public static final int DESTRUCTION_FRAMES = 3;    // Caricherà le colonne 3, 4, 5
-
-    // Durata visiva: 150ms per frame
-    public static final int DESTRUCTION_FRAME_DURATION = 150;
-
-
-    // --- MAPPA & DISTRUZIONE (MapItems.png) ---
-    // Celle Statiche
-// ==========================================================
-    // COORDINATE SPRITESHEET PER I TEMI (Colonna, Riga)
-    // ==========================================================
-
-    // --- 1. VILLAGGIO ---
-    public static final int VILLAGE_ROW = 0;               // Riga unica per tutti gli elementi del villaggio
-    public static final int VILLAGE_FLOOR_COL = 1;         // Pavimento
-    public static final int VILLAGE_WALL_IND_COL = 0;      // Muro Indistruttibile
-    public static final int VILLAGE_WALL_DEST_COL = 2;     // Cassa/Muro Distruttibile
-
-    // --- 2. FORESTA ---
-    public static final int FOREST_ROW = 0;                // Riga unica per tutti gli elementi della foresta
-    public static final int FOREST_FLOOR_COL = 2;          // Erba
-    public static final int FOREST_WALL_IND_COL = 0;       // Albero Grande
-    public static final int FOREST_WALL_DEST_COL = 1;      // Cespuglio/Tronco distruttibile
-
-    // --- 3. CAVERNA (CAVE) ---
-    public static final int CAVE_ROW = 0;                  // Riga unica per tutti gli elementi della caverna
-    public static final int CAVE_FLOOR_COL = 3;            // Roccia liscia
-    public static final int CAVE_WALL_IND_COL = 4;         // Muro di roccia scura
-    public static final int CAVE_WALL_DEST_COL = 0;// Cristalli/Rocce fragili
-    public static final int CAVE_FRAME_INDEX = 5;
-    // NUOVE COORDINATE
-    public static final int CAVE_CRACKED_FLOOR_COL = 1;    // Pavimento con crepe
-    public static final int CAVE_LAVA_FLOOR_COL = 2;
-
-
-
-
-
-
-    // --- LOGICA VITE E DANNI ---
-    public static final int INITIAL_LIVES = 99;           // Iniziamo con molte vite come richiesto
-    public static final long INVINCIBILITY_DURATION_MS = 3000; // 3 secondi di "invisibilità"
-    public static final int FLICKER_DELAY_MS = 100;       // Velocità del lampeggio visivo
-
-    // --- LOGICA BOMBE ---
-    public static final int BOMB_DETONATION_TICKS = 60; // 3 secondi a 60 FPS
-    public static final int INITIAL_MAX_BOMBS = 1;       // Numero di bombe iniziali
-    public static final int DEFAULT_BOMB_RADIUS = 1;    // Raggio iniziale (1 cella in croce)
-    public static final int ANIMATION_DELAY = 50;
-
-
-    // --- AI & PERCEZIONE (ChasingGoblin) ---
-    public static final int SMELL_BLOCK_PENALTY = 3;      // Quanto i muri bloccano l'odore
-    public static final int SAFE_DISTANCE_FROM_BOMB = 2;  // Raggio fuga bombe
-
-    // --- SHOOTER GOBLIN (Estende Chasing) ---
-    public static final double SHOOTER_SPEED_AIMING = 0.0; // Fermo quando mira
-    public static final double SHOOTER_SPEED_CHASE = 0.03; // Veloce quando insegue
-    public static final int SHOOTER_MAX_AMMO = 2;
-    public static final int SHOOTER_RELOAD_TIME = 180;     // 3 secondi
 
-    // Villaggio in rovina
-    // Coordinate (Colonna, Riga) nello sheet
-
-    // In src/utils/Config.java
-    public static final double MAGNET_TOLERANCE = 0.40; // Più alto = più facile imboccare i corridoi
-    public static final double GOBLIN_COMMON_SPEED = 0.03; // Leggermente più veloce per fluidità
-    public static final double CENTER_TOLERANCE = 0.1;
-    // In src/utils/Config.java
-    public static final int AURA_FRAMES = 12; // 12 immagini per movimento
-    public static final int AURA_ANIM_SPEED = 50; // Velocità animazione (ms per frame)
-
-    // Indici di partenza (Linear Index = Row * Columns + Col)
-    // Riga 3 (Right) -> 3 * 12 = 36
-    // Riga 4 (Left)  -> 4 * 12 = 48
-    // Riga 5 (Down)  -> 5 * 12 = 60
-    // Riga 6 (Up)    -> 6 * 12 = 72
-
-    public static final int AURA_RIGHT_START = 21;
-    public static final int AURA_LEFT_START  = 33;
-    public static final int AURA_DOWN_START  = 45;
-    public static final int AURA_UP_START    = 57;
-
-    public static final int  ANIMATION_DELAY_STAFF_ATTACK = 15;
-
-// ... (altre costanti)
-
-    // --- SLIDING / CORNER CORRECTION ---
-
-
-    // Velocità con cui il player viene riallineato (di solito uguale alla velocità di movimento)
-    public static final double CORNER_ALIGN_SPEED = ENTITY_LOGICAL_SPEED * 1.5;
-    // --- LOGICA ESPLOSIONE E FUOCO (Model) ---
-
-
-    // FUOCO
-    // Quanto dura il fuoco nel mondo di gioco? (30 tick = 0.5 secondi a 60 FPS)
-    public static final int FIRE_DURATION_TICKS = 30;
-
-    // Dimensioni della cornice decorativa
-    public static final int FRAME_WIDTH = 960;
-    public static final int FRAME_HEIGHT = 832;
-
-    // Calcolo dell'offset per centrare la griglia (13*64=832, 11*64=704)
-    // (960 - 832) / 2 = 64 pixel di bordo laterale
-    // (832 - 704) / 2 = 64 pixel di bordo superiore/inferiore
-    //public static final int FRAME_OFFSET_X = (FRAME_WIDTH - (GRID_WIDTH * TILE_SIZE)) / 2;
-   // public static final int FRAME_OFFSET_Y = (FRAME_HEIGHT - (GRID_HEIGHT * TILE_SIZE)) / 2;
-    // --- ANIMAZIONE FUOCO (View) ---
-
-
-
-    // --- PARAMETRI RENDER (Solo View) ---
-    // Posizione della cornice sullo schermo
-    public static final int FRAME_OFFSET_X = 0;
-    public static final int FRAME_OFFSET_Y = 0;
-
-    // Offset perfetti per far cadere la griglia ESATTAMENTE nel buco trasparente
-    public static final int GRID_OFFSET_X = 64;   // Bordo laterale della cornice
-    public static final int GRID_OFFSET_Y = 64;  // Bordo superiore largo (per l'HUD)
-
-    // Dimensioni Finestra:
-    // Larghezza = 960 (Cornice) + 192 (Spazio per la tua UI laterale "MUNIZIONI") = 1152
-    // Altezza = 932 (Altezza esatta della cornice per non tagliarla sotto)
-    public static final int WINDOW_PREFERRED_WIDTH = 1152;
-    public static final int WINDOW_PREFERRED_HEIGHT = 932;
-
-    public final static int MAX_TRANSITION_TICKS = 120;
-
-    // Configurazione della transizione
-    public static final float FADE_SPEED = 0.02f; // Velocità della sfumatura
-    public static final float MAX_ALPHA = 1.0f;   // Opacità massima (tutto nero)
-    public static final float MIN_ALPHA = 0.0f;
-    // Trasparenza totale
-
-    // ==========================================================
-    // --- SISTEMA DI PUNTEGGIO ARCADE ---
-    // ==========================================================
-    public static final int SCORE_CRATE = 20;
-    public static final int SCORE_COMMON_GOBLIN = 100;
-    public static final int SCORE_CHASING_GOBLIN = 200;
-    public static final int SCORE_SHOOTER_GOBLIN = 300;
-
-    // Soglia massima di punti ottenibile dai nemici in una zona (Cap)
-    public static final int SCORE_ZONE_CAP = 1500;
-
-    // Bonus speciali
-    public static final int PERFECT_LEVEL_BONUS = 2000;
-    public static final int SCORE_BOSS_BASE = 5000;
-    public static final int MAX_BOSS_TIME_BONUS = 5000;
-    public static final int BOSS_BONUS_DECAY_PER_SEC = 50; // Quanti punti perde il bonus ogni secondo
-
-
-
-
-
-
-    //Exit Gate
-
+    // =====================================================================
+    // LOGICA DI GIOCO  →  LogicConfig
+    // =====================================================================
+    public static final int GRID_WIDTH                  = LogicConfig.GRID_WIDTH;
+    public static final int GRID_HEIGHT                 = LogicConfig.GRID_HEIGHT;
+
+    public static final double ENTITY_LOGICAL_SPEED         = LogicConfig.ENTITY_LOGICAL_SPEED;
+    public static final double ENTITY_LOGICAL_HITBOX_WIDTH  = LogicConfig.ENTITY_LOGICAL_HITBOX_WIDTH;
+    public static final double ENTITY_LOGICAL_HITBOX_HEIGHT = LogicConfig.ENTITY_LOGICAL_HITBOX_HEIGHT;
+
+    public static final double MIN_LOGICAL_X            = LogicConfig.MIN_LOGICAL_X;
+    public static final double MAX_LOGICAL_X            = LogicConfig.MAX_LOGICAL_X;
+    public static final double MIN_LOGICAL_Y            = LogicConfig.MIN_LOGICAL_Y;
+    public static final double MAX_LOGICAL_Y            = LogicConfig.MAX_LOGICAL_Y;
+
+    public static final double CORNER_CORRECTION_SPEED  = LogicConfig.CORNER_CORRECTION_SPEED;
+    public static final double CORNER_ALIGN_SPEED        = LogicConfig.CORNER_ALIGN_SPEED;
+    public static final double MAGNET_TOLERANCE          = LogicConfig.MAGNET_TOLERANCE;
+    public static final double CENTER_TOLERANCE          = LogicConfig.CENTER_TOLERANCE;
+
+    public static final double GOBLIN_HITBOX_WIDTH       = LogicConfig.GOBLIN_HITBOX_WIDTH;
+    public static final double GOBLIN_HITBOX_HEIGHT      = LogicConfig.GOBLIN_HITBOX_HEIGHT;
+
+    public static final int    MAX_ENEMIES_ON_MAP        = LogicConfig.MAX_ENEMIES_ON_MAP;
+    public static final long   SPAWN_INTERVAL_MS         = LogicConfig.SPAWN_INTERVAL_MS;
+    public static final int    SPAWN_SAFE_DISTANCE       = LogicConfig.SPAWN_SAFE_DISTANCE;
+    public static final double MIN_SPAWN_DISTANCE        = LogicConfig.MIN_SPAWN_DISTANCE;
+
+    public static final int    SMELL_THRESHOLD_DISTANCE  = LogicConfig.SMELL_THRESHOLD_DISTANCE;
+    public static final int    SMELL_BLOCK_PENALTY       = LogicConfig.SMELL_BLOCK_PENALTY;
+    public static final int    SAFE_DISTANCE_FROM_BOMB   = LogicConfig.SAFE_DISTANCE_FROM_BOMB;
+
+    public static final int    SHOOTER_TELEGRAPH_TIME    = LogicConfig.SHOOTER_TELEGRAPH_TIME;
+    public static final double SHOOTER_SPEED_AIMING      = LogicConfig.SHOOTER_SPEED_AIMING;
+    public static final double SHOOTER_SPEED_CHASE       = LogicConfig.SHOOTER_SPEED_CHASE;
+    public static final int    SHOOTER_MAX_AMMO          = LogicConfig.SHOOTER_MAX_AMMO;
+    public static final int    SHOOTER_RELOAD_TIME       = LogicConfig.SHOOTER_RELOAD_TIME;
+
+    public static final double GOBLIN_COMMON_SPEED       = LogicConfig.GOBLIN_COMMON_SPEED;
+
+    public static final int    AuraProjectileSpeed       = LogicConfig.AuraProjectileSpeed;
+    public static final int    BoneProjectileSpeed       = LogicConfig.BoneProjectileSpeed;
+
+    public static final int    INITIAL_LIVES             = LogicConfig.INITIAL_LIVES;
+    public static final long   INVINCIBILITY_DURATION_MS = LogicConfig.INVINCIBILITY_DURATION_MS;
+
+    public static final int    BOMB_DETONATION_TICKS     = LogicConfig.BOMB_DETONATION_TICKS;
+    public static final int    INITIAL_MAX_BOMBS         = LogicConfig.INITIAL_MAX_BOMBS;
+    public static final int    DEFAULT_BOMB_RADIUS       = LogicConfig.DEFAULT_BOMB_RADIUS;
+
+    public static final int    FIRE_DURATION_TICKS       = LogicConfig.FIRE_DURATION_TICKS;
+
+    public static final int    CELL_EMPTY                = LogicConfig.CELL_EMPTY;
+    public static final int    CELL_INDESTRUCTIBLE_BLOCK = LogicConfig.CELL_INDESTRUCTIBLE_BLOCK;
+    public static final int    CELL_DESTRUCTIBLE_BLOCK   = LogicConfig.CELL_DESTRUCTIBLE_BLOCK;
+    public static final int    CELL_CRACKED_FLOOR        = LogicConfig.CELL_CRACKED_FLOOR;
+    public static final int    CELL_LAVA_FLOOR           = LogicConfig.CELL_LAVA_FLOOR;
+    public static final int    CELL_ORNAMENT             = LogicConfig.CELL_ORNAMENT;
+
+    public static final int    SCORE_CRATE               = LogicConfig.SCORE_CRATE;
+    public static final int    SCORE_COMMON_GOBLIN       = LogicConfig.SCORE_COMMON_GOBLIN;
+    public static final int    SCORE_CHASING_GOBLIN      = LogicConfig.SCORE_CHASING_GOBLIN;
+    public static final int    SCORE_SHOOTER_GOBLIN      = LogicConfig.SCORE_SHOOTER_GOBLIN;
+    public static final int    SCORE_ZONE_CAP            = LogicConfig.SCORE_ZONE_CAP;
+    public static final int    PERFECT_LEVEL_BONUS       = LogicConfig.PERFECT_LEVEL_BONUS;
+    public static final int    SCORE_BOSS_BASE           = LogicConfig.SCORE_BOSS_BASE;
+    public static final int    MAX_BOSS_TIME_BONUS       = LogicConfig.MAX_BOSS_TIME_BONUS;
+    public static final int    BOSS_BONUS_DECAY_PER_SEC  = LogicConfig.BOSS_BONUS_DECAY_PER_SEC;
+
+    // =====================================================================
+    // VIEW / RENDERING  →  ViewConfig
+    // =====================================================================
+    public static final int    TILE_SIZE                 = ViewConfig.TILE_SIZE;
+    public static final int    GAME_PANEL_WIDTH          = ViewConfig.GAME_PANEL_WIDTH;
+    public static final int    GAME_PANEL_HEIGHT         = ViewConfig.GAME_PANEL_HEIGHT;
+
+    public static final int    FPS                       = ViewConfig.FPS;
+    public static final int    GAME_LOOP_DELAY_MS        = ViewConfig.GAME_LOOP_DELAY_MS;
+
+    public static final int    FRAME_OFFSET_X            = ViewConfig.FRAME_OFFSET_X;
+    public static final int    FRAME_OFFSET_Y            = ViewConfig.FRAME_OFFSET_Y;
+    public static final int    GRID_OFFSET_X             = ViewConfig.GRID_OFFSET_X;
+    public static final int    GRID_OFFSET_Y             = ViewConfig.GRID_OFFSET_Y;
+
+    public static final int    FRAME_WIDTH               = ViewConfig.FRAME_WIDTH;
+    public static final int    FRAME_HEIGHT              = ViewConfig.FRAME_HEIGHT;
+    public static final int    WINDOW_PREFERRED_WIDTH    = ViewConfig.WINDOW_PREFERRED_WIDTH;
+    public static final int    WINDOW_PREFERRED_HEIGHT   = ViewConfig.WINDOW_PREFERRED_HEIGHT;
+
+    public static final int    PLAYER_PIVOT_Y            = ViewConfig.PLAYER_PIVOT_Y;
+
+    public static final int    PLAYER_RUN_FRAMES         = ViewConfig.PLAYER_RUN_FRAMES;
+    public static final int    PLAYER_IDLE_FRAMES        = ViewConfig.PLAYER_IDLE_FRAMES;
+    public static final int    PLAYER_ATTACK_FRAMES      = ViewConfig.PLAYER_ATTACK_FRAMES;
+    public static final int    ANIMATION_DELAY           = ViewConfig.ANIMATION_DELAY;
+    public static final int    ANIMATION_DELAY_STAFF_ATTACK = ViewConfig.ANIMATION_DELAY_STAFF_ATTACK;
+
+    public static final int    FLICKER_DELAY_MS          = ViewConfig.FLICKER_DELAY_MS;
+
+    public static final int    MAX_TRANSITION_TICKS      = ViewConfig.MAX_TRANSITION_TICKS;
+    public static final float  FADE_SPEED                = ViewConfig.FADE_SPEED;
+    public static final float  MAX_ALPHA                 = ViewConfig.MAX_ALPHA;
+    public static final float  MIN_ALPHA                 = ViewConfig.MIN_ALPHA;
+
+    public static final String PLAYER1_SHEET             = ViewConfig.PLAYER1_SHEET;
+    public static final int    ENTITY_FRAME_SIZE         = ViewConfig.ENTITY_FRAME_SIZE;
+    public static final String VILLAGE_SHEET             = ViewConfig.VILLAGE_SHEET;
+    public static final String VILLAGE_FRAME             = ViewConfig.VILLAGE_FRAME;
+    public static final int    VILLAGE_FRAME_INDEX       = ViewConfig.VILLAGE_FRAME_INDEX;
+    public static final String FOREST_SHEET              = ViewConfig.FOREST_SHEET;
+    public static final String FOREST_FRAME              = ViewConfig.FOREST_FRAME;
+    public static final int    FOREST_FRAME_INDEX        = ViewConfig.FOREST_FRAME_INDEX;
+    public static final int    THEME_FRAME_INDEX         = ViewConfig.THEME_FRAME_INDEX;
+    public static final String CAVE_SHEET                = ViewConfig.CAVE_SHEET;
+    public static final String CAVE_FRAME                = ViewConfig.CAVE_FRAME;
+    public static final String ORNAMENTS_SHEET           = ViewConfig.ORNAMENTS_SHEET;
+    public static final String CAVE_SKELETON_SHEET       = ViewConfig.CAVE_SKELETON_SHEET;
+    public static final int    CAVE_BUILDING_SIZE        = ViewConfig.CAVE_BUILDING_SIZE;
+    public static final int    SKELETON_FRAMES_COUNT     = ViewConfig.SKELETON_FRAMES_COUNT;
+    public static final int    SKELETON_SHEET_COLS       = ViewConfig.SKELETON_SHEET_COLS;
+    public static final String SHOOTERGOBLIN_SHEET       = ViewConfig.SHOOTERGOBLIN_SHEET;
+    public static final String CHASING_GOBLIN_SHEET      = ViewConfig.CHASING_GOBLIN_SHEET;
+    public static final String COMMON_GOBLIN             = ViewConfig.COMMON_GOBLIN;
+    public static final String BOSS_GOBLIN_SHEET         = ViewConfig.BOSS_GOBLIN_SHEET;
+    public static final String ITEM_SHEET                = ViewConfig.ITEM_SHEET;
+
+    public static final int    BOMB_SPRITE_START          = ViewConfig.BOMB_SPRITE_START;
+    public static final int    BOMB_FRAMES                = ViewConfig.BOMB_FRAMES;
+    public static final int    BOMB_ANIM_FRAME_DURATION   = ViewConfig.BOMB_ANIM_FRAME_DURATION;
+
+    public static final int    BONE_DOWN_INDEX            = ViewConfig.BONE_DOWN_INDEX;
+    public static final int    BONE_LEFT_INDEX            = ViewConfig.BONE_LEFT_INDEX;
+    public static final int    BONE_RIGHT_INDEX           = ViewConfig.BONE_RIGHT_INDEX;
+    public static final int    BONE_UP_INDEX              = ViewConfig.BONE_UP_INDEX;
+
+    public static final int    AURA_DOWN_INDEX            = ViewConfig.AURA_DOWN_INDEX;
+    public static final int    AURA_LEFT_INDEX            = ViewConfig.AURA_LEFT_INDEX;
+    public static final int    AURA_RIGHT_INDEX           = ViewConfig.AURA_RIGHT_INDEX;
+    public static final int    AURA_UP_INDEX              = ViewConfig.AURA_UP_INDEX;
+    public static final int    AURA_FRAMES                = ViewConfig.AURA_FRAMES;
+    public static final int    AURA_ANIM_SPEED            = ViewConfig.AURA_ANIM_SPEED;
+
+    public static final int    AURA_RIGHT_START           = ViewConfig.AURA_RIGHT_START;
+    public static final int    AURA_LEFT_START            = ViewConfig.AURA_LEFT_START;
+    public static final int    AURA_DOWN_START            = ViewConfig.AURA_DOWN_START;
+    public static final int    AURA_UP_START              = ViewConfig.AURA_UP_START;
+
+    public static final int    DESTRUCTION_START          = ViewConfig.DESTRUCTION_START;
+    public static final int    DESTRUCTION_FRAMES         = ViewConfig.DESTRUCTION_FRAMES;
+    public static final int    DESTRUCTION_FRAME_DURATION = ViewConfig.DESTRUCTION_FRAME_DURATION;
+
+    public static final int    CELL_SKELETON_START        = ViewConfig.CELL_SKELETON_START;
+
+    public static final int    VILLAGE_ROW                = ViewConfig.VILLAGE_ROW;
+    public static final int    VILLAGE_FLOOR_COL          = ViewConfig.VILLAGE_FLOOR_COL;
+    public static final int    VILLAGE_WALL_IND_COL       = ViewConfig.VILLAGE_WALL_IND_COL;
+    public static final int    VILLAGE_WALL_DEST_COL      = ViewConfig.VILLAGE_WALL_DEST_COL;
+
+    public static final int    FOREST_ROW                 = ViewConfig.FOREST_ROW;
+    public static final int    FOREST_FLOOR_COL           = ViewConfig.FOREST_FLOOR_COL;
+    public static final int    FOREST_WALL_IND_COL        = ViewConfig.FOREST_WALL_IND_COL;
+    public static final int    FOREST_WALL_DEST_COL       = ViewConfig.FOREST_WALL_DEST_COL;
+
+    public static final int    CAVE_ROW                   = ViewConfig.CAVE_ROW;
+    public static final int    CAVE_FLOOR_COL             = ViewConfig.CAVE_FLOOR_COL;
+    public static final int    CAVE_WALL_IND_COL          = ViewConfig.CAVE_WALL_IND_COL;
+    public static final int    CAVE_WALL_DEST_COL         = ViewConfig.CAVE_WALL_DEST_COL;
+    public static final int    CAVE_FRAME_INDEX           = ViewConfig.CAVE_FRAME_INDEX;
+    public static final int    CAVE_CRACKED_FLOOR_COL     = ViewConfig.CAVE_CRACKED_FLOOR_COL;
+    public static final int    CAVE_LAVA_FLOOR_COL        = ViewConfig.CAVE_LAVA_FLOOR_COL;
+
+    public static final int    SHOOTER_ROW_WIDTH          = ViewConfig.SHOOTER_ROW_WIDTH;
+    public static final int    SHOOTER_ATTACK_FRAMES      = ViewConfig.SHOOTER_ATTACK_FRAMES;
+    public static final int    GOBLIN_IDLE_FRAMES         = ViewConfig.GOBLIN_IDLE_FRAMES;
+    public static final int    GOBLIN_RUN_FRAMES          = ViewConfig.GOBLIN_RUN_FRAMES;
+
+    public static final int    COMMON_RUN_BACK_START      = ViewConfig.COMMON_RUN_BACK_START;
+    public static final int    COMMON_RUN_FRONT_START     = ViewConfig.COMMON_RUN_FRONT_START;
+    public static final int    COMMON_RUN_LEFT_START      = ViewConfig.COMMON_RUN_LEFT_START;
+    public static final int    COMMON_RUN_RIGHT_START     = ViewConfig.COMMON_RUN_RIGHT_START;
+
+    public static final int    CHASING_IDLE_BACK_START    = ViewConfig.CHASING_IDLE_BACK_START;
+    public static final int    CHASING_RUN_BACK_START     = ViewConfig.CHASING_RUN_BACK_START;
+    public static final int    CHASING_IDLE_FRONT_START   = ViewConfig.CHASING_IDLE_FRONT_START;
+    public static final int    CHASING_RUN_FRONT_START    = ViewConfig.CHASING_RUN_FRONT_START;
+    public static final int    CHASING_IDLE_LEFT_START    = ViewConfig.CHASING_IDLE_LEFT_START;
+    public static final int    CHASING_RUN_LEFT_START     = ViewConfig.CHASING_RUN_LEFT_START;
+    public static final int    CHASING_IDLE_RIGHT_START   = ViewConfig.CHASING_IDLE_RIGHT_START;
+    public static final int    CHASING_RUN_RIGHT_START    = ViewConfig.CHASING_RUN_RIGHT_START;
+
+    public static final int    SHOOTER_ATTACK_BACK_START  = ViewConfig.SHOOTER_ATTACK_BACK_START;
+    public static final int    SHOOTER_IDLE_BACK_START    = ViewConfig.SHOOTER_IDLE_BACK_START;
+    public static final int    SHOOTER_RUN_BACK_START     = ViewConfig.SHOOTER_RUN_BACK_START;
+    public static final int    SHOOTER_ATTACK_FRONT_START = ViewConfig.SHOOTER_ATTACK_FRONT_START;
+    public static final int    SHOOTER_IDLE_FRONT_START   = ViewConfig.SHOOTER_IDLE_FRONT_START;
+    public static final int    SHOOTER_RUN_FRONT_START    = ViewConfig.SHOOTER_RUN_FRONT_START;
+    public static final int    SHOOTER_ATTACK_LEFT_START  = ViewConfig.SHOOTER_ATTACK_LEFT_START;
+    public static final int    SHOOTER_IDLE_LEFT_START    = ViewConfig.SHOOTER_IDLE_LEFT_START;
+    public static final int    SHOOTER_RUN_LEFT_START     = ViewConfig.SHOOTER_RUN_LEFT_START;
+    public static final int    SHOOTER_ATTACK_RIGHT_START = ViewConfig.SHOOTER_ATTACK_RIGHT_START;
+    public static final int    SHOOTER_IDLE_RIGHT_START   = ViewConfig.SHOOTER_IDLE_RIGHT_START;
+    public static final int    SHOOTER_RUN_RIGHT_START    = ViewConfig.SHOOTER_RUN_RIGHT_START;
+
+    public static final int    BOSS_ATTACK_FRAMES         = ViewConfig.BOSS_ATTACK_FRAMES;
+    public static final int    BOSS_IDLE_FRAMES           = ViewConfig.BOSS_IDLE_FRAMES;
+    public static final int    BOSS_RUN_FRAMES            = ViewConfig.BOSS_RUN_FRAMES;
+    public static final int    BOSS_DYING_FRAMES          = ViewConfig.BOSS_DYING_FRAMES;
+    public static final int    BOSS_FRAME_SIZE            = ViewConfig.BOSS_FRAME_SIZE;
+
+    public static final int    BOSS_ATTACK_BACK_START     = ViewConfig.BOSS_ATTACK_BACK_START;
+    public static final int    BOSS_IDLE_BACK_START       = ViewConfig.BOSS_IDLE_BACK_START;
+    public static final int    BOSS_RUN_BACK_START        = ViewConfig.BOSS_RUN_BACK_START;
+    public static final int    BOSS_DYING_START           = ViewConfig.BOSS_DYING_START;
+    public static final int    BOSS_ATTACK_FRONT_START    = ViewConfig.BOSS_ATTACK_FRONT_START;
+    public static final int    BOSS_IDLE_FRONT_START      = ViewConfig.BOSS_IDLE_FRONT_START;
+    public static final int    BOSS_RUN_FRONT_START       = ViewConfig.BOSS_RUN_FRONT_START;
+    public static final int    BOSS_ATTACK_LEFT_START     = ViewConfig.BOSS_ATTACK_LEFT_START;
+    public static final int    BOSS_IDLE_LEFT_START       = ViewConfig.BOSS_IDLE_LEFT_START;
+    public static final int    BOSS_RUN_LEFT_START        = ViewConfig.BOSS_RUN_LEFT_START;
+    public static final int    BOSS_ATTACK_RIGHT_START    = ViewConfig.BOSS_ATTACK_RIGHT_START;
+    public static final int    BOSS_IDLE_RIGHT_START      = ViewConfig.BOSS_IDLE_RIGHT_START;
+    public static final int    BOSS_RUN_RIGHT_START       = ViewConfig.BOSS_RUN_RIGHT_START;
 }
-

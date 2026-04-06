@@ -92,7 +92,7 @@ public class BossGoblin extends Enemy {
             // ----------------------------------------------------------------
             case FURY: {
                 // 1. Allineamento (solo dopo 600 ms dall'ingresso in FURY)
-                if (elapsed > 600) {
+                if (elapsed > 1500) {
                     boolean alignedX = Math.abs(this.x - pX) < 0.5;
                     boolean alignedY = Math.abs(this.y - pY) < 0.5;
                     if (alignedX || alignedY) {

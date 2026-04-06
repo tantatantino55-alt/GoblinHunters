@@ -111,4 +111,7 @@ public interface IControllerForView {
     // --- HUD JUICY ANIMATION TRIGGER ---
     /** Notifica la View che un item è stato appena raccolto (avvia l'animazione icona HUD). */
     void triggerPickupAnimation(utils.ItemType type);
+
+    /** Ritorna il punteggio totale corrente. */
+    int getScore();
 }

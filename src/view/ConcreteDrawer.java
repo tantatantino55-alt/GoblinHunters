@@ -135,6 +135,7 @@ public class ConcreteDrawer extends AbstractDrawer {
         boolean shield  = ctrl.hasPlayerShield();
         boolean radius  = ctrl.hasPlayerMaxRadius();
         boolean speed   = ctrl.hasPlayerMaxSpeed();
+        int score       = ctrl.getScore();
 
         String timeString = String.format("%02d:%02d", totalSec / 60, totalSec % 60);
 
@@ -152,7 +153,17 @@ public class ConcreteDrawer extends AbstractDrawer {
         g2d.setFont(new Font("Arial", Font.BOLD, 18));
         g2d.drawString("FPS: "   + currentFPS, panelX, currentY);  currentY += lineGap;
         g2d.drawString("VITE: "  + lives,      panelX, currentY);  currentY += lineGap;
-        g2d.drawString("TEMPO: " + timeString,  panelX, currentY);  currentY += lineGap + 14;
+        g2d.drawString("TEMPO: " + timeString,  panelX, currentY);  currentY += lineGap;
+
+        // --- 4b. PUNTEGGIO ---
+        // Colore dorato pulsante per il punteggio
+        float pulse = 0.75f + 0.25f * (float) Math.abs(Math.sin(System.currentTimeMillis() / 600.0));
+        g2d.setColor(new Color(1.0f, 0.85f * pulse, 0.0f));
+        g2d.setFont(new Font("Arial", Font.BOLD, 18));
+        g2d.drawString("SCORE:", panelX, currentY);
+        g2d.setFont(new Font("Arial", Font.BOLD, 22));
+        g2d.drawString(String.format("%06d", score), panelX, currentY + 22);
+        currentY += lineGap + 24;
 
         // --- 5. SEZIONE CONSUMABILI ---
         g2d.setFont(new Font("Arial", Font.BOLD, 14));

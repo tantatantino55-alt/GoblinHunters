@@ -182,6 +182,11 @@ public class ControllerForView implements IControllerForView {
         view.HudItemAnimator.getInstance().triggerPickupAnimation(type);
     }
 
+    @Override
+    public int getScore() {
+        return Model.getInstance().getScore();
+    }
+
     public static IControllerForView getInstance() {
         if (instance == null) instance = new ControllerForView();
         return instance;

@@ -22,6 +22,8 @@ class MapManager {
     // Crepe del Boss: overlay temporaneo (NON modifica gameAreaArray)
     private final List<FloorCrack> activeCracks = new ArrayList<>();
 
+    private final List<CrackWave> activeWaves = new ArrayList<>();
+
     MapManager() {
         this.gameAreaArray = new int[Config.GRID_HEIGHT][Config.GRID_WIDTH];
     }
@@ -216,71 +218,100 @@ class MapManager {
     }
 
     // ==========================================================
+    // LOGICA ONDA GRADUALE (STEP-BY-STEP)
+    // ==========================================================
+
+    void spawnCrackWave(int originRow, int originCol, Direction dir, int[][] map) {
+        // Invece di creare le crepe subito, lanciamo un'onda che si evolverà nel tempo
+        activeWaves.add(new CrackWave(originRow, originCol, dir));
+    }
+
+    void updateCracks() {
+        // 1. Aggiorna le crepe esistenti (decremento timer)
+        Iterator<FloorCrack> it = activeCracks.iterator();
+        while (it.hasNext()) {
+            if (it.next().tick()) it.remove();
+        }
+
+        // 2. Aggiorna le onde in movimento (propagazione)
+        Iterator<CrackWave> waveIt = activeWaves.iterator();
+        while (waveIt.hasNext()) {
+            if (waveIt.next().update(gameAreaArray)) {
+                waveIt.remove(); // L'onda ha finito la sua corsa
+            }
+        }
+    }
+
+    /** Classe interna per gestire la propagazione di un singolo attacco. */
+    private class CrackWave {
+        private final int[][] lanePositions; // [3 corsie][riga, colonna]
+        private final boolean[] laneStopped; // corsia bloccata da muro
+        private final int fdr, fdc;          // direzione di avanzamento
+        private int propagationTimer = 0;
+        private static final int PROPAGATION_DELAY = 5; // Velocità: 1 cella ogni 5 tick
+
+        CrackWave(int r, int c, Direction d) {
+            int[][] offsets = getLateralOffsets(d);
+            this.lanePositions = new int[3][2];
+            this.laneStopped = new boolean[3];
+            for (int i = 0; i < 3; i++) {
+                lanePositions[i][0] = r + offsets[i][0];
+                lanePositions[i][1] = c + offsets[i][1];
+            }
+            int[] front = getFrontDelta(d);
+            this.fdr = front[0];
+            this.fdc = front[1];
+        }
+
+        /** Ritorna true se l'onda deve essere rimossa. */
+        boolean update(int[][] map) {
+            propagationTimer--;
+            if (propagationTimer <= 0) {
+                propagationTimer = PROPAGATION_DELAY;
+                boolean anyLaneAdvanced = false;
+
+                for (int i = 0; i < 3; i++) {
+                    if (laneStopped[i]) continue;
+
+                    int r = lanePositions[i][0];
+                    int c = lanePositions[i][1];
+
+                    // Controllo confini
+                    if (r < 0 || r >= Config.GRID_HEIGHT || c < 0 || c >= Config.GRID_WIDTH) {
+                        laneStopped[i] = true;
+                        continue;
+                    }
+
+                    // Controllo ostacoli indistruttibili
+                    int cell = map[r][c];
+                    if (cell == Config.CELL_INDESTRUCTIBLE_BLOCK || cell == Config.CELL_SKELETON_START) {
+                        laneStopped[i] = true;
+                        continue;
+                    }
+
+                    // Piazza la crepa o resetta il timer se esiste già (Overwrite Task 3)
+                    FloorCrack existing = getCrackAt(r, c);
+                    if (existing != null) {
+                        existing.resetTicks(FloorCrack.CRACK_DURATION_TICKS);
+                    } else {
+                        activeCracks.add(new FloorCrack(r, c));
+                    }
+
+                    // Avanza la corsia per il prossimo step
+                    lanePositions[i][0] += fdr;
+                    lanePositions[i][1] += fdc;
+                    anyLaneAdvanced = true;
+                }
+                return !anyLaneAdvanced; // Se nessuna corsia può più avanzare, l'onda è finita
+            }
+            return false;
+        }
+    }
+
+    // ==========================================================
     // CREPE DEL BOSS (FLOOR CRACK WAVE)
     // ==========================================================
 
-    /**
-     * Genera un'onda di crepe larga 3 celle centrata sulla posizione del Boss.
-     * L'onda percorre le celle nella direzione indicata finché non incontra
-     * un blocco indistruttibile (si ferma su quella singola corsia).
-     *
-     * @param originRow  Riga del Boss (intero)
-     * @param originCol  Colonna del Boss (intero)
-     * @param dir        Direzione in cui il Boss guarda (e spara)
-     * @param map        La mappa logica corrente (usata solo per leggere i blocchi)
-     */
-    void spawnCrackWave(int originRow, int originCol, Direction dir, int[][] map) {
-        int[][] laterals = getLateralOffsets(dir);
-
-        for (int[] lateral : laterals) {
-            int dr = lateral[0];
-            int dc = lateral[1];
-
-            int[] front = getFrontDelta(dir);
-            int fdr = front[0];
-            int fdc = front[1];
-
-            int startRow = originRow + dr;
-            int startCol = originCol + dc;
-
-            for (int step = 0; step <= 12; step++) {
-                int r = startRow + fdr * step;
-                int c = startCol + fdc * step;
-
-                if (r < 0 || r >= Config.GRID_HEIGHT || c < 0 || c >= Config.GRID_WIDTH) break;
-
-                int cell = map[r][c];
-                if (cell == Config.CELL_INDESTRUCTIBLE_BLOCK ||
-                    cell == Config.CELL_ORNAMENT             ||
-                    cell == Config.CELL_SKELETON_START) break;
-
-                // TASK 3: se la cella ha gia' una crepa, resetta il timer
-                // invece di aggiungerne una duplicata.
-                FloorCrack existing = getCrackAt(r, c);
-                if (existing != null) {
-                    existing.resetTicks(FloorCrack.CRACK_DURATION_TICKS);
-                } else {
-                    activeCracks.add(new FloorCrack(r, c));
-                }
-            }
-        }
-
-        System.out.println("BOSS WAVE: " + activeCracks.size() + " celle crepate totali.");
-    }
-
-    /**
-     * Aggiorna tutte le crepe attive: decrementa il timer e rimuove quelle scadute.
-     * Deve essere chiamato ogni tick dal game loop di Model.
-     */
-    void updateCracks() {
-        Iterator<FloorCrack> it = activeCracks.iterator();
-        while (it.hasNext()) {
-            FloorCrack crack = it.next();
-            if (crack.tick()) {
-                it.remove();
-            }
-        }
-    }
 
     /** Controlla se una cella ha gia' una crepa attiva (booleano). */
     boolean hasCrackAt(int row, int col) {

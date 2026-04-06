@@ -18,16 +18,26 @@ public class ConcreteDrawer extends AbstractDrawer {
     private float transitionAlpha = Config.MIN_ALPHA; // Partiamo da completamente trasparente
     private boolean fadingOut = true;
 
+    private BufferedImage arcadeCabinet = null;
+
     public ConcreteDrawer() {
         this.tileManager = TileManager.getInstance();
         this.spriteManager = SpriteManager.getInstance();
+        this.arcadeCabinet = ResourceManager.loadImage("/CabinetArcade.png");
     }
 
     @Override
     public void draw(Graphics g) {
         Graphics2D g2d = (Graphics2D) g;
+
+        // Sfondo di base
         g2d.setColor(Color.BLACK);
         g2d.fillRect(0, 0, getDrawingWidth(), getDrawingHeight());
+
+        // Disegna il Cabinato Arcade senza deformarlo o scalarlo (scala 1:1) per centratura matematica
+        if (arcadeCabinet != null) {
+            g2d.drawImage(arcadeCabinet, 0, 0, null);
+        }
         drawMap(g2d);
         drawCracks(g2d); // Crepe del Boss: overlay sul pavimento
         drawPortal(g2d); // 1. Disegna l'allarme se scopri il portale spawner

@@ -20,8 +20,9 @@ public class ViewConfig {
     // --- OFFSET GRIGLIA E CORNICE ---
     public static final int FRAME_OFFSET_X      = 0;
     public static final int FRAME_OFFSET_Y      = 0;
-    public static final int GRID_OFFSET_X       = 64;   // Bordo laterale della cornice
-    public static final int GRID_OFFSET_Y       = 64;   // Bordo superiore
+    // Gli offset della griglia sono ora applicati globalmente via g2d.translate(57, 46) dal GamePanel
+    public static final int GRID_OFFSET_X       = 0;
+    public static final int GRID_OFFSET_Y       = 0;
 
     // --- DIMENSIONI CORNICE E FINESTRA ---
     public static final int FRAME_WIDTH                = 960;

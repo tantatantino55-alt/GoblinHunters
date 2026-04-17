@@ -53,11 +53,24 @@ public class BossGoblin extends Enemy {
 
     @Override
     public boolean takeDamage(int damage) {
-        if (isDead || isInvincible()) return false;
+        if (isDead) return false;
 
-        hp -= damage;
-        System.out.println("Boss colpito! HP: " + hp + "/" + MAX_HP);
-        lastHitTime = System.currentTimeMillis();
+        long now = System.currentTimeMillis();
+
+        // TASK 4: Bypass I-Frames per danni simultanei (Combo)
+        if (now - lastHitTime < 50) {
+            hp -= damage;
+            System.out.println("Boss colpito da COMBO simultanea! HP: " + hp + "/" + MAX_HP);
+        } 
+        else if (now - lastHitTime > I_FRAME_DURATION) {
+            hp -= damage;
+            System.out.println("Boss colpito! HP: " + hp + "/" + MAX_HP);
+            lastHitTime = now;
+        } 
+        else {
+            // I-Frames attivi (fase intermedia 50ms - 1000ms)
+            return false;
+        }
 
         if (hp <= 0) {
             hp = 0;
@@ -86,12 +99,12 @@ public class BossGoblin extends Enemy {
         switch (currentState) {
 
             // ----------------------------------------------------------------
-            // FURY – corre sul perimetro.
-            // Cooldown anti-spam: almeno 600 ms di corsa prima di potersi
-            // allineare di nuovo al player.
+            // FURY – TASK 1: Stalking intelligente
+            // Cerca di pareggiare X se si trova nei bordi orizzontali
+            // o Y se si trova nei bordi verticali.
             // ----------------------------------------------------------------
             case FURY: {
-                // 1. Allineamento (solo dopo 600 ms dall'ingresso in FURY)
+                // 1. Allineamento (solo dopo 1500 ms dall'ingresso in FURY)
                 if (elapsed > 1500) {
                     boolean alignedX = Math.abs(this.x - pX) < 0.5;
                     boolean alignedY = Math.abs(this.y - pY) < 0.5;
@@ -106,18 +119,35 @@ public class BossGoblin extends Enemy {
                     }
                 }
 
-                // 2. Corsa sul perimetro interno (X 3.1-8.9, Y 2.1-7.9)
-                double nextX = this.x;
-                double nextY = this.y;
+                // 2. Pedinamento sui bordi
+                boolean onTop    = Math.abs(this.y - 2.1) < 0.1;
+                boolean onBottom = Math.abs(this.y - 7.9) < 0.1;
+                boolean onLeft   = Math.abs(this.x - 3.1) < 0.1;
+                boolean onRight  = Math.abs(this.x - 8.9) < 0.1;
 
-                if      (this.y <= 2.1 && this.x < 8.9) { nextX += runSpeed; this.currentDirection = Direction.RIGHT; }
-                else if (this.x >= 8.9 && this.y < 7.9) { nextY += runSpeed; this.currentDirection = Direction.DOWN;  }
-                else if (this.y >= 7.9 && this.x > 3.1) { nextX -= runSpeed; this.currentDirection = Direction.LEFT;  }
-                else if (this.x <= 3.1 && this.y > 2.1) { nextY -= runSpeed; this.currentDirection = Direction.UP;    }
-                else                                     { nextY -= runSpeed; this.currentDirection = Direction.UP;    }
-
-                this.x = nextX;
-                this.y = nextY;
+                if (onTop || onBottom) {
+                    // Pareggia la X
+                    if (Math.abs(this.x - pX) > runSpeed) {
+                        if (pX > this.x) { this.x += runSpeed; this.currentDirection = Direction.RIGHT; }
+                        else             { this.x -= runSpeed; this.currentDirection = Direction.LEFT;  }
+                    } else {
+                        this.x = pX;
+                        // Orientiamoci verso il centro per far capire che stiamo "guardando" ma non siamo ancora in attacco (opzionale)
+                        this.currentDirection = onTop ? Direction.DOWN : Direction.UP;
+                    }
+                } else if (onLeft || onRight) {
+                    // Pareggia la Y
+                    if (Math.abs(this.y - pY) > runSpeed) {
+                        if (pY > this.y) { this.y += runSpeed; this.currentDirection = Direction.DOWN; }
+                        else             { this.y -= runSpeed; this.currentDirection = Direction.UP;   }
+                    } else {
+                        this.y = pY;
+                        this.currentDirection = onLeft ? Direction.RIGHT : Direction.LEFT;
+                    }
+                } else {
+                    // Fallback se staccato dai bordi per qualche motivo
+                    this.y -= runSpeed; this.currentDirection = Direction.UP;
+                }
                 break;
             }
 
@@ -153,10 +183,8 @@ public class BossGoblin extends Enemy {
             }
 
             // ----------------------------------------------------------------
-            // EXHAUSTED – FASE A: si muove verso il centro a velocita' NORMALE.
-            // Timer assoluto: 4 s (2 s se enrage).
-            // FIX MOONWALK: currentDirection aggiornata in base alla traiettoria.
-            // Se il timer scade prima di arrivare → FURY direttamente.
+            // EXHAUSTED – FASE A: TASK 2 Movimento a "L" verso il centro.
+            // Prima asse X, poi asse Y.
             // ----------------------------------------------------------------
             case EXHAUSTED: {
                 int maxExhaust = (hp <= MAX_HP / 2) ? 2000 : 4000;
@@ -166,25 +194,25 @@ public class BossGoblin extends Enemy {
                     break;
                 }
 
-                double dx     = 6.0 - this.x;
-                double dy     = 5.0 - this.y;
-                double length = Math.sqrt(dx * dx + dy * dy);
-
-                if (length > 0.1) {
-                    // FIX MOONWALKING: la direzione riflette l'asse di movimento prevalente
-                    if (Math.abs(dx) >= Math.abs(dy)) {
-                        this.currentDirection = (dx > 0) ? Direction.RIGHT : Direction.LEFT;
-                    } else {
-                        this.currentDirection = (dy > 0) ? Direction.DOWN : Direction.UP;
-                    }
-                    // Velocita' di corsa normale — nessun moltiplicatore 0.3x
-                    this.x += (dx / length) * runSpeed;
-                    this.y += (dy / length) * runSpeed;
-                } else {
+                if (Math.abs(this.x - 6.0) > runSpeed) {
+                    // Priorità 1: allinea le ascisse (X)
+                    if (this.x < 6.0) { this.x += runSpeed; this.currentDirection = Direction.RIGHT; }
+                    else              { this.x -= runSpeed; this.currentDirection = Direction.LEFT;  }
+                } 
+                else if (Math.abs(this.y - 5.0) > runSpeed) {
+                    // Priorità 2: allinea le ordinate (Y) dopo aver fissato la X
+                    this.x = 6.0; // evita micro-shaking
+                    if (this.y < 5.0) { this.y += runSpeed; this.currentDirection = Direction.DOWN; }
+                    else              { this.y -= runSpeed; this.currentDirection = Direction.UP;   }
+                } 
+                else {
                     // Arrivato al centro → Fase B (riposo fermo)
                     this.x = 6.0;
                     this.y = 5.0;
                     changeState(BossState.IDLE_EXHAUSTED);
+                    
+                    // TASK 3: Chiama clearCracks() alla transizione di riposo
+                    model.getMapManager().clearCracks();
                 }
                 break;
             }

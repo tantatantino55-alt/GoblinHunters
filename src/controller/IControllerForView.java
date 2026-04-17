@@ -5,6 +5,8 @@ import utils.EnemyType;
 import utils.ItemType;
 import utils.PlayerState;
 
+import java.util.function.BiConsumer;
+
 public interface IControllerForView {
     public void openGameGUI();
     public void closeGameGUI();
@@ -120,4 +122,34 @@ public interface IControllerForView {
     boolean isPaused();
     /** Toggles or sets the paused state. When paused, the game-loop stops updating. */
     void setPaused(boolean paused);
+
+    // --- PAUSE CONTROLLER ---
+    /**
+     * Espone il {@link PauseController} alla View.
+     */
+    PauseController getPauseController();
+
+    // --- KEY BINDING APPLIER ---
+    /**
+     * Registra il callback che GamePanel espone per applicare le modifiche
+     * ai keybindings nell'InputMap/ActionMap di Swing.
+     *
+     * <p>Chiamato UNA VOLTA da {@code GamePanel} durante la sua costruzione.
+     * Il Controller NON dipende da {@code GamePanel} — usa solo questa funzione
+     * anonima per propagare le modifiche.</p>
+     *
+     * @param applier {@code BiConsumer<Integer, String>} dove:
+     *                Integer = indice azione (0-6, vedi {@code PauseModel}),
+     *                String  = nuovo keyName uppercase, es. "W", "UP", "SPACE"
+     */
+    void setKeyBindingApplier(BiConsumer<Integer, String> applier);
+
+    /**
+     * Propaga un rebind effettuato nel menu di pausa verso il sistema di input di Swing.
+     * Chiamato da {@link PauseController} quando l'utente conferma un nuovo tasto.
+     *
+     * @param actionIndex indice azione (0-6)
+     * @param newKeyName  nuovo tasto in formato KeyStroke uppercase (es. "W", "SPACE")
+     */
+    void applyKeyBinding(int actionIndex, String newKeyName);
 }

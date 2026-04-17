@@ -28,6 +28,7 @@ public class ResourceLoader {
         loadPortalAnimation(sm);
         loadPowerUps(sm);
         loadConsumables(sm);
+        loadHUDIcons(sm);
 
         // --- Grayscale HUD: genera una sola volta le versioni "non raccolto" ---
         buildGrayscaleHudIcons(sm);
@@ -334,13 +335,33 @@ public class ResourceLoader {
         System.out.println("ResourceLoader: Consumabili caricati (Frame 63-64).");
     }
 
+    private void loadHUDIcons(SpriteManager sm) {
+        // Sfondo Cabinato (JFrame Background) collegato globalmente
+        sm.loadSingleImage("ARCADE_CABINET", "/cabinet arcade.png");
+
+        // L'utente ha chiesto: Fire Spell prima tile = indice 0
+        sm.loadAnimation("HUD_FIRE_SPELL", Config.ITEM_SHEET, 0, 1, 64);
+        
+        // Aura Spell tile 33
+        sm.loadAnimation("HUD_AURA_SPELL", Config.ITEM_SHEET, 33, 1, 64);
+        
+        // Immagine del bastone
+        sm.loadSingleImage("STAFF_ICON", "/staff_icon.png");
+        
+        System.out.println("ResourceLoader: Icone HUD e Menu aggiornate (Fire, Aura, Staff).");
+    }
+
     /**
      * Pre-genera le versioni in scala di grigi di tutti gli sprite HUD.
      * Chiamato UNA SOLA VOLTA al termine del caricamento normali risorse.
      * Convenzione chiave: "CONSUMABLES_0_gray", "POWER_UPS_2_gray", ecc.
      */
     private void buildGrayscaleHudIcons(SpriteManager sm) {
-        // Consumabili: frame 0 = bomba extra, frame 1 = aura extra
+        // Icone aggiornate HUD
+        sm.buildGrayscale("HUD_FIRE_SPELL", 0, "HUD_FIRE_SPELL_gray");
+        sm.buildGrayscale("HUD_AURA_SPELL", 0, "HUD_AURA_SPELL_gray");
+        
+        // Consumabili map drops (eredità vecchio sistema)
         sm.buildGrayscale("CONSUMABLES", 0, "CONSUMABLES_0_gray");
         sm.buildGrayscale("CONSUMABLES", 1, "CONSUMABLES_1_gray");
         // Power-up:    frame 0 = scudo,  frame 1 = raggio, frame 2 = velocità

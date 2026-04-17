@@ -6,6 +6,8 @@ import utils.EnemyType;
 import utils.PlayerState;
 import view.View;
 
+import java.util.function.BiConsumer;
+
 public class ControllerForView implements IControllerForView {
 
     private static ControllerForView instance = null;
@@ -196,6 +198,36 @@ public class ControllerForView implements IControllerForView {
     @Override
     public void setPaused(boolean paused) {
         ControllerForModel.getInstance().setPaused(paused);
+    }
+
+    // --- PAUSE CONTROLLER ---
+    @Override
+    public PauseController getPauseController() {
+        return PauseController.getInstance();
+    }
+
+    // --- KEY BINDING APPLIER ---
+
+    /**
+     * Callback registrato da {@code GamePanel} una volta sola alla sua costruzione.
+     * Il Controller lo chiama per propagare i rebind verso l'InputMap di Swing.
+     */
+    private BiConsumer<Integer, String> keyBindingApplier = null;
+
+    @Override
+    public void setKeyBindingApplier(BiConsumer<Integer, String> applier) {
+        this.keyBindingApplier = applier;
+    }
+
+    /**
+     * Chiamato da {@link PauseController} quando l'utente conferma un nuovo tasto.
+     * Delega al callback registrato da GamePanel.
+     */
+    @Override
+    public void applyKeyBinding(int actionIndex, String newKeyName) {
+        if (keyBindingApplier != null) {
+            keyBindingApplier.accept(actionIndex, newKeyName);
+        }
     }
 
     public static IControllerForView getInstance() {

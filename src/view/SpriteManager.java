@@ -61,6 +61,16 @@ public class SpriteManager {
     }
 
     // ========================================================================
+    // 1.5 CARICAMENTO IMMAGINE INTERA COME FRAME SINGOLO
+    // ========================================================================
+    public void loadSingleImage(Object key, String path) {
+        BufferedImage image = loadSheet(path);
+        if (image != null) {
+            animations.put(key, new BufferedImage[]{ image });
+        }
+    }
+
+    // ========================================================================
     // 2. ESTRAZIONE TILE STATICHE (Per i muri)
     // ========================================================================
     public BufferedImage extractTile(String path, int col, int row, int width, int height) {

@@ -333,9 +333,10 @@ class MapManager {
         return null;
     }
 
-    /** Rimuove tutte le crepe (es. al cambio livello). */
+    /** Rimuove tutte le crepe e le onde (es. al cambio livello o riposo Boss). */
     void clearCracks() {
         activeCracks.clear();
+        activeWaves.clear();
     }
 
     // Getters per l'esposizione alla View tramite Model (pattern uguale ad activeFire)

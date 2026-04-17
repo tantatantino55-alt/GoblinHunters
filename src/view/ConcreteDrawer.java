@@ -18,26 +18,21 @@ public class ConcreteDrawer extends AbstractDrawer {
     private float transitionAlpha = Config.MIN_ALPHA; // Partiamo da completamente trasparente
     private boolean fadingOut = true;
 
-    private BufferedImage arcadeCabinet = null;
-
     public ConcreteDrawer() {
         this.tileManager = TileManager.getInstance();
         this.spriteManager = SpriteManager.getInstance();
-        this.arcadeCabinet = ResourceManager.loadImage("/CabinetArcade.png");
+        // Il background ArcadeCabinet ora è delegato al GamePanel tramite SpriteManager
     }
 
     @Override
     public void draw(Graphics g) {
         Graphics2D g2d = (Graphics2D) g;
 
-        // Sfondo di base
+        // Sfondo nero per l'area di gioco (la vera e propria griglia)
         g2d.setColor(Color.BLACK);
-        g2d.fillRect(0, 0, getDrawingWidth(), getDrawingHeight());
-
-        // Disegna il Cabinato Arcade senza deformarlo o scalarlo (scala 1:1) per centratura matematica
-        if (arcadeCabinet != null) {
-            g2d.drawImage(arcadeCabinet, 0, 0, null);
-        }
+        // Calcoliamo esattamente la larghezza della griglia affinché
+        // non copra il cabinato sottostante.
+        g2d.fillRect(0, 0, utils.ViewConfig.GAME_PANEL_WIDTH, utils.ViewConfig.GAME_PANEL_HEIGHT);
         drawMap(g2d);
         drawCracks(g2d); // Crepe del Boss: overlay sul pavimento
         drawPortal(g2d); // 1. Disegna l'allarme se scopri il portale spawner
@@ -64,7 +59,8 @@ public class ConcreteDrawer extends AbstractDrawer {
 
         // --- PAUSA: Overlay del menu di pausa ---
         if (ControllerForView.getInstance().isPaused()) {
-            PauseMenuDrawer.getInstance().draw(g2d, PauseState.getInstance());
+            PauseMenuDrawer.getInstance().draw(g2d,
+                    ControllerForView.getInstance().getPauseController());
         }
     }
 
@@ -187,14 +183,14 @@ public class ConcreteDrawer extends AbstractDrawer {
         currentY += 20;
 
         drawHudIcon(g2d, panelX, currentY,
-                utils.ItemType.AMMO_BOMB, "CONSUMABLES", 0,
-                "CONSUMABLES_0_gray",
+                utils.ItemType.AMMO_BOMB, "HUD_FIRE_SPELL", 0,
+                "HUD_FIRE_SPELL_gray",
                 bombAmmo > 0, "x" + bombAmmo);
         currentY += 60;
 
         drawHudIcon(g2d, panelX, currentY,
-                utils.ItemType.AMMO_AURA, "CONSUMABLES", 1,
-                "CONSUMABLES_1_gray",
+                utils.ItemType.AMMO_AURA, "HUD_AURA_SPELL", 0,
+                "HUD_AURA_SPELL_gray",
                 auraAmmo > 0, "x" + auraAmmo);
         currentY += 68;
 
@@ -269,9 +265,26 @@ public class ConcreteDrawer extends AbstractDrawer {
         int drawX  = x - offset;
         int drawY  = y - offset;
 
+        // --- CORREZIONE OFFSETS VISIVI ---
+        // Alcune sprites originali in items.png non sono perfettamente centrate.
+        // Applichiamo delle correzioni manuali per allinearle elegantemente al testo.
+        int imgOffsetX = 0;
+        int imgOffsetY = 0;
+        int textOffsetX = 0;
+
+        if ("HUD_FIRE_SPELL".equals(colorKey)) {
+            imgOffsetX = 6;   // Spostiamo la sfera un po' a destra
+            imgOffsetY = 8;   // Spostiamo la sfera in basso per centrarla verticalmente
+            textOffsetX = 2;
+        } else if ("HUD_AURA_SPELL".equals(colorKey)) {
+            imgOffsetX = 8;   // Spostiamo l'aura a destra perché il suo peso visivo è tutto a sinistra
+            imgOffsetY = 4;   // Lievemente in basso
+            textOffsetX = 6;  // Spostiamo il testo per non farlo sovrapporre alla coda
+        }
+
         // C. Disegna immagine
         if (img != null) {
-            g2d.drawImage(img, drawX, drawY, drawSize, drawSize, null);
+            g2d.drawImage(img, drawX + imgOffsetX, drawY + imgOffsetY, drawSize, drawSize, null);
         }
 
         // D. Ripristina composite originale
@@ -279,8 +292,9 @@ public class ConcreteDrawer extends AbstractDrawer {
 
         // E. Contatore testo (solo per consumabili attivi)
         if (counter != null) {
-            int textX = x + BASE_SIZE + 4;
-            int textY = y + BASE_SIZE / 2 + 6;
+            int textX = x + BASE_SIZE + 4 + textOffsetX;
+            int textY = y + BASE_SIZE / 2 + 6; // text baseline
+            
             if (active) {
                 g2d.setFont(new Font("Arial", Font.BOLD, 15));
                 g2d.setColor(Color.WHITE);
@@ -288,7 +302,11 @@ public class ConcreteDrawer extends AbstractDrawer {
                 g2d.setFont(new Font("Arial", Font.PLAIN, 14));
                 g2d.setColor(new Color(140, 140, 140));
             }
-            g2d.drawString(counter, textX, textY);
+            // Aggiungiamo un leggero aggiustamento verticale dinamico basato sul font
+            FontMetrics fm = g2d.getFontMetrics();
+            int correctedTextY = y + (BASE_SIZE / 2) + (fm.getAscent() / 2) - 2;
+            
+            g2d.drawString(counter, textX, correctedTextY);
         }
     }
 

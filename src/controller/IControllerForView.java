@@ -114,4 +114,10 @@ public interface IControllerForView {
 
     /** Ritorna il punteggio totale corrente. */
     int getScore();
-}
+
+    // --- PAUSE ---
+    /** Returns true when the game is paused (logic frozen, pause overlay visible). */
+    boolean isPaused();
+    /** Toggles or sets the paused state. When paused, the game-loop stops updating. */
+    void setPaused(boolean paused);
+}

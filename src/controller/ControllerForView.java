@@ -187,6 +187,17 @@ public class ControllerForView implements IControllerForView {
         return Model.getInstance().getScore();
     }
 
+    // --- PAUSE ---
+    @Override
+    public boolean isPaused() {
+        return ControllerForModel.getInstance().isPaused();
+    }
+
+    @Override
+    public void setPaused(boolean paused) {
+        ControllerForModel.getInstance().setPaused(paused);
+    }
+
     public static IControllerForView getInstance() {
         if (instance == null) instance = new ControllerForView();
         return instance;

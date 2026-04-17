@@ -16,8 +16,14 @@ public class ControllerForModel implements IControllerForModel, Runnable {
     //---------------------------------------------------------------
     private Thread gameThread;
     private boolean running = false;
+    private volatile boolean paused = false;
     private int transitionTimer = 0;
     private final int MAX_TRANSITION_TICKS = Config.MAX_TRANSITION_TICKS; // Circa 2 second
+
+    /** Returns true when the game logic is frozen (pause screen active). */
+    public boolean isPaused() { return paused; }
+    /** Freeze or unfreeze game logic. View continues to repaint for the pause overlay. */
+    public void setPaused(boolean paused) { this.paused = paused; }
 
 
     private ControllerForModel() {
@@ -98,8 +104,9 @@ public class ControllerForModel implements IControllerForModel, Runnable {
             boolean updated = false;
 
             // 1. FASE LOGICA: Aggiorna il gioco (es. movimento, collisioni)
+            // Se il gioco è in pausa, saltiamo updateGame() ma facciamo comunque il repaint.
             while (delta >= 1) {
-                updateGame();
+                if (!paused) updateGame();
                 delta--;
                 updated = true;
             }

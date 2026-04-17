@@ -51,6 +51,11 @@ public class ConcreteDrawer extends AbstractDrawer {
         drawDebugGrid(g2d);
         drawBossHUD(g2d); // Task 4: barra HP del boss (visibile solo in zona 2)
         drawHUD(g2d);
+
+        // --- PAUSA: Overlay del menu di pausa ---
+        if (ControllerForView.getInstance().isPaused()) {
+            PauseMenuDrawer.getInstance().draw(g2d, PauseState.getInstance());
+        }
     }
 
     private void drawPortal(Graphics2D g2d) {

@@ -28,11 +28,6 @@ public class ConcreteDrawer extends AbstractDrawer {
     public void draw(Graphics g) {
         Graphics2D g2d = (Graphics2D) g;
 
-        // Sfondo nero per l'area di gioco (la vera e propria griglia)
-        g2d.setColor(Color.BLACK);
-        // Calcoliamo esattamente la larghezza della griglia affinché
-        // non copra il cabinato sottostante.
-        g2d.fillRect(0, 0, utils.ViewConfig.GAME_PANEL_WIDTH, utils.ViewConfig.GAME_PANEL_HEIGHT);
         drawMap(g2d);
         drawCracks(g2d); // Crepe del Boss: overlay sul pavimento
         drawPortal(g2d); // 1. Disegna l'allarme se scopri il portale spawner
@@ -945,4 +940,4 @@ public class ConcreteDrawer extends AbstractDrawer {
         g2d.setColor(new Color(180, 20, 20));
         g2d.drawRect(barX, barY, barW, barH);
     }
-}
+}

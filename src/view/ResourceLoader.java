@@ -337,7 +337,7 @@ public class ResourceLoader {
 
     private void loadHUDIcons(SpriteManager sm) {
         // Sfondo Cabinato (JFrame Background) collegato globalmente
-        sm.loadSingleImage("ARCADE_CABINET", "/cabinet arcade.png");
+        sm.loadSingleImage("ARCADE_CABINET", "/CabinetArcade.png");
 
         // L'utente ha chiesto: Fire Spell prima tile = indice 0
         sm.loadAnimation("HUD_FIRE_SPELL", Config.ITEM_SHEET, 0, 1, 64);

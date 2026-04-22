@@ -11,9 +11,9 @@ import java.awt.event.*;
 public class GamePanel extends JPanel {
     private AbstractDrawer drawer = null;
 
-    private boolean canPlaceBomb    = true;
-    private boolean canShootAura    = true;
-    private boolean canStaffAttack  = true;
+    private boolean canPlaceBomb = true;
+    private boolean canShootAura = true;
+    private boolean canStaffAttack = true;
 
     // =========================================================================
     // KEY BINDING RUNTIME STATE
@@ -24,8 +24,8 @@ public class GamePanel extends JPanel {
      * Indice coerente con PauseModel.ACTION_MOVE_UP … ACTION_STAFF.
      */
     private static final String[] PRESS_ACTIONS = {
-        "moveUp", "moveDown", "moveLeft", "moveRight",
-        "placeBomb", "shootAura", "staffAttack"
+            "moveUp", "moveDown", "moveLeft", "moveRight",
+            "placeBomb", "shootAura", "staffAttack"
     };
 
     /**
@@ -33,8 +33,8 @@ public class GamePanel extends JPanel {
      * Indice coerente con PRESS_ACTIONS.
      */
     private static final String[] RELEASE_ACTIONS = {
-        "stopUp", "stopDown", "stopLeft", "stopRight",
-        "resetBomb", "resetAura", "resetStaff"
+            "stopUp", "stopDown", "stopLeft", "stopRight",
+            "resetBomb", "resetAura", "resetStaff"
     };
 
     /**
@@ -44,7 +44,7 @@ public class GamePanel extends JPanel {
      * Aggiornati da {@link #applyKeyRebind} ad ogni rebind.
      */
     private final String[] currentInputBindings = {
-        "UP", "DOWN", "LEFT", "RIGHT", "SPACE", "X", "Z"
+            "UP", "DOWN", "LEFT", "RIGHT", "SPACE", "X", "Z"
     };
 
     public GamePanel(AbstractDrawer drawer) {
@@ -76,11 +76,12 @@ public class GamePanel extends JPanel {
         // 2. DISEGNO AREA DI GIOCO (Griglia e HUD) - Livello Superiore
         // Creiamo una copia del Graphics per non inquinare il set originale
         Graphics2D g2d = (Graphics2D) g.create();
-        
+
         // --- INCASTONAMENTO NELLO SCHERMO ---
-        // Spostiamo il punto di origine (0,0) della griglia di gioco 
-        // esattamente alle coordinate (57, 46) in modo che cada dentro al monitor del cabinato
-        g2d.translate(57, 46);
+        // Spostiamo il punto di origine (0,0) della griglia di gioco
+        // esattamente alle coordinate (57, 46) in modo che cada dentro al monitor del
+        // cabinato
+        // g2d.translate(57, 46);
 
         drawer.draw(g2d);
 
@@ -122,23 +123,24 @@ public class GamePanel extends JPanel {
         this.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                if (!ControllerForView.getInstance().isPaused()) return;
+                if (!ControllerForView.getInstance().isPaused())
+                    return;
 
                 PauseController ctrl = ControllerForView.getInstance().getPauseController();
-                PauseMenuDrawer.ClickResult result =
-                        PauseMenuDrawer.getInstance().handleClick(e.getX(), e.getY(), ctrl);
+                PauseMenuDrawer.ClickResult result = PauseMenuDrawer.getInstance().handleClick(e.getX(), e.getY(),
+                        ctrl);
 
                 // GamePanel è l'orchestratore: riceve il ClickResult e gestisce
                 // tutte le azioni di lifecycle. PauseController si occupa solo
                 // della pulizia del proprio stato interno.
                 switch (result) {
                     case RESUME -> {
-                        ctrl.onResumeClicked();                          // pulizia rebind
+                        ctrl.onResumeClicked(); // pulizia rebind
                         ControllerForView.getInstance().setPaused(false); // lifecycle
                     }
                     case QUIT -> {
                         ctrl.onQuitClicked(); // pulizia stato interno
-                        System.exit(0);       // lifecycle
+                        System.exit(0); // lifecycle
                     }
                     case RETURN_TO_MAIN_MENU -> {
                         ctrl.onReturnToMainMenuClicked(); // log TODO
@@ -146,7 +148,8 @@ public class GamePanel extends JPanel {
                     }
                     // RESET_DEFAULTS, TOGGLE_AUDIO, REBIND_START, NONE
                     // → già gestiti internamente da PauseMenuDrawer + PauseController
-                    default -> { /* nessuna azione aggiuntiva necessaria */ }
+                    default -> {
+                        /* nessuna azione aggiuntiva necessaria */ }
                 }
             }
         });
@@ -165,7 +168,8 @@ public class GamePanel extends JPanel {
         im.put(KeyStroke.getKeyStroke("RIGHT"), "moveRight");
         am.put("moveRight", new AbstractAction() {
             public void actionPerformed(ActionEvent e) {
-                if (ControllerForView.getInstance().isPaused()) return;
+                if (ControllerForView.getInstance().isPaused())
+                    return;
                 ControllerForView.getInstance().setPlayerMovement(speed, ControllerForView.getInstance().getDeltaY());
             }
         });
@@ -181,7 +185,8 @@ public class GamePanel extends JPanel {
         im.put(KeyStroke.getKeyStroke("LEFT"), "moveLeft");
         am.put("moveLeft", new AbstractAction() {
             public void actionPerformed(ActionEvent e) {
-                if (ControllerForView.getInstance().isPaused()) return;
+                if (ControllerForView.getInstance().isPaused())
+                    return;
                 ControllerForView.getInstance().setPlayerMovement(-speed, ControllerForView.getInstance().getDeltaY());
             }
         });
@@ -197,7 +202,8 @@ public class GamePanel extends JPanel {
         im.put(KeyStroke.getKeyStroke("UP"), "moveUp");
         am.put("moveUp", new AbstractAction() {
             public void actionPerformed(ActionEvent e) {
-                if (ControllerForView.getInstance().isPaused()) return;
+                if (ControllerForView.getInstance().isPaused())
+                    return;
                 ControllerForView.getInstance().setPlayerMovement(ControllerForView.getInstance().getDeltaX(), -speed);
             }
         });
@@ -213,7 +219,8 @@ public class GamePanel extends JPanel {
         im.put(KeyStroke.getKeyStroke("DOWN"), "moveDown");
         am.put("moveDown", new AbstractAction() {
             public void actionPerformed(ActionEvent e) {
-                if (ControllerForView.getInstance().isPaused()) return;
+                if (ControllerForView.getInstance().isPaused())
+                    return;
                 ControllerForView.getInstance().setPlayerMovement(ControllerForView.getInstance().getDeltaX(), speed);
             }
         });
@@ -230,7 +237,8 @@ public class GamePanel extends JPanel {
         am.put("placeBomb", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (ControllerForView.getInstance().isPaused()) return;
+                if (ControllerForView.getInstance().isPaused())
+                    return;
                 if (canPlaceBomb) {
                     ControllerForView.getInstance().placeBomb();
                     canPlaceBomb = false;
@@ -250,7 +258,8 @@ public class GamePanel extends JPanel {
         am.put("shootAura", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (ControllerForView.getInstance().isPaused()) return;
+                if (ControllerForView.getInstance().isPaused())
+                    return;
                 if (canShootAura) {
                     ControllerForView.getInstance().playerShoot();
                     canShootAura = false;
@@ -270,7 +279,8 @@ public class GamePanel extends JPanel {
         am.put("staffAttack", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (ControllerForView.getInstance().isPaused()) return;
+                if (ControllerForView.getInstance().isPaused())
+                    return;
                 if (canStaffAttack) {
                     ControllerForView.getInstance().staffAttack();
                     canStaffAttack = false;
@@ -290,22 +300,30 @@ public class GamePanel extends JPanel {
     // =========================================================================
 
     /**
-     * Aggiorna l'InputMap di Swing per riflettere un rebind effettuato nel menu di pausa.
-     * <p>Questo metodo è passato come callback a {@code IControllerForView.setKeyBindingApplier()}
-     * nel costruttore: il Controller lo chiama senza conoscere questa classe.</p>
+     * Aggiorna l'InputMap di Swing per riflettere un rebind effettuato nel menu di
+     * pausa.
+     * <p>
+     * Questo metodo è passato come callback a
+     * {@code IControllerForView.setKeyBindingApplier()}
+     * nel costruttore: il Controller lo chiama senza conoscere questa classe.
+     * </p>
      *
      * <h3>Flusso</h3>
      * <ol>
-     *   <li>Rimuove il vecchio KeyStroke (press + released) dall'InputMap</li>
-     *   <li>Aggiunge il nuovo KeyStroke → stessa ActionName (l'ActionMap resta invariata)</li>
-     *   <li>Aggiorna {@code currentInputBindings} per tenere traccia del binding corrente</li>
+     * <li>Rimuove il vecchio KeyStroke (press + released) dall'InputMap</li>
+     * <li>Aggiunge il nuovo KeyStroke → stessa ActionName (l'ActionMap resta
+     * invariata)</li>
+     * <li>Aggiorna {@code currentInputBindings} per tenere traccia del binding
+     * corrente</li>
      * </ol>
      *
      * @param actionIndex indice azione 0-6 (coerente con PauseModel.ACTION_*)
-     * @param newKeyName  nuovo tasto in formato KeyStroke uppercase, es. "W", "UP", "SPACE"
+     * @param newKeyName  nuovo tasto in formato KeyStroke uppercase, es. "W", "UP",
+     *                    "SPACE"
      */
     private void applyKeyRebind(int actionIndex, String newKeyName) {
-        if (actionIndex < 0 || actionIndex >= PRESS_ACTIONS.length) return;
+        if (actionIndex < 0 || actionIndex >= PRESS_ACTIONS.length)
+            return;
 
         InputMap im = getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
         String oldKey = currentInputBindings[actionIndex];
@@ -315,7 +333,7 @@ public class GamePanel extends JPanel {
         im.remove(KeyStroke.getKeyStroke("released " + oldKey));
 
         // 2. Aggiungi il nuovo binding (stessa ActionName → stessa logica)
-        im.put(KeyStroke.getKeyStroke(newKeyName),             PRESS_ACTIONS[actionIndex]);
+        im.put(KeyStroke.getKeyStroke(newKeyName), PRESS_ACTIONS[actionIndex]);
         im.put(KeyStroke.getKeyStroke("released " + newKeyName), RELEASE_ACTIONS[actionIndex]);
 
         // 3. Aggiorna il tracking locale

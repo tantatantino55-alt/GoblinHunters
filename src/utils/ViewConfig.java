@@ -18,17 +18,20 @@ public class ViewConfig {
     public static final int GAME_LOOP_DELAY_MS  = 1000 / FPS;
 
     // --- OFFSET GRIGLIA E CORNICE ---
-    public static final int FRAME_OFFSET_X      = 0;
-    public static final int FRAME_OFFSET_Y      = 0;
+    public static final int FRAME_OFFSET_X      = 57;
+    public static final int FRAME_OFFSET_Y      = 46;
     // Gli offset della griglia sono ora applicati globalmente via g2d.translate(57, 46) dal GamePanel
-    public static final int GRID_OFFSET_X       = 0;
-    public static final int GRID_OFFSET_Y       = 0;
+    public static final int GRID_OFFSET_X       = 121;
+    public static final int GRID_OFFSET_Y       = 110;
 
     // --- DIMENSIONI CORNICE E FINESTRA ---
-    public static final int FRAME_WIDTH                = 960;
-    public static final int FRAME_HEIGHT               = 832;
+    //public static final int FRAME_WIDTH                = 960;
+    //public static final int FRAME_HEIGHT               = 832;
+    public static final int FRAME_WIDTH                = 1024;
+    public static final int FRAME_HEIGHT              = 896;
+
     public static final int WINDOW_PREFERRED_WIDTH     = 1152;
-    public static final int WINDOW_PREFERRED_HEIGHT    = 932;
+    public static final int WINDOW_PREFERRED_HEIGHT    = 768;
 
     // --- PLAYER PIVOT ---
     public static final int PLAYER_PIVOT_Y = 102;

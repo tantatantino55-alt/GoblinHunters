@@ -2,6 +2,7 @@ package controller;
 
 import model.Model;
 import utils.Config;
+import utils.GameState;
 
 // Aggiungiamo Runnable per permettere a questa classe di girare su un Thread dedicato
 public class ControllerForModel implements IControllerForModel, Runnable {
@@ -18,12 +19,20 @@ public class ControllerForModel implements IControllerForModel, Runnable {
     private boolean running = false;
     private volatile boolean paused = false;
     private int transitionTimer = 0;
-    private final int MAX_TRANSITION_TICKS = Config.MAX_TRANSITION_TICKS; // Circa 2 second
+    private final int MAX_TRANSITION_TICKS = Config.MAX_TRANSITION_TICKS;
+
+    /** Stato corrente del gioco: MENU o PLAYING. */
+    private volatile GameState gameState = GameState.MENU;
 
     /** Returns true when the game logic is frozen (pause screen active). */
     public boolean isPaused() { return paused; }
     /** Freeze or unfreeze game logic. View continues to repaint for the pause overlay. */
     public void setPaused(boolean paused) { this.paused = paused; }
+
+    /** Ritorna lo stato corrente del gioco. */
+    public GameState getGameState() { return gameState; }
+    /** Imposta lo stato del gioco (transizione MENU → PLAYING). */
+    public void setGameState(GameState state) { this.gameState = state; }
 
 
     private ControllerForModel() {
@@ -106,7 +115,11 @@ public class ControllerForModel implements IControllerForModel, Runnable {
             // 1. FASE LOGICA: Aggiorna il gioco (es. movimento, collisioni)
             // Se il gioco è in pausa, saltiamo updateGame() ma facciamo comunque il repaint.
             while (delta >= 1) {
-                if (!paused) updateGame();
+                // Solo in PLAYING state eseguiamo la logica di gioco
+                if (gameState == GameState.PLAYING && !paused) {
+                    updateGame();
+                }
+                // In MENU state: nessun tick logico, le animazioni sono time-based
                 delta--;
                 updated = true;
             }

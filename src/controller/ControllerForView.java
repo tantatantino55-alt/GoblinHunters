@@ -1,9 +1,9 @@
 package controller;
 
+import model.MenuModel;
 import model.Model;
-import utils.Direction;
-import utils.EnemyType;
-import utils.PlayerState;
+import utils.*;
+import view.ResourceLoader;
 import view.View;
 
 import java.util.function.BiConsumer;
@@ -15,6 +15,53 @@ public class ControllerForView implements IControllerForView {
 
     @Override public void openGameGUI() { View.getInstance().openGameGUI(); }
     @Override public void closeGameGUI() { View.getInstance().closeGameGUI(); }
+
+    // =========================================================================
+    // GAME STATE & MENU SELEZIONE (Controller media tra View e MenuModel)
+    // =========================================================================
+
+    @Override
+    public GameState getGameState() {
+        return ControllerForModel.getInstance().getGameState();
+    }
+
+    @Override
+    public void setMenuHoveredIndex(int index) {
+        MenuModel.getInstance().setHoveredIndex(index);
+    }
+
+    @Override
+    public void menuHandleClick(int frameIndex) {
+        // Click su un riquadro: seleziona il personaggio (senza avviare il gioco)
+        MenuModel.getInstance().selectByClick(frameIndex);
+    }
+
+    @Override
+    public void menuConfirmSelection() {
+        // Pulsante "Start Game": conferma e avvia
+        MenuModel.getInstance().confirmSelection();
+        if (MenuModel.getInstance().isCharacterConfirmed()) {
+            startGameWithSelectedCharacter();
+        }
+    }
+
+    /**
+     * Transizione MENU → PLAYING.
+     * 1. Determina il personaggio scelto
+     * 2. Ricarica le animazioni player con lo spritesheet corretto
+     * 3. Cambia lo stato del gioco a PLAYING
+     */
+    private void startGameWithSelectedCharacter() {
+        CharacterType selected = MenuModel.getInstance().getConfirmedCharacterType();
+        if (selected == null) return;
+
+        // Ricarica le animazioni con lo sheet del personaggio scelto
+        ResourceLoader.reloadPlayerAnimations(selected.getSheetPath());
+
+        // Transizione di stato
+        ControllerForModel.getInstance().setGameState(GameState.PLAYING);
+        System.out.println("Gioco avviato con: " + selected.getDisplayName());
+    }
     @Override public int getNumColumns() { return Model.getInstance().getNumColumns(); }
     @Override public int getNumRows() { return Model.getInstance().getNumRows(); }
     @Override public double getXCoordinatePlayer() { return Model.getInstance().xCoordinatePlayer(); }
@@ -240,4 +287,4 @@ public class ControllerForView implements IControllerForView {
         if (instance == null) instance = new ControllerForView();
         return instance;
     }
-}
+}

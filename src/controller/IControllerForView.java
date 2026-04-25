@@ -1,15 +1,23 @@
 package controller;
 
-import utils.Direction;
-import utils.EnemyType;
-import utils.ItemType;
-import utils.PlayerState;
+import utils.*;
 
 import java.util.function.BiConsumer;
 
 public interface IControllerForView {
     public void openGameGUI();
     public void closeGameGUI();
+
+    // --- GAME STATE (Menu / Playing) ---
+    GameState getGameState();
+
+    // --- MENU SELEZIONE PERSONAGGIO (solo mouse) ---
+    /** Aggiorna l'hover in base alla posizione del mouse (temporaneo). */
+    void setMenuHoveredIndex(int index);
+    /** Seleziona un personaggio tramite click sul riquadro. */
+    void menuHandleClick(int frameIndex);
+    /** Conferma la selezione e avvia il gioco (pulsante Start Game). */
+    void menuConfirmSelection();
     public int getNumColumns();
     public int getNumRows();
     public double getXCoordinatePlayer();

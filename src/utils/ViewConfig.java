@@ -200,4 +200,56 @@ public class ViewConfig {
     public static final int BOSS_ATTACK_RIGHT_START = 124;
     public static final int BOSS_IDLE_RIGHT_START   = 134;
     public static final int BOSS_RUN_RIGHT_START    = 150;
+
+    // =====================================================================
+    // MENU SELEZIONE PERSONAGGIO
+    // =====================================================================
+    //
+    // ⚙️ GUIDA AL TUNING VISIVO
+    //
+    // Le coordinate sono RELATIVE all'area di disegno del menu (MENU_DRAW_*).
+    // Per convertire in coordinate schermo assolute:
+    //   screenX = MENU_DRAW_X + CHAR_FRAME_X[i]
+    //   screenY = MENU_DRAW_Y + CHAR_FRAME_Y
+    //
+    // Se i riquadri non sono allineati ai personaggi nell'immagine:
+    //   1. Modifica CHAR_FRAME_X[i] per spostare orizzontalmente ciascun riquadro
+    //   2. Modifica CHAR_FRAME_Y per spostare verticalmente tutti i riquadri
+    //   3. Modifica CHAR_FRAME_W / CHAR_FRAME_H per ridimensionare i rettangoli
+    //
+    // Se il pulsante "NEW GAME" non risponde al click:
+    //   4. Modifica NEW_GAME_BTN_X/Y/W/H per spostare/ridimensionare la hitbox
+    //
+    // Se l'intera immagine è fuori posizione nel cabinet:
+    //   5. Modifica MENU_DRAW_X/Y per spostare l'immagine
+    //   6. Modifica MENU_DRAW_W/H per riscalare l'immagine
+    // =====================================================================
+
+    /** Immagine di sfondo del menu di selezione. */
+    public static final String START_GAME_BG = "/StartGame.png";
+
+    /** Area di disegno del menu dentro al Cabinet Arcade. */
+    public static final int MENU_DRAW_X = 57;   // offset X dal bordo sinistro del pannello
+    public static final int MENU_DRAW_Y = 20;   // offset Y dal bordo superiore del pannello
+    public static final int MENU_DRAW_W = 1010;  // larghezza dell'area di disegno (px)
+    public static final int MENU_DRAW_H = 800;   // altezza dell'area di disegno (px)
+
+    /**
+     * Hitbox dei 4 riquadri personaggio.
+     * Ordine sx→dx: Male Wizard, Goblin Wizard, Veteran Wizard, Female Wizard.
+     * CHAR_FRAME_X[i] = posizione X del riquadro i-esimo (relativa a MENU_DRAW_X).
+     */
+    public static final int[] CHAR_FRAME_X = { 95, 295, 500, 710 };  // posizioni X dei 4 riquadri
+    public static final int   CHAR_FRAME_Y = 255;   // posizione Y comune (relativa a MENU_DRAW_Y)
+    public static final int   CHAR_FRAME_W = 130;   // larghezza di ciascun riquadro (px)
+    public static final int   CHAR_FRAME_H = 260;   // altezza di ciascun riquadro (px)
+
+    /**
+     * Hitbox del pulsante "NEW GAME" / "Start Game".
+     * Coordinate relative a MENU_DRAW_X / MENU_DRAW_Y.
+     */
+    public static final int NEW_GAME_BTN_X = 380;   // posizione X del pulsante
+    public static final int NEW_GAME_BTN_Y = 630;   // posizione Y del pulsante
+    public static final int NEW_GAME_BTN_W = 260;   // larghezza del pulsante (px)
+    public static final int NEW_GAME_BTN_H = 75;    // altezza del pulsante (px)
 }

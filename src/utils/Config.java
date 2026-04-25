@@ -241,4 +241,17 @@ public class Config {
     public static final int    BOSS_ATTACK_RIGHT_START    = ViewConfig.BOSS_ATTACK_RIGHT_START;
     public static final int    BOSS_IDLE_RIGHT_START      = ViewConfig.BOSS_IDLE_RIGHT_START;
     public static final int    BOSS_RUN_RIGHT_START       = ViewConfig.BOSS_RUN_RIGHT_START;
+
+    // =====================================================================
+    // MENU SELEZIONE PERSONAGGIO  →  ViewConfig
+    // =====================================================================
+    public static final String START_GAME_BG               = ViewConfig.START_GAME_BG;
+    public static final int    MENU_DRAW_X                 = ViewConfig.MENU_DRAW_X;
+    public static final int    MENU_DRAW_Y                 = ViewConfig.MENU_DRAW_Y;
+    public static final int    MENU_DRAW_W                 = ViewConfig.MENU_DRAW_W;
+    public static final int    MENU_DRAW_H                 = ViewConfig.MENU_DRAW_H;
+    public static final int[]  CHAR_FRAME_X                = ViewConfig.CHAR_FRAME_X;
+    public static final int    CHAR_FRAME_Y                = ViewConfig.CHAR_FRAME_Y;
+    public static final int    CHAR_FRAME_W                = ViewConfig.CHAR_FRAME_W;
+    public static final int    CHAR_FRAME_H                = ViewConfig.CHAR_FRAME_H;
 }

@@ -3,6 +3,7 @@ package view;
 import controller.ControllerForView;
 import controller.PauseController;
 import utils.Config;
+import utils.GameState;
 
 import javax.swing.*;
 import java.awt.*;
@@ -54,11 +55,32 @@ public class GamePanel extends JPanel {
         this.setBackground(Color.black);
         this.setDoubleBuffered(true);
         this.setFocusable(true);
+        setupMenuControls();   // Input per il menu di selezione personaggio
         setupKeyBindings();
         setupPauseControls();
         // Registra il callback: permette a PauseController di aggiornare l'InputMap
         // al momento del rebind, senza che il Controller conosca GamePanel.
         ControllerForView.getInstance().setKeyBindingApplier(this::applyKeyRebind);
+    }
+
+    // =========================================================================
+    // MENU SELEZIONE PERSONAGGIO — Mouse hover/click + Tastiera
+    // =========================================================================
+
+    /**
+     * Configura i listener per il menu di selezione personaggio.
+     * Tutti gli input passano attraverso il Controller (MVC).
+     */
+    private void setupMenuControls() {
+        // HOVER: aggiorna la selezione in base alla posizione del mouse
+        this.addMouseMotionListener(new MouseMotionAdapter() {
+            @Override
+            public void mouseMoved(MouseEvent e) {
+                if (ControllerForView.getInstance().getGameState() != GameState.MENU) return;
+                int frameIndex = MenuDrawer.getInstance().getFrameIndexAt(e.getX(), e.getY());
+                ControllerForView.getInstance().setMenuHoveredIndex(frameIndex);
+            }
+        });
     }
 
     @Override
@@ -98,6 +120,10 @@ public class GamePanel extends JPanel {
         this.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
+                // In MENU state i tasti non fanno nulla (interazione solo mouse)
+                if (ControllerForView.getInstance().getGameState() == GameState.MENU) return;
+
+                // --- PLAYING STATE: pausa e rebind ---
                 if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
                     boolean nowPaused = !ControllerForView.getInstance().isPaused();
                     ControllerForView.getInstance().setPaused(nowPaused);
@@ -119,10 +145,17 @@ public class GamePanel extends JPanel {
             }
         });
 
-        // Click del mouse: routing tramite PauseMenuDrawer mentre è in pausa.
+        // Click del mouse: routing basato sullo stato.
         this.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
+                // --- MENU STATE: click su riquadri personaggio o NEW GAME ---
+                if (ControllerForView.getInstance().getGameState() == GameState.MENU) {
+                    handleMenuClick(e.getX(), e.getY());
+                    return;
+                }
+
+                // --- PLAYING STATE (pausa): routing tramite PauseMenuDrawer ---
                 if (!ControllerForView.getInstance().isPaused())
                     return;
 
@@ -155,6 +188,24 @@ public class GamePanel extends JPanel {
         });
     }
 
+    /**
+     * Gestisce i click nella schermata del menu di selezione.
+     * View (hit-testing) + Controller (azioni) = MVC.
+     */
+    private void handleMenuClick(int x, int y) {
+        // 1. Click su un riquadro personaggio?
+        int frameIndex = MenuDrawer.getInstance().getFrameIndexAt(x, y);
+        if (frameIndex >= 0) {
+            ControllerForView.getInstance().menuHandleClick(frameIndex);
+            return;
+        }
+
+        // 2. Click sul pulsante "NEW GAME"?
+        if (MenuDrawer.getInstance().isNewGameButtonAt(x, y)) {
+            ControllerForView.getInstance().menuConfirmSelection();
+        }
+    }
+
     // =========================================================================
     // GAMEPLAY KEY BINDINGS
     // =========================================================================
@@ -168,7 +219,7 @@ public class GamePanel extends JPanel {
         im.put(KeyStroke.getKeyStroke("RIGHT"), "moveRight");
         am.put("moveRight", new AbstractAction() {
             public void actionPerformed(ActionEvent e) {
-                if (ControllerForView.getInstance().isPaused())
+                if (ControllerForView.getInstance().getGameState() != GameState.PLAYING || ControllerForView.getInstance().isPaused())
                     return;
                 ControllerForView.getInstance().setPlayerMovement(speed, ControllerForView.getInstance().getDeltaY());
             }
@@ -185,7 +236,7 @@ public class GamePanel extends JPanel {
         im.put(KeyStroke.getKeyStroke("LEFT"), "moveLeft");
         am.put("moveLeft", new AbstractAction() {
             public void actionPerformed(ActionEvent e) {
-                if (ControllerForView.getInstance().isPaused())
+                if (ControllerForView.getInstance().getGameState() != GameState.PLAYING || ControllerForView.getInstance().isPaused())
                     return;
                 ControllerForView.getInstance().setPlayerMovement(-speed, ControllerForView.getInstance().getDeltaY());
             }
@@ -202,7 +253,7 @@ public class GamePanel extends JPanel {
         im.put(KeyStroke.getKeyStroke("UP"), "moveUp");
         am.put("moveUp", new AbstractAction() {
             public void actionPerformed(ActionEvent e) {
-                if (ControllerForView.getInstance().isPaused())
+                if (ControllerForView.getInstance().getGameState() != GameState.PLAYING || ControllerForView.getInstance().isPaused())
                     return;
                 ControllerForView.getInstance().setPlayerMovement(ControllerForView.getInstance().getDeltaX(), -speed);
             }
@@ -219,7 +270,7 @@ public class GamePanel extends JPanel {
         im.put(KeyStroke.getKeyStroke("DOWN"), "moveDown");
         am.put("moveDown", new AbstractAction() {
             public void actionPerformed(ActionEvent e) {
-                if (ControllerForView.getInstance().isPaused())
+                if (ControllerForView.getInstance().getGameState() != GameState.PLAYING || ControllerForView.getInstance().isPaused())
                     return;
                 ControllerForView.getInstance().setPlayerMovement(ControllerForView.getInstance().getDeltaX(), speed);
             }
@@ -237,7 +288,7 @@ public class GamePanel extends JPanel {
         am.put("placeBomb", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (ControllerForView.getInstance().isPaused())
+                if (ControllerForView.getInstance().getGameState() != GameState.PLAYING || ControllerForView.getInstance().isPaused())
                     return;
                 if (canPlaceBomb) {
                     ControllerForView.getInstance().placeBomb();
@@ -258,7 +309,7 @@ public class GamePanel extends JPanel {
         am.put("shootAura", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (ControllerForView.getInstance().isPaused())
+                if (ControllerForView.getInstance().getGameState() != GameState.PLAYING || ControllerForView.getInstance().isPaused())
                     return;
                 if (canShootAura) {
                     ControllerForView.getInstance().playerShoot();
@@ -279,7 +330,7 @@ public class GamePanel extends JPanel {
         am.put("staffAttack", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (ControllerForView.getInstance().isPaused())
+                if (ControllerForView.getInstance().getGameState() != GameState.PLAYING || ControllerForView.getInstance().isPaused())
                     return;
                 if (canStaffAttack) {
                     ControllerForView.getInstance().staffAttack();

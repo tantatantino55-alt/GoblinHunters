@@ -2,6 +2,7 @@ package view;
 
 import controller.ControllerForView;
 import utils.Config;
+import utils.GameState;
 import utils.PlayerState;
 
 import java.awt.*;
@@ -28,6 +29,13 @@ public class ConcreteDrawer extends AbstractDrawer {
     public void draw(Graphics g) {
         Graphics2D g2d = (Graphics2D) g;
 
+        // --- STATE PATTERN: delega al drawer corretto in base allo stato ---
+        if (ControllerForView.getInstance().getGameState() == GameState.MENU) {
+            MenuDrawer.getInstance().draw(g2d);
+            return;
+        }
+
+        // --- PLAYING STATE: logica di rendering esistente ---
         drawMap(g2d);
         drawCracks(g2d); // Crepe del Boss: overlay sul pavimento
         drawPortal(g2d); // 1. Disegna l'allarme se scopri il portale spawner

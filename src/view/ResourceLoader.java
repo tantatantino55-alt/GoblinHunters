@@ -2,6 +2,7 @@ package view;
 
 import utils.Config;
 import utils.PlayerState;
+import utils.ViewConfig;
 
 import java.awt.image.BufferedImage;
 
@@ -14,8 +15,11 @@ public class ResourceLoader {
     public void loadAllResources() {
         SpriteManager sm = SpriteManager.getInstance();
 
+        // --- MENU: risorse per la schermata di selezione personaggio ---
+        loadMenuResources(sm);
 
-        loadPlayerAnimations(sm);
+        // --- GAMEPLAY: animazioni player con lo sheet di default ---
+        loadPlayerAnimations(sm, Config.PLAYER1_SHEET);
         loadBombResources(sm);
         loadDestructionAnimations(sm);
         loadFireResources(sm);
@@ -34,8 +38,15 @@ public class ResourceLoader {
         buildGrayscaleHudIcons(sm);
     }
 
-    private void loadPlayerAnimations(SpriteManager sm) {
-        String sheet = Config.PLAYER1_SHEET;
+    /**
+     * Carica tutte le animazioni del player da uno spritesheet.
+     * Il metodo è parametrizzato per supportare la selezione del personaggio:
+     * la struttura dei frame è identica per tutti gli sheet.
+     *
+     * @param sm    SpriteManager in cui registrare le animazioni
+     * @param sheet percorso dello spritesheet (es. "/wizardmale.png")
+     */
+    private void loadPlayerAnimations(SpriteManager sm, String sheet) {
         int size = Config.ENTITY_FRAME_SIZE;
 
         // --- FRONTE (Giù) -> FRONT ---
@@ -371,4 +382,32 @@ public class ResourceLoader {
         System.out.println("ResourceLoader: Icone HUD grayscale generate.");
     }
 
+    // =========================================================================
+    // MENU SELEZIONE PERSONAGGIO
+    // =========================================================================
+
+    /**
+     * Carica le risorse per il menu di selezione.
+     * I personaggi sono già presenti nell'immagine StartGame.png
+     * (caricati manualmente), quindi serve solo lo sfondo.
+     */
+    private void loadMenuResources(SpriteManager sm) {
+        sm.loadSingleImage("MENU_BG", ViewConfig.START_GAME_BG);
+        System.out.println("ResourceLoader: Sfondo menu caricato (StartGame.png).");
+    }
+
+    /**
+     * Ricarica le animazioni del player con un nuovo spritesheet.
+     * Chiamato dal Controller dopo la selezione del personaggio.
+     * Sovrascrive le animazioni PlayerState.* già caricate.
+     *
+     * @param sheetPath percorso dello spritesheet selezionato
+     */
+    public static void reloadPlayerAnimations(String sheetPath) {
+        ResourceLoader loader = new ResourceLoader();
+        loader.loadPlayerAnimations(SpriteManager.getInstance(), sheetPath);
+        System.out.println("ResourceLoader: Animazioni player ricaricate con " + sheetPath);
+    }
+
 }
+

@@ -74,6 +74,64 @@ class LevelManager {
     long getBossPortalActivationTime()   { return bossPortalActivationTime; }
 
     // ==========================================================
+    // CONFIGURAZIONE LIVELLO (count, cap, distribuzione)
+    // ==========================================================
+
+    /**
+     * Numero di nemici da spawnare all'inizio del livello.
+     * Zona 0: ciclo 1=4, ciclo 2=5, ciclo 3+=6
+     * Zona 1: ciclo 1=5, ciclo 2+=6
+     * Zona 2: 0 (il boss viene generato dopo la fase di preparazione)
+     */
+    int getInitialEnemyCount() {
+        int cycle = Math.min(difficultyCycle, 3); // cap a 3
+        return switch (currentZone) {
+            case 0 -> switch (cycle) {
+                case 1  -> 4;
+                case 2  -> 5;
+                default -> 6;
+            };
+            case 1 -> switch (cycle) {
+                case 1  -> 5;
+                default -> 6;
+            };
+            default -> 0; // zona 2 (boss)
+        };
+    }
+
+    /**
+     * Numero massimo di nemici che il portale puo' mantenere in mappa.
+     * Stesso valore di getInitialEnemyCount (il portale riempie fino al cap).
+     */
+    int getPortalMaxEnemies() {
+        return getInitialEnemyCount();
+    }
+
+    /**
+     * Genera un nemico secondo la distribuzione della zona corrente.
+     * Zona 0: 75% Common, 25% Chasing
+     * Zona 1: 40% Common, 30% Chasing, 30% Shooter
+     *
+     * @param roll un valore casuale 0-99
+     */
+    Enemy createEnemyForZone(int roll, double x, double y) {
+        return switch (currentZone) {
+            case 0 -> {
+                // 75% Common (0-74), 25% Chasing (75-99)
+                if (roll < 75) yield new CommonGoblin(x, y);
+                else           yield new ChasingGoblin(x, y);
+            }
+            case 1 -> {
+                // 40% Common (0-39), 30% Chasing (40-69), 30% Shooter (70-99)
+                if (roll < 40)      yield new CommonGoblin(x, y);
+                else if (roll < 70) yield new ChasingGoblin(x, y);
+                else                yield new ShooterGoblin(x, y);
+            }
+            default -> new CommonGoblin(x, y); // fallback (non usato per zona 2)
+        };
+    }
+
+    // ==========================================================
     // PORTALE
     // ==========================================================
 

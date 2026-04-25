@@ -12,7 +12,7 @@ public class LogicConfig {
     public static final int GRID_HEIGHT = 11;
 
     // --- VELOCITÀ E HITBOX ENTITÀ ---
-    public static final double ENTITY_LOGICAL_SPEED          = 0.05;
+    public static final double ENTITY_LOGICAL_SPEED          = 0.04;
     public static final double ENTITY_LOGICAL_HITBOX_WIDTH   = 0.5;
     public static final double ENTITY_LOGICAL_HITBOX_HEIGHT  = 0.3;
 
@@ -62,7 +62,7 @@ public class LogicConfig {
     public static final long INVINCIBILITY_DURATION_MS = 3000;
 
     // --- BOMBE ---
-    public static final int BOMB_DETONATION_TICKS = 60;
+    public static final int BOMB_DETONATION_TICKS = 90;
     public static final int INITIAL_MAX_BOMBS     = 1;
     public static final int DEFAULT_BOMB_RADIUS   = 1;
 

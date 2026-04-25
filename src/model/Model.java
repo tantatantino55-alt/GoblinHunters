@@ -60,9 +60,10 @@ public class Model implements IModel {
         int[][] initialMap = mapManager.generateProceduralMap(levelManager.getCurrentZone(), levelManager);
         mapManager.applyMap(initialMap);
 
-        // 4. Spawn nemici iniziali
-        for (int i = 0; i < 1; i++) {
-            spawnManager.spawnEnemy(enemies, player, mapManager.getGameAreaArray());
+        // 4. Spawn nemici iniziali (secondo la configurazione della zona)
+        int initialCount = levelManager.getInitialEnemyCount();
+        for (int i = 0; i < initialCount; i++) {
+            spawnManager.spawnEnemy(enemies, player, mapManager.getGameAreaArray(), levelManager);
         }
     }
 
@@ -380,7 +381,12 @@ public class Model implements IModel {
 
         // Spawn iniziale (non nella mappa boss)
         if (levelManager.getCurrentZone() != 2) {
-            spawnManager.spawnEnemy(enemies, player, mapManager.getGameAreaArray());
+            int initialCount = levelManager.getInitialEnemyCount();
+            for (int i = 0; i < initialCount; i++) {
+                spawnManager.spawnEnemy(enemies, player, mapManager.getGameAreaArray(), levelManager);
+            }
+            System.out.println("Spawn iniziale: " + initialCount + " nemici (zona "
+                    + levelManager.getCurrentZone() + ", ciclo " + levelManager.getDifficultyCycle() + ")");
         }
     }
 
@@ -494,7 +500,8 @@ public class Model implements IModel {
         mapManager.updateCracks();
 
         checkCollisions();
-        spawnManager.manageSpawning(enemies, levelManager.getPortalCol(), levelManager.getPortalRow(), levelManager.isPortalRevealed());
+        spawnManager.manageSpawning(enemies, levelManager.getPortalCol(), levelManager.getPortalRow(),
+                levelManager.isPortalRevealed(), levelManager);
 
         // Spawn goblin dal portale boss (solo zona 2, dopo preparazione)
         if (levelManager.getCurrentZone() == 2) {

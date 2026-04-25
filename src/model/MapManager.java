@@ -55,18 +55,6 @@ class MapManager {
             generateBossArena(nextMap, emptyCells, buildingID);
         }
 
-        // --- PORTAL RANDOM ---
-        int portalRow, portalCol;
-        if (!emptyCells.isEmpty()) {
-            int[] portalPos = emptyCells.remove(0);
-            portalRow = portalPos[0];
-            portalCol = portalPos[1];
-        } else {
-            portalRow = 1;
-            portalCol = 1;
-        }
-        levelManager.setPortal(portalRow, portalCol);
-
         // --- CASSE CASUALI ---
         int numCrates = 35;
         java.util.Collections.shuffle(emptyCells, randomGenerator);
@@ -74,6 +62,15 @@ class MapManager {
             int[] pos = emptyCells.get(i);
             nextMap[pos[0]][pos[1]] = Config.CELL_DESTRUCTIBLE_BLOCK;
             cratePositions.add(pos);
+        }
+
+        // --- PORTALE NASCOSTO SOTTO UNA CASSA CASUALE (solo zone 0 e 1) ---
+        if (currentZone < 2 && !cratePositions.isEmpty()) {
+            java.util.Collections.shuffle(cratePositions, randomGenerator);
+            int[] portalPos = cratePositions.get(0);
+            levelManager.setPortal(portalPos[0], portalPos[1]);
+            System.out.println("Portale nascosto sotto la cassa in ["
+                    + portalPos[0] + ", " + portalPos[1] + "]");
         }
 
         // --- LOOT NELLE CASSE ---

@@ -207,4 +207,21 @@ public class ShooterGoblin extends ChasingGoblin {
     public boolean isActuallyAttacking() {
         return state == State.ATTACKING;
     }
+
+    /**
+     * Override per esporre lo stato dello Shooter alla View.
+     * TELEGRAPHING → "IDLE" (fermo, sta mirando)
+     * ATTACKING    → "ATTACK" (animazione di lancio)
+     * RELOADING con proiettili in volo → "IDLE" (fermo, guarda il suo osso)
+     * Altrimenti → "RUN" (movimento normale)
+     */
+    @Override
+    public String getEnemyState() {
+        return switch (state) {
+            case TELEGRAPHING -> "IDLE";
+            case ATTACKING    -> "ATTACK";
+            case RELOADING    -> activeProjectiles.isEmpty() ? "RUN" : "IDLE";
+            default           -> "RUN";
+        };
+    }
 }

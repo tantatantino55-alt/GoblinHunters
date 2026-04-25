@@ -569,7 +569,6 @@ public class ConcreteDrawer extends AbstractDrawer {
                         frames = utils.Config.BOSS_RUN_FRAMES;
                     }
                     case "FURY_GUARD" -> {
-                        // Modalita' Guardia: il Boss e' fermo sul bordo → animazione idle
                         state = "IDLE";
                         frames = utils.Config.BOSS_IDLE_FRAMES;
                     }
@@ -582,6 +581,15 @@ public class ConcreteDrawer extends AbstractDrawer {
                         frames = utils.Config.BOSS_IDLE_FRAMES;
                     }
                     case "DYING" -> frames = utils.Config.BOSS_DYING_FRAMES;
+                }
+            }
+
+            // Mappatura stati Shooter → frame corretti
+            if (type == utils.EnemyType.SHOOTER) {
+                switch (state) {
+                    case "IDLE"   -> frames = utils.Config.GOBLIN_IDLE_FRAMES;
+                    case "ATTACK" -> frames = utils.Config.SHOOTER_ATTACK_FRAMES;
+                    // "RUN" usa il default GOBLIN_RUN_FRAMES gia' impostato
                 }
             }
 

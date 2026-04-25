@@ -87,4 +87,14 @@ public class LogicConfig {
     public static final int SCORE_BOSS_BASE       = 5000;
     public static final int MAX_BOSS_TIME_BONUS   = 5000;
     public static final int BOSS_BONUS_DECAY_PER_SEC = 50;
+
+    // --- PORTALE BOSS (Zona 2) ---
+    /** Riga del portale goblin nella mappa boss (facilmente modificabile). */
+    public static final int BOSS_PORTAL_ROW = 0;
+    /** Colonna del portale goblin nella mappa boss (facilmente modificabile). */
+    public static final int BOSS_PORTAL_COL = 6;
+    /** Intervallo tra uno spawn e l'altro dal portale boss (in millisecondi). */
+    public static final long BOSS_PORTAL_SPAWN_INTERVAL_MS = 10_000;
+    /** Numero massimo di chasing goblin vivi nella mappa boss. */
+    public static final int BOSS_PORTAL_MAX_GOBLINS = 6;
 }

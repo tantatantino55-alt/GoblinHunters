@@ -82,6 +82,12 @@ public class Config {
     public static final int    MAX_BOSS_TIME_BONUS       = LogicConfig.MAX_BOSS_TIME_BONUS;
     public static final int    BOSS_BONUS_DECAY_PER_SEC  = LogicConfig.BOSS_BONUS_DECAY_PER_SEC;
 
+    // --- PORTALE BOSS (Zona 2) ---
+    public static final int    BOSS_PORTAL_ROW                = LogicConfig.BOSS_PORTAL_ROW;
+    public static final int    BOSS_PORTAL_COL                = LogicConfig.BOSS_PORTAL_COL;
+    public static final long   BOSS_PORTAL_SPAWN_INTERVAL_MS  = LogicConfig.BOSS_PORTAL_SPAWN_INTERVAL_MS;
+    public static final int    BOSS_PORTAL_MAX_GOBLINS        = LogicConfig.BOSS_PORTAL_MAX_GOBLINS;
+
     // =====================================================================
     // VIEW / RENDERING  →  ViewConfig
     // =====================================================================

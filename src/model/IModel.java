@@ -126,4 +126,10 @@ public interface IModel {
     int getBossHP();
     /** Ritorna gli HP massimi del Boss (0 se non presente). */
     int getBossMaxHP();
+
+    // --- PORTALE BOSS (Zona 2) ---
+    boolean isBossPortalActive();
+    int getBossPortalRow();
+    int getBossPortalCol();
+    long getBossPortalActivationTime();
 }

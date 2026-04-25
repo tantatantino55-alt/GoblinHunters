@@ -110,6 +110,12 @@ public interface IControllerForView {
     int getBossHP();
     int getBossMaxHP();
 
+    // --- PORTALE BOSS (Zona 2) ---
+    boolean isBossPortalActive();
+    int getBossPortalRow();
+    int getBossPortalCol();
+    long getBossPortalActivationTime();
+
     // --- HUD JUICY ANIMATION TRIGGER ---
     /** Notifica la View che un item è stato appena raccolto (avvia l'animazione icona HUD). */
     void triggerPickupAnimation(utils.ItemType type);

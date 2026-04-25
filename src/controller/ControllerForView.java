@@ -176,6 +176,12 @@ public class ControllerForView implements IControllerForView {
     @Override public int getBossHP()    { return Model.getInstance().getBossHP(); }
     @Override public int getBossMaxHP() { return Model.getInstance().getBossMaxHP(); }
 
+    // --- PORTALE BOSS (Zona 2) ---
+    @Override public boolean isBossPortalActive()       { return Model.getInstance().isBossPortalActive(); }
+    @Override public int getBossPortalRow()              { return Model.getInstance().getBossPortalRow(); }
+    @Override public int getBossPortalCol()              { return Model.getInstance().getBossPortalCol(); }
+    @Override public long getBossPortalActivationTime()  { return Model.getInstance().getBossPortalActivationTime(); }
+
     // --- HUD JUICY ANIMATION TRIGGER ---
     @Override
     public void triggerPickupAnimation(utils.ItemType type) {

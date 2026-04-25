@@ -323,6 +323,12 @@ public class Model implements IModel {
         return 0;
     }
 
+    // --- PORTALE BOSS (Zona 2) ---
+    @Override public boolean isBossPortalActive()       { return levelManager.isBossPortalActive(); }
+    @Override public int getBossPortalRow()              { return levelManager.getBossPortalRow(); }
+    @Override public int getBossPortalCol()              { return levelManager.getBossPortalCol(); }
+    @Override public long getBossPortalActivationTime()  { return levelManager.getBossPortalActivationTime(); }
+
     // ==========================================================
     // IModel – LIVELLI / GATE / PORTALE
     // ==========================================================
@@ -490,6 +496,12 @@ public class Model implements IModel {
         checkCollisions();
         spawnManager.manageSpawning(enemies, levelManager.getPortalCol(), levelManager.getPortalRow(), levelManager.isPortalRevealed());
 
+        // Spawn goblin dal portale boss (solo zona 2, dopo preparazione)
+        if (levelManager.getCurrentZone() == 2) {
+            spawnManager.manageBossSpawning(enemies, levelManager.isBossPortalActive());
+            checkBossPortalDeactivation();
+        }
+
         // Fuoco
         Iterator<int[]> it = activeFire.iterator();
         while (it.hasNext()) {
@@ -516,7 +528,34 @@ public class Model implements IModel {
         mapManager.destroyAllCrates(activeItems, destructionEffects);
         enemies.add(new BossGoblin(6.0, 5.0));
         scoreManager.startBossFight();
-        System.out.println("Il Boss è sceso nell'arena!");
+
+        // Attiva il portale goblin fisso nella mappa boss
+        levelManager.activateBossPortal();
+        spawnManager.resetBossPortalTimer();
+
+        System.out.println("Il Boss e' sceso nell'arena!");
+    }
+
+    /**
+     * Controlla se il portale boss deve essere disattivato.
+     * Condizione: il Boss e' morto (o rimosso) E non ci sono goblin vivi.
+     */
+    private void checkBossPortalDeactivation() {
+        if (!levelManager.isBossPortalActive()) return;
+
+        // Cerca se c'e' ancora un boss vivo
+        boolean bossAlive = enemies.stream()
+                .anyMatch(e -> e.getType() == utils.EnemyType.BOSS && !e.isDead());
+        if (bossAlive) return;
+
+        // Boss morto/rimosso: conta i goblin rimanenti vivi
+        long livingGoblins = enemies.stream()
+                .filter(e -> !e.isDead() && e.getType() != utils.EnemyType.BOSS)
+                .count();
+
+        if (livingGoblins == 0) {
+            levelManager.deactivateBossPortal();
+        }
     }
 
     private void updatePlayerMovement() {

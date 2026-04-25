@@ -36,7 +36,11 @@ class LevelManager {
     // Timer boss
     private int bossPreparationTimer;
     private boolean isPreparationPhase = false;
-    private static final int PREP_TIME_SECONDS = 15;
+    private static final int PREP_TIME_SECONDS = 3;
+
+    // Portale goblin nella mappa Boss (posizione fissa da Config)
+    private boolean bossPortalActive = false;
+    private long bossPortalActivationTime = 0;
 
     LevelManager(Model model) {
         this.model = model;
@@ -62,6 +66,12 @@ class LevelManager {
     long getExitGateActivationTime() { return lastExitGateSpawnTime; }
     boolean isPreparationPhase() { return isPreparationPhase; }
     int getBossPreparationTimer(){ return bossPreparationTimer; }
+
+    // --- PORTALE BOSS ---
+    boolean isBossPortalActive()         { return bossPortalActive; }
+    int getBossPortalRow()               { return Config.BOSS_PORTAL_ROW; }
+    int getBossPortalCol()               { return Config.BOSS_PORTAL_COL; }
+    long getBossPortalActivationTime()   { return bossPortalActivationTime; }
 
     // ==========================================================
     // PORTALE
@@ -91,6 +101,10 @@ class LevelManager {
         // Durante la preparazione boss non aprire il gate
         if (currentZone == 2 && isPreparationPhase) return;
 
+        // Nella zona Boss: il portale deve essere disattivato prima che appaia l'exit gate
+        // (il portale si disattiva quando il Boss e' morto E tutti i goblin sono stati eliminati)
+        if (currentZone == 2 && bossPortalActive) return;
+
         // Conta nemici vivi
         long livingEnemies = enemies.stream().filter(e -> !e.isDead()).count();
 
@@ -101,7 +115,7 @@ class LevelManager {
                 map[0][6] = Model.EXIT_GATE_ID;
                 if (map[0][0] == Model.EXIT_GATE_ID) map[0][0] = Config.CELL_EMPTY;
                 if (map[0][7] == Model.EXIT_GATE_ID) map[0][7] = Config.CELL_EMPTY;
-                System.out.println("Tutti i nemici sconfitti! L'Exit Gate è apparso in [0, 6]!");
+                System.out.println("Tutti i nemici sconfitti! L'Exit Gate e' apparso in [0, 6]!");
             }
 
             // Controlla se il player ha calpestato il gate
@@ -165,9 +179,32 @@ class LevelManager {
         if (currentZone == 2) {
             bossPreparationTimer = PREP_TIME_SECONDS * Config.FPS;
             isPreparationPhase = true;
+            bossPortalActive = false; // il portale si attivera' a fine preparazione
             System.out.println("Fase preparazione Boss avviata! Hai " + PREP_TIME_SECONDS + " secondi!");
         } else {
             isPreparationPhase = false;
+            bossPortalActive = false;
         }
+    }
+
+    // ==========================================================
+    // PORTALE BOSS – Attivazione/Disattivazione
+    // ==========================================================
+
+    /** Attiva il portale goblin nella mappa boss (chiamato da triggerGlobalExplosion). */
+    void activateBossPortal() {
+        bossPortalActive = true;
+        bossPortalActivationTime = System.currentTimeMillis();
+        System.out.println("PORTALE BOSS attivato in [" + Config.BOSS_PORTAL_ROW + ", " + Config.BOSS_PORTAL_COL + "]!");
+    }
+
+    /**
+     * Disattiva il portale goblin. Chiamato quando il Boss e' sconfitto
+     * e non ci sono piu' goblin vivi sulla mappa.
+     */
+    void deactivateBossPortal() {
+        if (!bossPortalActive) return;
+        bossPortalActive = false;
+        System.out.println("PORTALE BOSS chiuso!");
     }
 }

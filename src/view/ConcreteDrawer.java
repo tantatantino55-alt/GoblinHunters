@@ -49,7 +49,7 @@ public class ConcreteDrawer extends AbstractDrawer {
         }
 
         drawDebugGrid(g2d);
-        drawBossHUD(g2d); // Task 4: barra HP del boss (visibile solo in zona 2)
+        // drawBossHUD(g2d); // Sostituito dalla barra fluttuante diegetica in drawEnemies
         drawHUD(g2d);
 
         // --- PAUSA: Overlay del menu di pausa ---
@@ -60,6 +60,7 @@ public class ConcreteDrawer extends AbstractDrawer {
     }
 
     private void drawPortal(Graphics2D g2d) {
+        // Portale classico (Mappe 0-1): compare quando si distrugge il blocco che lo contiene
         if (ControllerForView.getInstance().isPortalRevealed()) {
             int pCol = ControllerForView.getInstance().getPortalCol();
             int pRow = ControllerForView.getInstance().getPortalRow();
@@ -68,6 +69,23 @@ public class ConcreteDrawer extends AbstractDrawer {
             int screenY = (pRow * Config.TILE_SIZE) + Config.GRID_OFFSET_Y;
 
             g2d.setColor(new Color(138, 43, 226, 180)); // Viola semi-trasparente
+            g2d.fillRect(screenX, screenY, Config.TILE_SIZE, Config.TILE_SIZE);
+
+            if (System.currentTimeMillis() % 1000 < 500) {
+                g2d.setColor(Color.MAGENTA);
+                g2d.drawRect(screenX + 4, screenY + 4, Config.TILE_SIZE - 8, Config.TILE_SIZE - 8);
+            }
+        }
+
+        // Portale Boss (Mappa 2): compare alla fine della fase di preparazione
+        if (ControllerForView.getInstance().isBossPortalActive()) {
+            int pCol = ControllerForView.getInstance().getBossPortalCol();
+            int pRow = ControllerForView.getInstance().getBossPortalRow();
+
+            int screenX = (pCol * Config.TILE_SIZE) + Config.GRID_OFFSET_X;
+            int screenY = (pRow * Config.TILE_SIZE) + Config.GRID_OFFSET_Y;
+
+            g2d.setColor(new Color(138, 43, 226, 180));
             g2d.fillRect(screenX, screenY, Config.TILE_SIZE, Config.TILE_SIZE);
 
             if (System.currentTimeMillis() % 1000 < 500) {
@@ -543,25 +561,27 @@ public class ConcreteDrawer extends AbstractDrawer {
             String state = controller.ControllerForView.getInstance().getEnemyState(i);
             int frames = utils.Config.GOBLIN_RUN_FRAMES;
 
-            // TASK 1 + 3: Mappatura stati Boss → chiave animazione
+            // Mappatura stati Boss → chiave animazione
             if (type == utils.EnemyType.BOSS) {
                 switch (state) {
                     case "FURY", "EXHAUSTED" -> {
                         state = "RUN";
                         frames = utils.Config.BOSS_RUN_FRAMES;
                     }
+                    case "FURY_GUARD" -> {
+                        // Modalita' Guardia: il Boss e' fermo sul bordo → animazione idle
+                        state = "IDLE";
+                        frames = utils.Config.BOSS_IDLE_FRAMES;
+                    }
                     case "TELEGRAPH" -> {
-                        // Task 1: TELEGRAPH mostra l'animazione ATTACK (caricamento)
                         state = "ATTACK";
                         frames = utils.Config.BOSS_ATTACK_FRAMES;
                     }
                     case "IDLE_EXHAUSTED" -> {
-                        // Task 3: IDLE_EXHAUSTED mostra l'animazione IDLE (riposo)
                         state = "IDLE";
                         frames = utils.Config.BOSS_IDLE_FRAMES;
                     }
                     case "DYING" -> frames = utils.Config.BOSS_DYING_FRAMES;
-                    // default (RUN, IDLE, ATTACK già corretti) → nessun override
                 }
             }
 
@@ -606,6 +626,35 @@ public class ConcreteDrawer extends AbstractDrawer {
                     int drawY = (screenY + 64) - 149;
                     g2d.drawImage(sprite, drawX, drawY, utils.Config.BOSS_FRAME_SIZE, utils.Config.BOSS_FRAME_SIZE,
                             null);
+
+                    // TASK 2: Barra HP fluttuante sopra le corna (nascosta se DYING)
+                    if (!state.equals("DYING")) {
+                        int hp    = controller.ControllerForView.getInstance().getBossHP();
+                        int maxHp = controller.ControllerForView.getInstance().getBossMaxHP();
+                        if (hp > 0 && maxHp > 0) {
+                            int barW = 60;
+                            int barH = 6;
+                            int barX = drawX + (utils.Config.BOSS_FRAME_SIZE - barW) / 2;
+                            int barY = drawY + 35;
+
+                            float ratio = Math.max(0f, Math.min(1f, (float) hp / maxHp));
+
+                            // Sfondo grigio scuro
+                            g2d.setColor(new Color(40, 40, 40, 200));
+                            g2d.fillRect(barX, barY, barW, barH);
+
+                            // Barra vita (rossa, arancione se enrage)
+                            Color barColor = (ratio > 0.5f)
+                                    ? new Color(220, 40, 40)
+                                    : new Color(255, 120, 0);
+                            g2d.setColor(barColor);
+                            g2d.fillRect(barX, barY, (int)(barW * ratio), barH);
+
+                            // Bordo nero per leggibilita'
+                            g2d.setColor(Color.BLACK);
+                            g2d.drawRect(barX, barY, barW, barH);
+                        }
+                    }
                 } else {
                     int drawX = screenX + (utils.Config.TILE_SIZE - 128) / 2;
                     int drawY = screenY + (utils.Config.TILE_SIZE - 128);

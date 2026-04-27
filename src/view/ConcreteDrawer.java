@@ -25,6 +25,19 @@ public class ConcreteDrawer extends AbstractDrawer {
         // Il background ArcadeCabinet ora è delegato al GamePanel tramite SpriteManager
     }
 
+    // =========================================================================
+    // Y-SORTING SUPPORT
+    // =========================================================================
+    private static class DrawableEntity {
+        public final int y;
+        public final Runnable drawAction;
+
+        public DrawableEntity(int y, Runnable drawAction) {
+            this.y = y;
+            this.drawAction = drawAction;
+        }
+    }
+
     @Override
     public void draw(Graphics g) {
         Graphics2D g2d = (Graphics2D) g;
@@ -35,29 +48,40 @@ public class ConcreteDrawer extends AbstractDrawer {
             return;
         }
 
-        // --- PLAYING STATE: logica di rendering esistente ---
+        // --- LAYER BACKGROUND (non ordinati per Y) ---
         drawMap(g2d);
         drawCracks(g2d); // Crepe del Boss: overlay sul pavimento
-        drawPortal(g2d); // 1. Disegna l'allarme se scopri il portale spawner
+        drawPortal(g2d); // Allarme se scopri il portale spawner
         drawLevelExitGate(g2d);
-        drawDestructions(g2d); // Qui vengono disegnati i blocchi che esplodono
-        drawFire(g2d);
-        drawBombs(g2d);
-        drawCollectibles(g2d);
-        drawProjectiles(g2d);
-        drawEnemies(g2d);
-        drawTransition(g2d);
 
-        // --- FIX TREMOLIO: USARE IF/ELSE ---
+        // --- LAYER Y-SORTED (ordinati per Y basato sui 'piedi') ---
+        java.util.List<DrawableEntity> sortedEntities = new java.util.ArrayList<>();
+
+        gatherBombs(sortedEntities, g2d);
+        gatherCollectibles(sortedEntities, g2d);
+        gatherProjectiles(sortedEntities, g2d);
+        gatherEnemies(sortedEntities, g2d);
+
         PlayerState state = ControllerForView.getInstance().getPlayerState();
         if (state.name().startsWith("ATTACK")) {
-            drawStaffAttack(g2d); // Gestisce i 10 frame
+            gatherStaffAttack(sortedEntities, g2d); // Gestisce i 10 frame
         } else {
-            drawPlayer(g2d); // Gestisce IDLE, RUN, CAST (3 frame) e INVINCIBILITÀ
+            gatherPlayer(sortedEntities, g2d); // Gestisce IDLE, RUN, CAST e INVINCIBILITÀ
         }
 
+        // Ordinamento crescente per Y: chi sta "sopra" (Y minore) viene disegnato prima
+        java.util.Collections.sort(sortedEntities, java.util.Comparator.comparingInt(e -> e.y));
+
+        // Disegno effettivo
+        for (DrawableEntity e : sortedEntities) {
+            e.drawAction.run();
+        }
+
+        // --- LAYER FOREGROUND (disegnati sopra a tutto, non ordinati) ---
+        drawDestructions(g2d); // Qui vengono disegnati i blocchi che esplodono
+        drawFire(g2d);
+        drawTransition(g2d);
         drawDebugGrid(g2d);
-        // drawBossHUD(g2d); // Sostituito dalla barra fluttuante diegetica in drawEnemies
         drawHUD(g2d);
 
         // --- PAUSA: Overlay del menu di pausa ---
@@ -414,7 +438,7 @@ public class ConcreteDrawer extends AbstractDrawer {
         }
     }
 
-    private void drawPlayer(Graphics2D g2d) {
+    private void gatherPlayer(java.util.List<DrawableEntity> entities, Graphics2D g2d) {
         // 1. RECUPERO STATO INVINCIBILITÀ
         boolean isInvincible = ControllerForView.getInstance().isPlayerInvincible();
 
@@ -465,8 +489,12 @@ public class ConcreteDrawer extends AbstractDrawer {
             // Centramento orizzontale e allineamento piedi in basso
             int drawX = screenX + (Config.TILE_SIZE - Config.ENTITY_FRAME_SIZE) / 2;
             int drawY = screenY + (Config.TILE_SIZE - Config.ENTITY_FRAME_SIZE);
+            
+            int feetY = drawY + Config.ENTITY_FRAME_SIZE;
 
-            g2d.drawImage(sprite, drawX, drawY, Config.ENTITY_FRAME_SIZE, Config.ENTITY_FRAME_SIZE, null);
+            entities.add(new DrawableEntity(feetY, () -> {
+                g2d.drawImage(sprite, drawX, drawY, Config.ENTITY_FRAME_SIZE, Config.ENTITY_FRAME_SIZE, null);
+            }));
         }
     }
     // In src/view/ConcreteDrawer.java
@@ -532,7 +560,7 @@ public class ConcreteDrawer extends AbstractDrawer {
      * }
      */
 
-    private void drawEnemies(Graphics2D g2d) {
+    private void gatherEnemies(java.util.List<DrawableEntity> entities, Graphics2D g2d) {
         int count = controller.ControllerForView.getInstance().getEnemyCount();
 
         for (int i = 0; i < count; i++) {
@@ -623,7 +651,10 @@ public class ConcreteDrawer extends AbstractDrawer {
                 sprite = view.SpriteManager.getInstance().getSprite(spriteKey, 0);
             }
 
-            if (sprite != null) {
+            final java.awt.image.BufferedImage finalSprite = sprite;
+            final String finalState = state;
+
+            if (finalSprite != null) {
                 int screenX = (int) (x * utils.Config.TILE_SIZE) + utils.Config.GRID_OFFSET_X;
                 int screenY = (int) (y * utils.Config.TILE_SIZE) + utils.Config.GRID_OFFSET_Y;
 
@@ -631,41 +662,47 @@ public class ConcreteDrawer extends AbstractDrawer {
                     // --- CALCOLO PIVOT BOSS ---
                     int drawX = (screenX + 32) - 96;
                     int drawY = (screenY + 64) - 149;
-                    g2d.drawImage(sprite, drawX, drawY, utils.Config.BOSS_FRAME_SIZE, utils.Config.BOSS_FRAME_SIZE,
-                            null);
+                    
+                    int feetY = drawY + utils.Config.BOSS_FRAME_SIZE;
 
-                    // TASK 2: Barra HP fluttuante sopra le corna (nascosta se DYING)
-                    if (!state.equals("DYING")) {
-                        int hp    = controller.ControllerForView.getInstance().getBossHP();
-                        int maxHp = controller.ControllerForView.getInstance().getBossMaxHP();
-                        if (hp > 0 && maxHp > 0) {
-                            int barW = 60;
-                            int barH = 6;
-                            int barX = drawX + (utils.Config.BOSS_FRAME_SIZE - barW) / 2;
-                            int barY = drawY + 35;
+                    entities.add(new DrawableEntity(feetY, () -> {
+                        g2d.drawImage(finalSprite, drawX, drawY, utils.Config.BOSS_FRAME_SIZE, utils.Config.BOSS_FRAME_SIZE, null);
 
-                            float ratio = Math.max(0f, Math.min(1f, (float) hp / maxHp));
+                        // TASK 2: Barra HP fluttuante sopra le corna (nascosta se DYING)
+                        if (!finalState.equals("DYING")) {
+                            int hp    = controller.ControllerForView.getInstance().getBossHP();
+                            int maxHp = controller.ControllerForView.getInstance().getBossMaxHP();
+                            if (hp > 0 && maxHp > 0) {
+                                int barW = 60;
+                                int barH = 6;
+                                int barX = drawX + (utils.Config.BOSS_FRAME_SIZE - barW) / 2;
+                                int barY = drawY + 35;
 
-                            // Sfondo grigio scuro
-                            g2d.setColor(new Color(40, 40, 40, 200));
-                            g2d.fillRect(barX, barY, barW, barH);
+                                float ratio = Math.max(0f, Math.min(1f, (float) hp / maxHp));
 
-                            // Barra vita (rossa, arancione se enrage)
-                            Color barColor = (ratio > 0.5f)
-                                    ? new Color(220, 40, 40)
-                                    : new Color(255, 120, 0);
-                            g2d.setColor(barColor);
-                            g2d.fillRect(barX, barY, (int)(barW * ratio), barH);
+                                g2d.setColor(new Color(40, 40, 40, 200));
+                                g2d.fillRect(barX, barY, barW, barH);
 
-                            // Bordo nero per leggibilita'
-                            g2d.setColor(Color.BLACK);
-                            g2d.drawRect(barX, barY, barW, barH);
+                                Color barColor = (ratio > 0.5f)
+                                        ? new Color(220, 40, 40)
+                                        : new Color(255, 120, 0);
+                                g2d.setColor(barColor);
+                                g2d.fillRect(barX, barY, (int)(barW * ratio), barH);
+
+                                g2d.setColor(Color.BLACK);
+                                g2d.drawRect(barX, barY, barW, barH);
+                            }
                         }
-                    }
+                    }));
                 } else {
                     int drawX = screenX + (utils.Config.TILE_SIZE - 128) / 2;
                     int drawY = screenY + (utils.Config.TILE_SIZE - 128);
-                    g2d.drawImage(sprite, drawX, drawY, 128, 128, null);
+                    
+                    int feetY = drawY + 128; // base del goblin
+                    
+                    entities.add(new DrawableEntity(feetY, () -> {
+                        g2d.drawImage(finalSprite, drawX, drawY, 128, 128, null);
+                    }));
                 }
             }
         }
@@ -728,7 +765,7 @@ public class ConcreteDrawer extends AbstractDrawer {
         }
     }
 
-    private void drawBombs(Graphics2D g2d) {
+    private void gatherBombs(java.util.List<DrawableEntity> entities, Graphics2D g2d) {
         int count = ControllerForView.getInstance().getBombCount();
 
         for (int i = 0; i < count; i++) {
@@ -742,7 +779,11 @@ public class ConcreteDrawer extends AbstractDrawer {
 
             BufferedImage sprite = SpriteManager.getInstance().getSprite("BOMB_ANIM", currentFrame);
             if (sprite != null) {
-                g2d.drawImage(sprite, screenX, screenY, null);
+                // I piedi della bomba sono alla base della tile
+                int feetY = screenY + Config.TILE_SIZE;
+                entities.add(new DrawableEntity(feetY, () -> {
+                    g2d.drawImage(sprite, screenX, screenY, null);
+                }));
             }
         }
     }
@@ -791,7 +832,7 @@ public class ConcreteDrawer extends AbstractDrawer {
         }
     }
 
-    private void drawProjectiles(Graphics2D g2d) {
+    private void gatherProjectiles(java.util.List<DrawableEntity> entities, Graphics2D g2d) {
         int count = ControllerForView.getInstance().getProjectileCount();
 
         for (int i = 0; i < count; i++) {
@@ -827,14 +868,18 @@ public class ConcreteDrawer extends AbstractDrawer {
                     int screenX = (int) (x * Config.TILE_SIZE) + Config.GRID_OFFSET_X;
                     int screenY = (int) (y * Config.TILE_SIZE) + Config.GRID_OFFSET_Y;
 
-                    // Disegniamo l'immagine a grandezza naturale (64x64) senza alcun offset!
-                    g2d.drawImage(sprite, screenX, screenY, Config.TILE_SIZE, Config.TILE_SIZE, null);
+                    // Il proiettile galleggia, ma per lo y-sorting usiamo la sua altezza centrale o base
+                    int feetY = screenY + Config.TILE_SIZE;
+
+                    entities.add(new DrawableEntity(feetY, () -> {
+                        g2d.drawImage(sprite, screenX, screenY, Config.TILE_SIZE, Config.TILE_SIZE, null);
+                    }));
                 }
             }
         }
     }
 
-    private void drawStaffAttack(Graphics2D g2d) {
+    private void gatherStaffAttack(java.util.List<DrawableEntity> entities, Graphics2D g2d) {
         PlayerState state = ControllerForView.getInstance().getPlayerState();
         double logX = ControllerForView.getInstance().getXCoordinatePlayer();
         double logY = ControllerForView.getInstance().getYCoordinatePlayer();
@@ -857,8 +902,13 @@ public class ConcreteDrawer extends AbstractDrawer {
 
             int drawX = screenX + (Config.TILE_SIZE - Config.ENTITY_FRAME_SIZE) / 2;
             int drawY = screenY + (Config.TILE_SIZE - Config.ENTITY_FRAME_SIZE);
+            
+            // Usiamo la stessa logica di base del player
+            int feetY = drawY + Config.ENTITY_FRAME_SIZE;
 
-            g2d.drawImage(sprite, drawX, drawY, Config.ENTITY_FRAME_SIZE, Config.ENTITY_FRAME_SIZE, null);
+            entities.add(new DrawableEntity(feetY, () -> {
+                g2d.drawImage(sprite, drawX, drawY, Config.ENTITY_FRAME_SIZE, Config.ENTITY_FRAME_SIZE, null);
+            }));
         }
     }
 
@@ -918,22 +968,19 @@ public class ConcreteDrawer extends AbstractDrawer {
             return Config.PLAYER_IDLE_FRAMES;
     }
 
-    private void drawCollectibles(Graphics2D g2d) {
+    private void gatherCollectibles(java.util.List<DrawableEntity> entities, Graphics2D g2d) {
         int count = controller.ControllerForView.getInstance().getCollectibleCount();
-        view.SpriteManager sm = view.SpriteManager.getInstance(); // Recuperiamo lo SpriteManager
+        view.SpriteManager sm = view.SpriteManager.getInstance();
 
         for (int i = 0; i < count; i++) {
-            // Calcolo delle coordinate mantenuto identico al tuo
             int screenX = (int) (controller.ControllerForView.getInstance().getCollectibleX(i)
                     * utils.Config.TILE_SIZE) + utils.Config.GRID_OFFSET_X;
             int screenY = (int) (controller.ControllerForView.getInstance().getCollectibleY(i)
                     * utils.Config.TILE_SIZE) + utils.Config.GRID_OFFSET_Y;
 
             utils.ItemType type = controller.ControllerForView.getInstance().getCollectibleType(i);
-
             java.awt.image.BufferedImage sprite = null;
 
-            // Associamo ogni ItemType allo sprite corretto caricato nel ResourceLoader
             switch (type) {
                 case AMMO_BOMB -> sprite = sm.getSprite("CONSUMABLES", 0);
                 case AMMO_AURA -> sprite = sm.getSprite("CONSUMABLES", 1);
@@ -942,10 +989,13 @@ public class ConcreteDrawer extends AbstractDrawer {
                 case POWER_SPEED -> sprite = sm.getSprite("POWER_UPS", 2);
             }
 
-            // Se lo sprite è stato trovato, lo disegniamo sulla mappa
-            if (sprite != null) {
-                // Disegniamo lo sprite forzandolo alla dimensione del TILE_SIZE
-                g2d.drawImage(sprite, screenX, screenY, utils.Config.TILE_SIZE, utils.Config.TILE_SIZE, null);
+            final java.awt.image.BufferedImage finalSprite = sprite;
+
+            if (finalSprite != null) {
+                int feetY = screenY + utils.Config.TILE_SIZE;
+                entities.add(new DrawableEntity(feetY, () -> {
+                    g2d.drawImage(finalSprite, screenX, screenY, utils.Config.TILE_SIZE, utils.Config.TILE_SIZE, null);
+                }));
             }
         }
     }

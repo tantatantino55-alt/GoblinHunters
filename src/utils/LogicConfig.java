@@ -39,7 +39,7 @@ public class LogicConfig {
     public static final double MIN_SPAWN_DISTANCE = 5.0;
 
     // --- AI NEMICI ---
-    public static final int SMELL_THRESHOLD_DISTANCE = 6;
+    public static final int SMELL_THRESHOLD_DISTANCE = 5;
     public static final int SMELL_BLOCK_PENALTY      = 3;
     public static final int SAFE_DISTANCE_FROM_BOMB  = 2;
 
@@ -94,7 +94,7 @@ public class LogicConfig {
     /** Colonna del portale goblin nella mappa boss (facilmente modificabile). */
     public static final int BOSS_PORTAL_COL = 6;
     /** Intervallo tra uno spawn e l'altro dal portale boss (in millisecondi). */
-    public static final long BOSS_PORTAL_SPAWN_INTERVAL_MS = 10_000;
+    public static final long BOSS_PORTAL_SPAWN_INTERVAL_MS = 10000;
     /** Numero massimo di chasing goblin vivi nella mappa boss. */
-    public static final int BOSS_PORTAL_MAX_GOBLINS = 6;
+    public static final int BOSS_PORTAL_MAX_GOBLINS = 3;
 }

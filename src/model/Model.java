@@ -248,9 +248,21 @@ public class Model implements IModel {
         for (int i = 1; i <= rad; i++) {
             int cr = sr + dr * i, cc = sc + dc * i;
             if (cr < 0 || cr >= Config.GRID_HEIGHT || cc < 0 || cc >= Config.GRID_WIDTH) break;
+            
             int cell = map[cr][cc];
             if (cell == Config.CELL_INDESTRUCTIBLE_BLOCK || cell == Config.CELL_ORNAMENT || cell == Config.CELL_SKELETON_START) break;
-            if (cell == Config.CELL_DESTRUCTIBLE_BLOCK) { destroyBlock(cr, cc); break; }
+            
+            if (cell == Config.CELL_DESTRUCTIBLE_BLOCK) { 
+                destroyBlock(cr, cc); 
+                break; 
+            }
+            
+            Bomb chainBomb = collisionManager.getBombAt(cr, cc, activeBombs);
+            if (chainBomb != null && !chainBomb.isExploded()) {
+                chainBomb.detonate();
+                break; // Il fuoco colpisce la bomba, innescandola e fermando la sua espansione in questa direzione
+            }
+
             boolean tip = (i == rad);
             activeFire.add(new int[]{cr, cc, tip ? tipType : midType, Config.FIRE_DURATION_TICKS});
             checkExplosionDamage(cr, cc);
@@ -720,11 +732,13 @@ public class Model implements IModel {
             Enemy e = it.next();
             if (e.isDead()) continue;
 
-            double eW = Config.GOBLIN_HITBOX_WIDTH, eH = Config.GOBLIN_HITBOX_HEIGHT;
+            // Usa la stessa hitbox logica (piu' piccola) del Player per evitare morti ingiuste
+            double eW = Config.ENTITY_LOGICAL_HITBOX_WIDTH, eH = Config.ENTITY_LOGICAL_HITBOX_HEIGHT;
             double eL = e.getX() + (1.0 - eW) / 2.0, eR = eL + eW;
             double eB = e.getY() + 1.0 - 0.4,         eT = eB - eH;
+            double m = 0.1;
 
-            if (eL < expR && eR > expL && eT < expB && eB > expT) {
+            if ((eL + m) < expR && (eR - m) > expL && (eT + m) < expB && (eB - m) > expT) {
                 boolean fatal = e.takeDamage(1);
                 if (fatal) {
                     if (e.getType() == EnemyType.BOSS) {

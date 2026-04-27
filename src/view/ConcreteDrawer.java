@@ -183,7 +183,6 @@ public class ConcreteDrawer extends AbstractDrawer {
         // --- 4. TESTO STATISTICHE ---
         g2d.setColor(Color.WHITE);
         g2d.setFont(new Font("Arial", Font.BOLD, 18));
-        g2d.drawString("FPS: "   + currentFPS, panelX, currentY);  currentY += lineGap;
         g2d.drawString("VITE: "  + lives,      panelX, currentY);  currentY += lineGap;
         g2d.drawString("TEMPO: " + timeString,  panelX, currentY);  currentY += lineGap;
 
@@ -198,11 +197,6 @@ public class ConcreteDrawer extends AbstractDrawer {
         currentY += lineGap + 24;
 
         // --- 5. SEZIONE CONSUMABILI ---
-        g2d.setFont(new Font("Arial", Font.BOLD, 14));
-        g2d.setColor(new Color(255, 220, 80));
-        g2d.drawString("MUNIZIONI", panelX, currentY);
-        currentY += 20;
-
         drawHudIcon(g2d, panelX, currentY,
                 utils.ItemType.AMMO_BOMB, "HUD_FIRE_SPELL", 0,
                 "HUD_FIRE_SPELL_gray",
@@ -213,27 +207,24 @@ public class ConcreteDrawer extends AbstractDrawer {
                 utils.ItemType.AMMO_AURA, "HUD_AURA_SPELL", 0,
                 "HUD_AURA_SPELL_gray",
                 auraAmmo > 0, "x" + auraAmmo);
-        currentY += 68;
+        currentY += 60;
 
-        // --- 6. SEZIONE POWER-UP ---
-        g2d.setFont(new Font("Arial", Font.BOLD, 14));
-        g2d.setColor(new Color(100, 220, 255));
-        g2d.drawString("POTENZIAMENTI", panelX, currentY);
-        currentY += 20;
-
-        drawHudIcon(g2d, panelX, currentY,
+        // --- 6. SEZIONE POWER-UP (Orizzontale) ---
+        int pX = panelX;
+        
+        drawHudIcon(g2d, pX, currentY,
                 utils.ItemType.POWER_SHIELD, "POWER_UPS", 0,
                 "POWER_UPS_0_gray",
                 shield, null);
-        currentY += 60;
+        pX += 56; // Spostamento orizzontale per l'icona successiva
 
-        drawHudIcon(g2d, panelX, currentY,
+        drawHudIcon(g2d, pX, currentY,
                 utils.ItemType.POWER_RADIUS, "POWER_UPS", 1,
                 "POWER_UPS_1_gray",
                 radius, null);
-        currentY += 60;
+        pX += 56;
 
-        drawHudIcon(g2d, panelX, currentY,
+        drawHudIcon(g2d, pX, currentY,
                 utils.ItemType.POWER_SPEED, "POWER_UPS", 2,
                 "POWER_UPS_2_gray",
                 speed, null);

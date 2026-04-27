@@ -51,8 +51,8 @@ public class GamePanel extends JPanel {
     public GamePanel(AbstractDrawer drawer) {
         this.drawer = drawer;
         // Obbliga il pannello ad avere le dimensioni ESATTE dell'immagine di sfondo
-        this.setPreferredSize(new Dimension(1230, 832));
-        this.setBackground(Color.black);
+// Obbliga il pannello ad avere le dimensioni ESATTE dell'immagine di sfondo
+        this.setPreferredSize(new Dimension(utils.ViewConfig.WINDOW_PREFERRED_WIDTH, utils.ViewConfig.WINDOW_PREFERRED_HEIGHT));        this.setBackground(Color.black);
         this.setDoubleBuffered(true);
         this.setFocusable(true);
         setupMenuControls();   // Input per il menu di selezione personaggio
@@ -88,8 +88,9 @@ public class GamePanel extends JPanel {
         java.awt.image.BufferedImage cabinetImg = view.SpriteManager.getInstance().getSprite("ARCADE_CABINET", 0);
         if (cabinetImg != null) {
             // Disegna coprendo l'intero ContentPane senza tagliare nulla
-            g.drawImage(cabinetImg, 0, 0, 1230, 832, this);
-        }
+            g.drawImage(cabinetImg, 0, 0,
+                    utils.ViewConfig.WINDOW_PREFERRED_WIDTH,
+                    utils.ViewConfig.WINDOW_PREFERRED_HEIGHT, this);        }
 
         // 2. DISEGNO AREA DI GIOCO (Griglia e HUD) - Livello Superiore
         // Creiamo una copia del Graphics per non inquinare il set originale

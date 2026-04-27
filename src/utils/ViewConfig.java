@@ -30,8 +30,8 @@ public class ViewConfig {
     public static final int FRAME_WIDTH                = 1024;
     public static final int FRAME_HEIGHT              = 896;
 
-    public static final int WINDOW_PREFERRED_WIDTH     = 1152;
-    public static final int WINDOW_PREFERRED_HEIGHT    = 768;
+    public static final int WINDOW_PREFERRED_WIDTH     = 1230;
+    public static final int WINDOW_PREFERRED_HEIGHT    = 898;
 
     // --- PLAYER PIVOT ---
     public static final int PLAYER_PIVOT_Y = 102;
@@ -230,22 +230,19 @@ public class ViewConfig {
 
     /** Area di disegno del menu dentro al Cabinet Arcade (centrato nello schermo). */
     public static final int MENU_DRAW_X = FRAME_OFFSET_X; // allineato all'inizio dello schermo del cabinato
-    public static final int MENU_DRAW_Y = 20;             // offset Y dal bordo superiore del pannello
+    public static final int MENU_DRAW_Y = FRAME_OFFSET_Y; // offset Y dal bordo superiore (allineato alla cornice)
     public static final int MENU_DRAW_W = 960;            // larghezza reale di StartGame.png (= area schermo)
-    public static final int MENU_DRAW_H = 800;            // altezza dell'area di disegno (px)
+    public static final int MENU_DRAW_H = 832;            // altezza reale dell'area di disegno (px)
 
     /**
      * Hitbox dei 4 riquadri personaggio.
      * Ordine sx→dx: Male Wizard, Goblin Wizard, Veteran Wizard, Female Wizard.
      * CHAR_FRAME_X[i] = posizione X del riquadro i-esimo (relativa a MENU_DRAW_X).
-     *
-     * Valori matematicamente corretti per allineare l'hitbox ai ritratti visivi.
-     * (I valori precedenti 43, 237... erano traslati a sinistra di 65px).
      */
     public static final int[] CHAR_FRAME_X = { 128, 318, 508, 698 };  // posizioni X reali dei riquadri
-    public static final int   CHAR_FRAME_Y = 255;   // posizione Y comune (relativa a MENU_DRAW_Y)
+    public static final int   CHAR_FRAME_Y = 265;   // posizione Y comune (scalata per 832)
     public static final int   CHAR_FRAME_W = 130;   // larghezza di ciascun riquadro (px)
-    public static final int   CHAR_FRAME_H = 260;   // altezza di ciascun riquadro (px)
+    public static final int   CHAR_FRAME_H = 270;   // altezza di ciascun riquadro scalata per 832
 
     /**
      * Coordinate X del centro di ciascun personaggio per il puntatore/freccia selettore.
@@ -264,7 +261,7 @@ public class ViewConfig {
      * Coordinate relative a MENU_DRAW_X / MENU_DRAW_Y.
      */
     public static final int NEW_GAME_BTN_X = 350;   // posizione X del pulsante (centrato in 960px)
-    public static final int NEW_GAME_BTN_Y = 630;   // posizione Y del pulsante
+    public static final int NEW_GAME_BTN_Y = 655;   // posizione Y del pulsante (scalata per 832)
     public static final int NEW_GAME_BTN_W = 260;   // larghezza del pulsante (px)
-    public static final int NEW_GAME_BTN_H = 75;    // altezza del pulsante (px)
+    public static final int NEW_GAME_BTN_H = 78;    // altezza del pulsante scalata
 }

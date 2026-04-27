@@ -57,6 +57,13 @@ public class ControllerForView implements IControllerForView {
         ControllerForModel.getInstance().setGameState(GameState.PLAYING);
         System.out.println("Gioco avviato con: " + selected.getDisplayName());
     }
+    @Override
+    public void resetGame() {
+        ControllerForModel.getInstance().resetGame();
+        // Reset del MenuModel per rimuovere il personaggio precedentemente confermato
+        MenuModel.getInstance().reset();
+    }
+
     @Override public int getNumColumns() { return Model.getInstance().getNumColumns(); }
     @Override public int getNumRows() { return Model.getInstance().getNumRows(); }
     @Override public double getXCoordinatePlayer() { return Model.getInstance().xCoordinatePlayer(); }
@@ -80,6 +87,7 @@ public class ControllerForView implements IControllerForView {
     @Override public boolean isPlayerInvincible() { return Model.getInstance().isPlayerInvincible(); }
     @Override public int getPlayerLives() { return Model.getInstance().getPlayerLives(); }
     @Override public int getElapsedTimeInSeconds() { return Model.getInstance().getElapsedTimeInSeconds(); }
+    @Override public int getScore() { return Model.getInstance().getScore(); }
 
     // --- DELEGAZIONE METODI AD INDICE ---
     @Override public int getBombCount() { return Model.getInstance().getBombCount(); }

@@ -10,6 +10,7 @@ public interface IControllerForView {
 
     // --- GAME STATE (Menu / Playing) ---
     GameState getGameState();
+    void resetGame();
 
     // --- MENU SELEZIONE PERSONAGGIO (click-only) ---
     /** Seleziona un personaggio tramite click: aggiorna il Model e la freccia selettore. */
@@ -39,6 +40,7 @@ public interface IControllerForView {
     public boolean isPlayerInvincible();
     public int getPlayerLives();
     public int getElapsedTimeInSeconds();
+    public int getScore();
     public boolean isEnemyAttacking(int index);
 
 

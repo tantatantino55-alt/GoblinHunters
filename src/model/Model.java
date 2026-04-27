@@ -72,6 +72,14 @@ public class Model implements IModel {
         return instance;
     }
 
+    /**
+     * Resetta completamente l'istanza del Model, creando una nuova partita
+     * con stato, punteggi e configurazioni pulite.
+     */
+    public static void resetInstance() {
+        instance = new Model();
+    }
+
     // ==========================================================
     // PACKAGE-PRIVATE: accesso per i Manager (Mediator)
     // ==========================================================
@@ -697,11 +705,16 @@ public class Model implements IModel {
         if (player.isInvincible()) return;
         boolean lifeLost = player.takeDamage();
         if (lifeLost) {
-            player.setXCoordinate(0.0);
-            player.setYCoordinate(0.0);
-            player.setDelta(0, 0);
-            player.setState(PlayerState.IDLE_FRONT);
-            System.out.println("RESPAWN.");
+            if (player.getLives() <= 0) {
+                System.out.println("GAME OVER! Vite esaurite.");
+                controller.ControllerForModel.getInstance().setGameState(utils.GameState.GAME_OVER);
+            } else {
+                player.setXCoordinate(0.0);
+                player.setYCoordinate(0.0);
+                player.setDelta(0, 0);
+                player.setState(PlayerState.IDLE_FRONT);
+                System.out.println("RESPAWN.");
+            }
         }
     }
 

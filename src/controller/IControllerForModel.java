@@ -17,4 +17,7 @@ public interface IControllerForModel {
     GameState getGameState();
     /** Imposta lo stato del gioco. */
     void setGameState(GameState state);
+
+    /** Resetta il loop di gioco al menu principale. */
+    void resetGame();
 }

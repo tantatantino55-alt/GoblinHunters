@@ -52,13 +52,12 @@ public class PauseController {
     }
 
     /**
-     * Torna al menu principale.
-     *
-     * <p><strong>TODO:</strong> Aggiungere navigazione quando la scena sarà pronta.</p>
+     * Torna al menu principale e resetta completamente lo stato di gioco.
      */
     public void onReturnToMainMenuClicked() {
-        // TODO: navigazione verso il Main Menu
-        System.out.println("[PauseController] Return to Main Menu — non ancora implementato.");
+        System.out.println("[PauseController] Ritorno al Main Menu richiesto...");
+        cancelRebind(); // Pulisce eventuali rebind in corso
+        ControllerForView.getInstance().resetGame();
     }
 
     // =========================================================================

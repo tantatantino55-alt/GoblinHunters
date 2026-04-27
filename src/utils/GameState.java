@@ -7,5 +7,6 @@ package utils;
  */
 public enum GameState {
     MENU,
-    PLAYING
+    PLAYING,
+    GAME_OVER
 }

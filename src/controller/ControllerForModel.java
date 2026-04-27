@@ -34,6 +34,13 @@ public class ControllerForModel implements IControllerForModel, Runnable {
     /** Imposta lo stato del gioco (transizione MENU → PLAYING). */
     public void setGameState(GameState state) { this.gameState = state; }
 
+    @Override
+    public void resetGame() {
+        this.paused = false;
+        this.gameState = GameState.MENU;
+        model.Model.resetInstance();
+    }
+
 
     private ControllerForModel() {
         // Non usiamo più il Timer di Swing!

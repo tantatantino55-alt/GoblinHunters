@@ -84,8 +84,12 @@ public class ConcreteDrawer extends AbstractDrawer {
         drawDebugGrid(g2d);
         drawHUD(g2d);
 
+        // --- GAME OVER: Overlay ---
+        if (ControllerForView.getInstance().getGameState() == GameState.GAME_OVER) {
+            GameOverDrawer.getInstance().draw(g2d);
+        }
         // --- PAUSA: Overlay del menu di pausa ---
-        if (ControllerForView.getInstance().isPaused()) {
+        else if (ControllerForView.getInstance().isPaused()) {
             PauseMenuDrawer.getInstance().draw(g2d,
                     ControllerForView.getInstance().getPauseController());
         }

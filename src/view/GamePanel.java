@@ -152,6 +152,17 @@ public class GamePanel extends JPanel {
                     return;
                 }
 
+                // --- GAME OVER STATE ---
+                if (ControllerForView.getInstance().getGameState() == GameState.GAME_OVER) {
+                    PauseMenuDrawer.ClickResult result = GameOverDrawer.getInstance().handleClick(e.getX(), e.getY());
+                    switch (result) {
+                        case QUIT -> System.exit(0);
+                        case RETURN_TO_MAIN_MENU -> ControllerForView.getInstance().resetGame();
+                        default -> {}
+                    }
+                    return;
+                }
+
                 // --- PLAYING STATE (pausa): routing tramite PauseMenuDrawer ---
                 if (!ControllerForView.getInstance().isPaused())
                     return;

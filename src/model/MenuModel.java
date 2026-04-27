@@ -5,12 +5,12 @@ import utils.CharacterType;
 /**
  * Model del menu di selezione personaggio (MVC).
  *
- * Gestisce DUE stati indipendenti:
- * - {@code hoveredIndex}: riquadro sotto il cursore (effetto glow temporaneo)
- * - {@code clickedIndex}: personaggio selezionato con click (bordo persistente)
+ * Stato unico:
+ * - {@code selectedIndex}: indice del personaggio selezionato con click (-1 = nessuno).
+ *   La freccia selettore nella View punta al personaggio con questo indice.
  *
- * La conferma ({@link #confirmSelection()}) usa {@code clickedIndex},
- * così spostare il mouse verso il pulsante "Start Game" non perde la selezione.
+ * La conferma ({@link #confirmSelection()}) usa {@code selectedIndex}
+ * per determinare con quale personaggio iniziare il gioco.
  *
  * NON conosce la View né il Controller.
  */
@@ -18,11 +18,8 @@ public class MenuModel {
 
     private static MenuModel instance = null;
 
-    // --- STATO HOVER (segue il cursore, temporaneo) ---
-    private int hoveredIndex = -1;
-
     // --- STATO SELEZIONE (persistente, impostato dal click) ---
-    private int clickedIndex  = -1;
+    private int selectedIndex  = -1;
 
     // --- CONFERMA ---
     private int confirmedIndex = -1;
@@ -38,11 +35,14 @@ public class MenuModel {
     // QUERY
     // =========================================================================
 
-    /** Indice del riquadro sotto il cursore (-1 se nessuno). */
-    public int getHoveredIndex()   { return hoveredIndex; }
+    /**
+     * Indice del personaggio selezionato con click (-1 se nessuno).
+     * Usato dalla View per posizionare la freccia selettore.
+     */
+    public int getSelectedIndex()  { return selectedIndex; }
 
-    /** Indice del personaggio selezionato con click (-1 se nessuno). */
-    public int getClickedIndex()   { return clickedIndex; }
+    /** Alias di compatibilità — restituisce lo stesso valore di getSelectedIndex(). */
+    public int getClickedIndex()   { return selectedIndex; }
 
     /** Indice del personaggio confermato (-1 se non confermato). */
     public int getConfirmedIndex() { return confirmedIndex; }
@@ -60,36 +60,36 @@ public class MenuModel {
     // COMANDI (chiamati dal Controller)
     // =========================================================================
 
-    /** Aggiorna l'hover in base alla posizione del mouse. */
-    public void setHoveredIndex(int index) {
-        this.hoveredIndex = index;
+    /**
+     * Seleziona un personaggio tramite click.
+     * Aggiorna {@code selectedIndex}: la View sposterà la freccia.
+     *
+     * @param index indice del personaggio (0-3), oppure -1 per deselezionare.
+     */
+    public void selectCharacter(int index) {
+        if (index >= 0 && index < CharacterType.values().length) {
+            this.selectedIndex = index;
+        }
     }
 
-    /**
-     * Seleziona un personaggio tramite click sul riquadro.
-     * Il clickedIndex persiste anche quando il mouse si sposta altrove.
-     */
+    /** Alias di compatibilità — delega a {@link #selectCharacter(int)}. */
     public void selectByClick(int frameIndex) {
-        if (frameIndex >= 0 && frameIndex < CharacterType.values().length) {
-            this.clickedIndex = frameIndex;
-        }
+        selectCharacter(frameIndex);
     }
 
     /**
      * Conferma la selezione e prepara la transizione.
-     * Usa {@code clickedIndex} (NON hoveredIndex) per evitare
-     * che lo spostamento del mouse verso il pulsante annulli la scelta.
+     * Usa {@code selectedIndex} per determinare il personaggio confermato.
      */
     public void confirmSelection() {
-        if (clickedIndex >= 0) {
-            this.confirmedIndex = clickedIndex;
+        if (selectedIndex >= 0) {
+            this.confirmedIndex = selectedIndex;
         }
     }
 
     /** Resetta lo stato del menu (per un eventuale ritorno al menu). */
     public void reset() {
-        hoveredIndex   = -1;
-        clickedIndex   = -1;
+        selectedIndex  = -1;
         confirmedIndex = -1;
     }
 }

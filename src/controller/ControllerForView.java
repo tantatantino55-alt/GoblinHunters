@@ -26,14 +26,9 @@ public class ControllerForView implements IControllerForView {
     }
 
     @Override
-    public void setMenuHoveredIndex(int index) {
-        MenuModel.getInstance().setHoveredIndex(index);
-    }
-
-    @Override
-    public void menuHandleClick(int frameIndex) {
-        // Click su un riquadro: seleziona il personaggio (senza avviare il gioco)
-        MenuModel.getInstance().selectByClick(frameIndex);
+    public void menuHandleClick(int characterIndex) {
+        // Click su un personaggio: aggiorna il Model (sposta la freccia selettore)
+        MenuModel.getInstance().selectCharacter(characterIndex);
     }
 
     @Override

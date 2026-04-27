@@ -10,12 +10,14 @@ import java.awt.image.BufferedImage;
 /**
  * Componente View del menu di selezione personaggio (MVC).
  *
- * Effetti visivi:
- * - Hover glow (pulsante, temporaneo): quando il mouse è sopra un riquadro
- * - Selection border (persistente, dorato): quando un personaggio è stato cliccato
- * - Combinazione: se hover e selezione coincidono, gli effetti si sommano
+ * Responsabilità ESCLUSIVE della View:
+ * - Rendering dello sfondo (StartGame.png)
+ * - Rendering della freccia selettore arcade sopra il personaggio selezionato
+ * - Rendering del nome del personaggio e delle istruzioni
+ * - Hit-testing: dato un punto (x,y) in coordinate schermo, determina su
+ *   quale personaggio o pulsante si trova (restituisce un indice al Controller)
  *
- * I personaggi sono già presenti nell'immagine StartGame.png.
+ * NON modifica il Model direttamente: tutto passa attraverso il Controller.
  */
 public class MenuDrawer {
 
@@ -29,15 +31,18 @@ public class MenuDrawer {
     }
 
     // =========================================================================
-    // RENDERING
+    // RENDERING PRINCIPALE
     // =========================================================================
 
+    /**
+     * Disegna l'intera schermata del menu di selezione.
+     * Legge lo stato dal Model (sola lettura) per decidere cosa mostrare.
+     */
     public void draw(Graphics2D g2d) {
         MenuModel model = MenuModel.getInstance();
         SpriteManager sm = SpriteManager.getInstance();
 
-        int hovered = model.getHoveredIndex();
-        int clicked = model.getClickedIndex();
+        int selected = model.getSelectedIndex();
 
         // 1. SFONDO: StartGame.png scalato nell'area del Cabinet
         BufferedImage bg = sm.getSprite("MENU_BG", 0);
@@ -47,81 +52,100 @@ public class MenuDrawer {
                     ViewConfig.MENU_DRAW_W, ViewConfig.MENU_DRAW_H, null);
         }
 
-        // 2. SELEZIONE PERSISTENTE: bordo dorato sul personaggio cliccato
-        if (clicked >= 0 && clicked < CharacterType.values().length) {
-            drawSelectionBorder(g2d, clicked);
+        // 2. FRECCIA SELETTORE: punta al personaggio selezionato (click)
+        if (selected >= 0 && selected < CharacterType.values().length) {
+            drawSelectionArrow(g2d, selected);
         }
 
-        // 3. HOVER GLOW: effetto temporaneo sul riquadro sotto il cursore
-        if (hovered >= 0 && hovered < CharacterType.values().length) {
-            drawHoverGlow(g2d, hovered);
+        // 3. NOME PERSONAGGIO: mostra il nome sotto il personaggio selezionato
+        if (selected >= 0) {
+            drawSelectedName(g2d, selected);
         }
 
-        // 4. NOME PERSONAGGIO: mostra il nome del personaggio selezionato (click)
-        if (clicked >= 0) {
-            drawSelectedName(g2d, clicked);
-        }
-
-        // 5. ISTRUZIONI
-        drawInstructions(g2d, clicked);
+        // 4. ISTRUZIONI
+        drawInstructions(g2d, selected);
     }
 
     // =========================================================================
-    // EFFETTO SELEZIONE PERSISTENTE (click)
+    // FRECCIA SELETTORE STILE ARCADE 2D
     // =========================================================================
 
     /**
-     * Bordo dorato spesso + lieve glow fisso sul riquadro del personaggio
-     * selezionato con click. Rimane visibile anche quando il mouse si sposta.
+     * Disegna una freccia/puntatore verso il basso in stile pixel-art arcade,
+     * posizionata sopra il personaggio selezionato. La freccia ha un'animazione
+     * di "bobbing" verticale per dare un feedback dinamico tipico dei giochi 2D.
+     *
+     * Le coordinate X sono calcolate a partire dal game area array (la cornice
+     * delle mappe) usando le posizioni: 43, 237, 427, 616.
+     *
+     * @param index indice del personaggio selezionato (0-3)
      */
-    private void drawSelectionBorder(Graphics2D g2d, int index) {
-        int sx = ViewConfig.MENU_DRAW_X + ViewConfig.CHAR_FRAME_X[index];
-        int sy = ViewConfig.MENU_DRAW_Y + ViewConfig.CHAR_FRAME_Y;
-        int sw = ViewConfig.CHAR_FRAME_W;
-        int sh = ViewConfig.CHAR_FRAME_H;
+    private void drawSelectionArrow(Graphics2D g2d, int index) {
+        // Centro orizzontale del personaggio in coordinate schermo assolute.
+        // CHAR_SELECTOR_X[i] è relativo a FRAME_OFFSET_X.
+        int cx = ViewConfig.FRAME_OFFSET_X + ViewConfig.CHAR_SELECTOR_X[index];
 
-        // Glow fisso (leggero)
-        Composite original = g2d.getComposite();
-        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.06f));
-        g2d.setColor(new Color(255, 215, 0)); // Oro
-        g2d.fillRect(sx, sy, sw, sh);
-        g2d.setComposite(original);
+        // Y base: appena sopra i riquadri personaggio
+        int baseY = ViewConfig.MENU_DRAW_Y + ViewConfig.CHAR_FRAME_Y - 10;
 
-        // Bordo dorato spesso (indicatore di conferma)
-        g2d.setColor(new Color(255, 215, 0, 230));
-        g2d.setStroke(new BasicStroke(4));
-        g2d.drawRect(sx - 3, sy - 3, sw + 6, sh + 6);
+        // --- ANIMAZIONE BOBBING (oscillazione verticale) ---
+        double bobOffset = 6.0 * Math.sin(System.currentTimeMillis() / 250.0);
+        int arrowY = baseY + (int) bobOffset;
+
+        // --- DIMENSIONI FRECCIA ---
+        int arrowW = 24;  // larghezza base del triangolo
+        int arrowH = 18;  // altezza del triangolo
+        int stemW  = 8;   // larghezza dello stelo
+        int stemH  = 12;  // altezza dello stelo
+
+        Composite originalComposite = g2d.getComposite();
+
+        // --- OMBRA (offset di 2px, scura) ---
+        int shadowOff = 2;
+        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.4f));
+        g2d.setColor(Color.BLACK);
+        g2d.fillRect(cx - stemW / 2 + shadowOff, arrowY - stemH + shadowOff, stemW, stemH);
+        int[] sxShadow = { cx - arrowW / 2 + shadowOff, cx + arrowW / 2 + shadowOff, cx + shadowOff };
+        int[] syShadow = { arrowY + shadowOff, arrowY + shadowOff, arrowY + arrowH + shadowOff };
+        g2d.fillPolygon(sxShadow, syShadow, 3);
+        g2d.setComposite(originalComposite);
+
+        // --- CORPO FRECCIA (colore principale: giallo/oro arcade pulsante) ---
+        float pulse = 0.85f + 0.15f * (float) Math.abs(Math.sin(System.currentTimeMillis() / 300.0));
+        Color arrowColor = new Color(
+                Math.min(255, (int)(255 * pulse)),
+                Math.min(255, (int)(200 * pulse)),
+                0
+        );
+        g2d.setColor(arrowColor);
+
+        // Stelo
+        g2d.fillRect(cx - stemW / 2, arrowY - stemH, stemW, stemH);
+
+        // Punta (triangolo verso il basso)
+        int[] triX = { cx - arrowW / 2, cx + arrowW / 2, cx };
+        int[] triY = { arrowY, arrowY, arrowY + arrowH };
+        g2d.fillPolygon(triX, triY, 3);
+
+        // --- BORDO PIXEL-ART (contorno scuro) ---
+        g2d.setColor(new Color(120, 80, 0));
+        g2d.setStroke(new BasicStroke(1.5f));
+        g2d.drawRect(cx - stemW / 2, arrowY - stemH, stemW, stemH);
+        g2d.drawPolygon(triX, triY, 3);
         g2d.setStroke(new BasicStroke(1));
-    }
 
-    // =========================================================================
-    // EFFETTO HOVER (cursore sopra il riquadro)
-    // =========================================================================
+        // --- HIGHLIGHT INTERNO (profondità pixel-art) ---
+        g2d.setColor(new Color(255, 255, 180, 160));
+        g2d.fillRect(cx - stemW / 2 + 2, arrowY - stemH + 2, stemW - 4, 3);
 
-    /**
-     * Overlay bianco pulsante + bordo sottile.
-     * Effetto temporaneo che segue il cursore.
-     */
-    private void drawHoverGlow(Graphics2D g2d, int index) {
-        int sx = ViewConfig.MENU_DRAW_X + ViewConfig.CHAR_FRAME_X[index];
-        int sy = ViewConfig.MENU_DRAW_Y + ViewConfig.CHAR_FRAME_Y;
-        int sw = ViewConfig.CHAR_FRAME_W;
-        int sh = ViewConfig.CHAR_FRAME_H;
-
-        // Glow pulsante bianco
-        float pulse = 0.06f + 0.06f
-                * (float) Math.abs(Math.sin(System.currentTimeMillis() / 300.0));
-        Composite original = g2d.getComposite();
-        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, pulse));
-        g2d.setColor(Color.WHITE);
-        g2d.fillRect(sx, sy, sw, sh);
-        g2d.setComposite(original);
-
-        // Bordo bianco sottile
-        g2d.setColor(new Color(255, 255, 255, 150));
-        g2d.setStroke(new BasicStroke(2));
-        g2d.drawRect(sx - 1, sy - 1, sw + 2, sh + 2);
-        g2d.setStroke(new BasicStroke(1));
+        // --- PARTICELLE SCINTILLANTI ai lati ---
+        float sparkAlpha = 0.3f + 0.7f * (float) Math.abs(Math.sin(System.currentTimeMillis() / 200.0));
+        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, sparkAlpha));
+        g2d.setColor(new Color(255, 255, 100));
+        int sparkSize = 3;
+        g2d.fillRect(cx - arrowW / 2 - 4, arrowY + arrowH / 2, sparkSize, sparkSize);
+        g2d.fillRect(cx + arrowW / 2 + 2, arrowY + arrowH / 2, sparkSize, sparkSize);
+        g2d.setComposite(originalComposite);
     }
 
     // =========================================================================
@@ -149,12 +173,12 @@ public class MenuDrawer {
     /**
      * Istruzioni in basso: cambiano in base allo stato di selezione.
      */
-    private void drawInstructions(Graphics2D g2d, int clickedIndex) {
+    private void drawInstructions(Graphics2D g2d, int selectedIndex) {
         g2d.setFont(new Font("Arial", Font.PLAIN, 13));
         g2d.setColor(new Color(210, 210, 210));
 
         String instructions;
-        if (clickedIndex >= 0) {
+        if (selectedIndex >= 0) {
             instructions = "Clicca START GAME per iniziare!";
         } else {
             instructions = "Clicca un personaggio per selezionarlo";
@@ -168,14 +192,21 @@ public class MenuDrawer {
     }
 
     // =========================================================================
-    // HIT-TESTING
+    // HIT-TESTING (usato dal Controller per determinare il target del click)
     // =========================================================================
 
     /**
-     * Determina quale riquadro personaggio si trova alle coordinate date.
-     * @return indice (0-3), oppure -1 se fuori dai riquadri.
+     * Determina quale personaggio si trova alle coordinate schermo date.
+     *
+     * <p>Questo metodo è esposto alla View/Controller per tradurre le coordinate
+     * pixel del mouse in un indice logico. Il Controller usa il risultato per
+     * aggiornare il Model.</p>
+     *
+     * @param mouseX coordinata X del click (schermo assoluto)
+     * @param mouseY coordinata Y del click (schermo assoluto)
+     * @return indice del personaggio (0-3), oppure -1 se fuori da tutti i riquadri.
      */
-    public int getFrameIndexAt(int mouseX, int mouseY) {
+    public int getCharacterIndexAt(int mouseX, int mouseY) {
         for (int i = 0; i < CharacterType.values().length; i++) {
             int sx = ViewConfig.MENU_DRAW_X + ViewConfig.CHAR_FRAME_X[i];
             int sy = ViewConfig.MENU_DRAW_Y + ViewConfig.CHAR_FRAME_Y;
@@ -188,13 +219,27 @@ public class MenuDrawer {
         return -1;
     }
 
+    /** Alias di compatibilità per getCharacterIndexAt. */
+    public int getFrameIndexAt(int mouseX, int mouseY) {
+        return getCharacterIndexAt(mouseX, mouseY);
+    }
+
     /**
      * Verifica se le coordinate cadono sul pulsante "Start Game" / "NEW GAME".
+     *
+     * @param mouseX coordinata X del click (schermo assoluto)
+     * @param mouseY coordinata Y del click (schermo assoluto)
+     * @return true se il click è sul pulsante.
      */
-    public boolean isNewGameButtonAt(int mouseX, int mouseY) {
+    public boolean isStartGameButtonAt(int mouseX, int mouseY) {
         int bx = ViewConfig.MENU_DRAW_X + ViewConfig.NEW_GAME_BTN_X;
         int by = ViewConfig.MENU_DRAW_Y + ViewConfig.NEW_GAME_BTN_Y;
         return mouseX >= bx && mouseX <= bx + ViewConfig.NEW_GAME_BTN_W
                 && mouseY >= by && mouseY <= by + ViewConfig.NEW_GAME_BTN_H;
+    }
+
+    /** Alias di compatibilità per isStartGameButtonAt. */
+    public boolean isNewGameButtonAt(int mouseX, int mouseY) {
+        return isStartGameButtonAt(mouseX, mouseY);
     }
 }

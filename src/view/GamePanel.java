@@ -64,23 +64,19 @@ public class GamePanel extends JPanel {
     }
 
     // =========================================================================
-    // MENU SELEZIONE PERSONAGGIO — Mouse hover/click + Tastiera
+    // MENU SELEZIONE PERSONAGGIO — Click-only (freccia selettore)
     // =========================================================================
 
     /**
      * Configura i listener per il menu di selezione personaggio.
-     * Tutti gli input passano attraverso il Controller (MVC).
+     * L'interazione è esclusivamente tramite click (nessun hover).
+     * Il click viene gestito in {@link #setupPauseControls()} nel mouseClicked,
+     * che delega a {@link #handleMenuClick(int, int)}.
      */
     private void setupMenuControls() {
-        // HOVER: aggiorna la selezione in base alla posizione del mouse
-        this.addMouseMotionListener(new MouseMotionAdapter() {
-            @Override
-            public void mouseMoved(MouseEvent e) {
-                if (ControllerForView.getInstance().getGameState() != GameState.MENU) return;
-                int frameIndex = MenuDrawer.getInstance().getFrameIndexAt(e.getX(), e.getY());
-                ControllerForView.getInstance().setMenuHoveredIndex(frameIndex);
-            }
-        });
+        // Nessun listener aggiuntivo necessario:
+        // il click del mouse viene intercettato da setupPauseControls()
+        // e indirizzato a handleMenuClick() quando lo stato è MENU.
     }
 
     @Override
@@ -190,18 +186,27 @@ public class GamePanel extends JPanel {
 
     /**
      * Gestisce i click nella schermata del menu di selezione.
-     * View (hit-testing) + Controller (azioni) = MVC.
+     *
+     * <p>Flusso MVC:</p>
+     * <ol>
+     *   <li><b>View</b> (MenuDrawer): hit-testing → coordinate pixel → indice personaggio</li>
+     *   <li><b>Controller</b> (ControllerForView): riceve l'indice e aggiorna il Model</li>
+     *   <li><b>Model</b> (MenuModel): memorizza l'indice selezionato</li>
+     *   <li><b>View</b> (MenuDrawer): nel frame successivo, legge il Model e disegna la freccia</li>
+     * </ol>
      */
     private void handleMenuClick(int x, int y) {
-        // 1. Click su un riquadro personaggio?
-        int frameIndex = MenuDrawer.getInstance().getFrameIndexAt(x, y);
-        if (frameIndex >= 0) {
-            ControllerForView.getInstance().menuHandleClick(frameIndex);
+        MenuDrawer menuView = MenuDrawer.getInstance();
+
+        // 1. Click su un personaggio? (View: hit-testing → Controller: aggiorna Model)
+        int characterIndex = menuView.getCharacterIndexAt(x, y);
+        if (characterIndex >= 0) {
+            ControllerForView.getInstance().menuHandleClick(characterIndex);
             return;
         }
 
-        // 2. Click sul pulsante "NEW GAME"?
-        if (MenuDrawer.getInstance().isNewGameButtonAt(x, y)) {
+        // 2. Click sul pulsante "Start Game"? (Controller: conferma e avvia)
+        if (menuView.isStartGameButtonAt(x, y)) {
             ControllerForView.getInstance().menuConfirmSelection();
         }
     }

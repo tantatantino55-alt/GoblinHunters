@@ -11,11 +11,9 @@ public interface IControllerForView {
     // --- GAME STATE (Menu / Playing) ---
     GameState getGameState();
 
-    // --- MENU SELEZIONE PERSONAGGIO (solo mouse) ---
-    /** Aggiorna l'hover in base alla posizione del mouse (temporaneo). */
-    void setMenuHoveredIndex(int index);
-    /** Seleziona un personaggio tramite click sul riquadro. */
-    void menuHandleClick(int frameIndex);
+    // --- MENU SELEZIONE PERSONAGGIO (click-only) ---
+    /** Seleziona un personaggio tramite click: aggiorna il Model e la freccia selettore. */
+    void menuHandleClick(int characterIndex);
     /** Conferma la selezione e avvia il gioco (pulsante Start Game). */
     void menuConfirmSelection();
     public int getNumColumns();

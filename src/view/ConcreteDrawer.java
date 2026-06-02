@@ -51,6 +51,7 @@ public class ConcreteDrawer extends AbstractDrawer {
         // --- LAYER BACKGROUND (non ordinati per Y) ---
         drawMap(g2d);
         drawCracks(g2d); // Crepe del Boss: overlay sul pavimento
+        drawFire(g2d);   // Fuoco: effetto a terra, sempre sotto i personaggi
         drawPortal(g2d); // Allarme se scopri il portale spawner
         drawLevelExitGate(g2d);
 
@@ -79,7 +80,6 @@ public class ConcreteDrawer extends AbstractDrawer {
         }
 
         // --- LAYER FOREGROUND (disegnati sopra a tutto, non ordinati) ---
-        drawFire(g2d);
         drawTransition(g2d);
         drawDebugGrid(g2d);
         drawHUD(g2d);

@@ -218,6 +218,8 @@ class LevelManager {
         levelCompletedFlag = false;
         exitGateActive = false;
         portalRevealed = false;
+        portalRow = -1;
+        portalCol = -1;
 
         currentZone++;
         if (currentZone > 2) {

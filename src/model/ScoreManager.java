@@ -85,20 +85,22 @@ class ScoreManager {
     void generateGoblinDrop(double x, double y, List<Collectible> activeItems, Player player) {
         Random rand = new Random();
 
-        // Probabilità del 25% di droppare un oggetto (per non riempire la mappa e bilanciare il gioco)
-        if (rand.nextInt(100) >= 25) {
+        // Probabilità del 30% di droppare un oggetto
+        if (rand.nextInt(100) >= 30) {
             return;
         }
 
         List<ItemType> available = new ArrayList<>();
-        // Le munizioni possono sempre essere droppate
-        available.add(ItemType.AMMO_BOMB);
-        available.add(ItemType.AMMO_AURA);
 
-        // Aggiunge i power-up mancanti al pool
+        // Aggiunge i power-up mancanti al pool (i goblin droppano SOLO power-up)
         if (!player.hasShield())     available.add(ItemType.POWER_SHIELD);
         if (!player.hasMaxRadius())  available.add(ItemType.POWER_RADIUS);
         if (!player.hasMaxSpeed())   available.add(ItemType.POWER_SPEED);
+
+        // Se il player ha già tutto maxato, non droppa nulla
+        if (available.isEmpty()) {
+            return;
+        }
 
         ItemType dropped = available.get(rand.nextInt(available.size()));
 

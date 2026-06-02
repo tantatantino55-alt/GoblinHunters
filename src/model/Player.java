@@ -62,6 +62,8 @@ public class Player extends Entity {
     }
 
     private void updateState() {
+        if (currentState == PlayerState.DYING) return; // FIX: non sovrascrivere lo stato di morte
+
         if (isMoving) {
             switch (currentDirection) {
                 case UP:    setState(PlayerState.RUN_BACK); break;

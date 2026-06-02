@@ -83,23 +83,23 @@ class ScoreManager {
     // ==========================================================
 
     void generateGoblinDrop(double x, double y, List<Collectible> activeItems, Player player) {
-        List<ItemType> available = new ArrayList<>();
-        boolean isBossZone = model.getCurrentZone() == 2;
+        Random rand = new Random();
 
-        if (!isBossZone) {
-            // Fuori dalla zona boss: droppa power-up mancanti
-            if (!player.hasShield())     available.add(ItemType.POWER_SHIELD);
-            if (!player.hasMaxRadius())  available.add(ItemType.POWER_RADIUS);
-            if (!player.hasMaxSpeed())   available.add(ItemType.POWER_SPEED);
-        }
-        // In zona boss: nessun power-up (evita che lo scudo si rigeneri ciclicamente)
-
-        if (available.isEmpty()) {
-            System.out.println("Nessun drop" + (isBossZone ? " (zona boss)" : ": il player ha già tutto maxato!"));
+        // Probabilità del 25% di droppare un oggetto (per non riempire la mappa e bilanciare il gioco)
+        if (rand.nextInt(100) >= 25) {
             return;
         }
 
-        Random rand = new Random();
+        List<ItemType> available = new ArrayList<>();
+        // Le munizioni possono sempre essere droppate
+        available.add(ItemType.AMMO_BOMB);
+        available.add(ItemType.AMMO_AURA);
+
+        // Aggiunge i power-up mancanti al pool
+        if (!player.hasShield())     available.add(ItemType.POWER_SHIELD);
+        if (!player.hasMaxRadius())  available.add(ItemType.POWER_RADIUS);
+        if (!player.hasMaxSpeed())   available.add(ItemType.POWER_SPEED);
+
         ItemType dropped = available.get(rand.nextInt(available.size()));
 
         // Arrotondiamo al centro logico del goblin per ottenere la cella corretta

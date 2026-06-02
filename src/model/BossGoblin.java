@@ -12,7 +12,7 @@ public class BossGoblin extends Enemy {
     private BossState currentState = BossState.FURY;
 
     private static final long I_FRAME_DURATION  = 1000L;
-    public  static final int  MAX_HP            = 25;
+    public  static final int  MAX_HP            = 15;
 
     private int attackCounter = 0;
     private static final int ATTACKS_BEFORE_REST = 3;
@@ -254,7 +254,7 @@ public class BossGoblin extends Enemy {
             }
 
             case IDLE_EXHAUSTED: {
-                long restTime = (hp <= MAX_HP / 2) ? 1500L : 3000L;
+                long restTime = (hp <= MAX_HP / 2) ? 3500L : 5000L;
                 if (elapsed > restTime) {
                     this.currentDirection = Direction.values()[rand.nextInt(4)];
                     changeState(BossState.FURY);

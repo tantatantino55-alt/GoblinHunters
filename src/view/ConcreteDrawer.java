@@ -270,6 +270,39 @@ public class ConcreteDrawer extends AbstractDrawer {
                 utils.ItemType.POWER_SPEED, "POWER_UPS", 2,
                 "POWER_UPS_2_gray",
                 speed, null);
+        currentY += puSize + 14;
+
+        // --- 8. ICONA BASTONE (visibile = usabile, trasparente = non usabile) ---
+        boolean staffUsable = controller.ControllerForView.getInstance().isStaffUsable();
+        BufferedImage staffImg = spriteManager.getSprite("STAFF_ICON", 0);
+        if (staffImg != null) {
+            final int STAFF_SIZE = 40;
+            int staffX = panelX + (panelW - STAFF_SIZE) / 2;
+
+            Composite originalComp = g2d.getComposite();
+            if (staffUsable) {
+                // Usabile: piena opacità + bagliore dorato
+                g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
+                // Rettangolo di sfondo luminoso
+                float glowPulse = 0.5f + 0.5f * (float) Math.abs(Math.sin(System.currentTimeMillis() / 400.0));
+                g2d.setColor(new Color(1.0f, 0.85f, 0.0f, 0.25f * glowPulse));
+                g2d.fillRoundRect(staffX - 4, currentY - 4, STAFF_SIZE + 8, STAFF_SIZE + 8, 8, 8);
+            } else {
+                // Non usabile: grigio + molto trasparente
+                g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.30f));
+            }
+            g2d.drawImage(staffImg, staffX, currentY, STAFF_SIZE, STAFF_SIZE, null);
+            g2d.setComposite(originalComp);
+
+            // Etichetta "[Z] Bastone" solo quando usabile
+            if (staffUsable) {
+                g2d.setFont(new Font("Monospaced", Font.BOLD, 11));
+                g2d.setColor(new Color(255, 215, 0));
+                FontMetrics fmStaff = g2d.getFontMetrics();
+                String label = "[Z] Bastone";
+                g2d.drawString(label, panelX + (panelW - fmStaff.stringWidth(label)) / 2, currentY + STAFF_SIZE + 12);
+            }
+        }
     }
 
     /**

@@ -363,6 +363,7 @@ public class Model implements IModel {
     @Override public int getDifficultyCycle()          { return levelManager.getDifficultyCycle(); }
     @Override public boolean isExitGateActive()        { return levelManager.isExitGateActive(); }
     @Override public boolean isGateActive()            { return levelManager.isExitGateActive(); }
+    @Override public boolean isPreparationPhase()      { return levelManager.isPreparationPhase(); }
     @Override public boolean isLevelCompletedFlag()    { return levelManager.isLevelCompletedFlag(); }
     @Override public String getCurrentTheme()          { return levelManager.getCurrentTheme(); }
     @Override public int getPortalRow()                { return levelManager.getPortalRow(); }

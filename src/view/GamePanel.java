@@ -350,6 +350,8 @@ public class GamePanel extends JPanel {
             public void actionPerformed(ActionEvent e) {
                 if (ControllerForView.getInstance().getGameState() != GameState.PLAYING || ControllerForView.getInstance().isPaused())
                     return;
+                if (!ControllerForView.getInstance().isStaffUsable())
+                    return; // Bastone non disponibile in questa fase
                 if (canStaffAttack) {
                     ControllerForView.getInstance().staffAttack();
                     canStaffAttack = false;

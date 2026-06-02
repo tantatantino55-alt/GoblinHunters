@@ -89,6 +89,7 @@ public interface IModel {
     int getDifficultyCycle();
     boolean isExitGateActive();
     String getCurrentTheme();
+    boolean isPreparationPhase();
 
     boolean isGateActive();
 

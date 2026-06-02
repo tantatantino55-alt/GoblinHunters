@@ -124,6 +124,9 @@ public interface IControllerForView {
     int getBossPortalCol();
     long getBossPortalActivationTime();
 
+    /** Ritorna true solo se il bastone è attualmente utilizzabile (mappa 3, fase preparazione). */
+    boolean isStaffUsable();
+
     // --- HUD JUICY ANIMATION TRIGGER ---
     /** Notifica la View che un item è stato appena raccolto (avvia l'animazione icona HUD). */
     void triggerPickupAnimation(utils.ItemType type);

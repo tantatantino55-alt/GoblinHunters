@@ -140,6 +140,13 @@ public class ControllerForView implements IControllerForView {
         Model.getInstance().staffAttack();
     }
 
+    @Override
+    public boolean isStaffUsable() {
+        // Usabile SOLO durante la fase di preparazione del boss (mappa 3, casse ancora presenti)
+        return Model.getInstance().getCurrentZone() == 2
+                && Model.getInstance().isPreparationPhase();
+    }
+
     @Override public int getPlayerBombAmmo() { return Model.getInstance().getPlayerBombAmmo(); }
     @Override public int getPlayerAuraAmmo() { return Model.getInstance().getPlayerAuraAmmo(); }
     @Override public boolean hasPlayerShield() { return Model.getInstance().hasPlayerShield(); }

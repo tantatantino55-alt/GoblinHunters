@@ -51,7 +51,7 @@ public class LogicConfig {
     public static final int    SHOOTER_RELOAD_TIME    = 180;
 
     // --- GOBLIN COMUNE ---
-    public static final double GOBLIN_COMMON_SPEED = 0.03;
+    public static final double GOBLIN_COMMON_SPEED = 0.025;
 
     // --- PROIETTILI (velocità logica) ---
     public static final int AuraProjectileSpeed = 2;
@@ -94,7 +94,7 @@ public class LogicConfig {
     /** Colonna del portale goblin nella mappa boss (facilmente modificabile). */
     public static final int BOSS_PORTAL_COL = 6;
     /** Intervallo tra uno spawn e l'altro dal portale boss (in millisecondi). */
-    public static final long BOSS_PORTAL_SPAWN_INTERVAL_MS = 10000;
+    public static final long BOSS_PORTAL_SPAWN_INTERVAL_MS = 14000;
     /** Numero massimo di chasing goblin vivi nella mappa boss. */
-    public static final int BOSS_PORTAL_MAX_GOBLINS = 3;
+    public static final int BOSS_PORTAL_MAX_GOBLINS = 2;
 }

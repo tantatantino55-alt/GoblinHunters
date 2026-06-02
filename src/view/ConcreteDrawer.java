@@ -1040,8 +1040,8 @@ public class ConcreteDrawer extends AbstractDrawer {
             java.awt.image.BufferedImage sprite = null;
 
             switch (type) {
-                case AMMO_BOMB -> sprite = sm.getSprite("CONSUMABLES", 0);
-                case AMMO_AURA -> sprite = sm.getSprite("CONSUMABLES", 1);
+                case AMMO_BOMB -> sprite = sm.getSprite("CONSUMABLES", 1);
+                case AMMO_AURA -> sprite = sm.getSprite("CONSUMABLES", 0);
                 case POWER_SHIELD -> sprite = sm.getSprite("POWER_UPS", 0);
                 case POWER_RADIUS -> sprite = sm.getSprite("POWER_UPS", 1);
                 case POWER_SPEED -> sprite = sm.getSprite("POWER_UPS", 2);

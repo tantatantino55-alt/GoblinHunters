@@ -13,7 +13,10 @@ public class ControllerForView implements IControllerForView {
     private static ControllerForView instance = null;
     private ControllerForView() {}
 
-    @Override public void openGameGUI() { View.getInstance().openGameGUI(); }
+    @Override public void openGameGUI() {
+        View.getInstance().openGameGUI();
+        model.AudioManager.getInstance().loadAndPlay("/goblin_theme.wav");
+    }
     @Override public void closeGameGUI() { View.getInstance().closeGameGUI(); }
 
     // =========================================================================

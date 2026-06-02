@@ -138,6 +138,7 @@ public class PauseController {
     /** Toggle audio. La View chiama questo metodo quando l'utente clicca l'icona. */
     public void setAudioEnabled(boolean enabled) {
         PauseModel.getInstance().setAudioEnabled(enabled);
+        model.AudioManager.getInstance().setMuted(!enabled);
     }
 
     // =========================================================================

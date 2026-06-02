@@ -95,9 +95,36 @@ class ScoreManager {
 
         Random rand = new Random();
         ItemType dropped = available.get(rand.nextInt(available.size()));
-        int col = (int) Math.floor(x);
-        int row = (int) Math.floor(y);
+
+        // Arrotondiamo al centro logico del goblin per ottenere la cella corretta
+        int col = (int) Math.round(x);
+        int row = (int) Math.round(y);
+
+        // Verifica che la cella sia valida e calpestabile (non muro/cornice)
+        int[][] map = model.getGameAreaArray();
+        if (!isCellEmpty(map, row, col)) {
+            // Cerca la cella vuota più vicina tra le 4 adiacenti
+            int[][] offsets = {{0, -1}, {0, 1}, {-1, 0}, {1, 0}};
+            for (int[] off : offsets) {
+                int nr = row + off[0];
+                int nc = col + off[1];
+                if (isCellEmpty(map, nr, nc)) {
+                    row = nr;
+                    col = nc;
+                    break;
+                }
+            }
+        }
+
         activeItems.add(new Collectible(col, row, dropped));
-        System.out.println("Goblin droppa: " + dropped.name());
+        System.out.println("Goblin droppa: " + dropped.name() + " @ [" + row + "," + col + "]");
+    }
+
+    /**
+     * Controlla se una cella della mappa è vuota e valida per il drop.
+     */
+    private boolean isCellEmpty(int[][] map, int row, int col) {
+        if (row < 0 || row >= map.length || col < 0 || col >= map[0].length) return false;
+        return map[row][col] == Config.CELL_EMPTY;
     }
 }

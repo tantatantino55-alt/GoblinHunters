@@ -100,6 +100,15 @@ public class ResourceLoader {
                 64                            // Dimensione Tile
         );
         System.out.println("ResourceLoader: Animazione Distruzione caricata (Frame 3-5).");
+        
+        sm.loadAnimation(
+                "BUSH_BREAK",                 // Chiave univoca
+                Config.FOREST_SHEET,          // File (/Forest.png)
+                3,                            // L'animazione di esplosione parte dall'indice 3
+                3,                            // Quanti frame caricare (3 frame)
+                64                            // Dimensione Tile
+        );
+        System.out.println("ResourceLoader: Animazione Bush Break caricata.");
     }
 
     private void loadFireResources(SpriteManager sm) {
@@ -147,19 +156,19 @@ public class ResourceLoader {
 
         // --- BACK ---
         sm.loadAnimation("COMMON_RUN_UP",     sheet, Config.COMMON_RUN_BACK_START,   runFrames, size);
-        sm.loadAnimation("COMMON_IDLE_UP",    sheet, Config.COMMON_RUN_BACK_START,   runFrames, size); // Fallback
+        sm.loadAnimation("COMMON_IDLE_UP",    sheet, Config.COMMON_RUN_BACK_START,   1, size); // Fallback
 
         // --- FRONT ---
         sm.loadAnimation("COMMON_RUN_DOWN",   sheet, Config.COMMON_RUN_FRONT_START,  runFrames, size);
-        sm.loadAnimation("COMMON_IDLE_DOWN",  sheet, Config.COMMON_RUN_FRONT_START,  runFrames, size); // Fallback
+        sm.loadAnimation("COMMON_IDLE_DOWN",  sheet, Config.COMMON_RUN_FRONT_START,  1, size); // Fallback
 
         // --- LEFT ---
         sm.loadAnimation("COMMON_RUN_LEFT",   sheet, Config.COMMON_RUN_LEFT_START,   runFrames, size);
-        sm.loadAnimation("COMMON_IDLE_LEFT",  sheet, Config.COMMON_RUN_LEFT_START,   runFrames, size); // Fallback
+        sm.loadAnimation("COMMON_IDLE_LEFT",  sheet, Config.COMMON_RUN_LEFT_START,   1, size); // Fallback
 
         // --- RIGHT ---
         sm.loadAnimation("COMMON_RUN_RIGHT",  sheet, Config.COMMON_RUN_RIGHT_START,  runFrames, size);
-        sm.loadAnimation("COMMON_IDLE_RIGHT", sheet, Config.COMMON_RUN_RIGHT_START,  runFrames, size); // Fallback
+        sm.loadAnimation("COMMON_IDLE_RIGHT", sheet, Config.COMMON_RUN_RIGHT_START,  1, size); // Fallback
     }
 
     private void loadChasingGoblinAnimations(SpriteManager sm) {

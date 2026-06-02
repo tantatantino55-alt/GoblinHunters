@@ -40,6 +40,8 @@ public class Model implements IModel {
     /** ID logico della cella che funge da Exit Gate. */
     public static final int EXIT_GATE_ID = 25;
 
+    private int playerDyingTimer = 0;
+
     // ==========================================================
     // COSTRUTTORE / SINGLETON
     // ==========================================================
@@ -156,7 +158,10 @@ public class Model implements IModel {
     @Override public Direction getEnemyDirection(int i){ return isValidIndex(i) ? enemies.get(i).getDirection() : Direction.DOWN; }
     @Override public EnemyType getEnemyType(int i)    { return isValidIndex(i) ? enemies.get(i).getType() : EnemyType.COMMON; }
     @Override public Direction getEnemyTelegraph(int i){ return isValidIndex(i) ? enemies.get(i).getTelegraphDirection() : null; }
-    @Override public String getEnemyState(int i)      { return isValidIndex(i) ? enemies.get(i).getEnemyState() : "RUN"; }
+    @Override public String getEnemyState(int i) {
+        if (player.getState() == utils.PlayerState.DYING) return "IDLE";
+        return isValidIndex(i) ? enemies.get(i).getEnemyState() : "RUN";
+    }
     @Override public boolean isEnemyInvincible(int i) { return isValidIndex(i) && enemies.get(i).isInvincible(); }
 
     @Override
@@ -492,6 +497,20 @@ public class Model implements IModel {
     public void updateGameLogic() {
         elapsedTicks++;
 
+        if (player.getState() == utils.PlayerState.DYING) {
+            if (playerDyingTimer > 0) {
+                playerDyingTimer--;
+                if (playerDyingTimer <= 0) {
+                    System.out.println("GAME OVER! Vite esaurite.");
+                    controller.ControllerForModel.getInstance().setGameState(utils.GameState.GAME_OVER);
+                }
+            }
+            updateBombs();
+            updateProjectiles();
+            mapManager.updateCracks();
+            return;
+        }
+
         // Timer boss
         if (levelManager.getCurrentZone() == 2 && levelManager.isPreparationPhase()) {
             if (levelManager.tickBossPreparation()) {
@@ -702,12 +721,14 @@ public class Model implements IModel {
     }
 
     private void handlePlayerHit() {
-        if (player.isInvincible()) return;
+        if (player.isInvincible() || player.getState() == utils.PlayerState.DYING) return;
         boolean lifeLost = player.takeDamage();
         if (lifeLost) {
             if (player.getLives() <= 0) {
-                System.out.println("GAME OVER! Vite esaurite.");
-                controller.ControllerForModel.getInstance().setGameState(utils.GameState.GAME_OVER);
+                System.out.println("GIOCO IN TRANSIZIONE MORTE...");
+                player.setState(utils.PlayerState.DYING);
+                player.setDelta(0, 0); // Ferma il giocatore sul posto
+                playerDyingTimer = 80; // Pausa prima della schermata Game Over (circa 1.3 secondi)
             } else {
                 player.setXCoordinate(0.0);
                 player.setYCoordinate(0.0);

@@ -61,6 +61,7 @@ public class ConcreteDrawer extends AbstractDrawer {
         gatherCollectibles(sortedEntities, g2d);
         gatherProjectiles(sortedEntities, g2d);
         gatherEnemies(sortedEntities, g2d);
+        gatherDestructions(sortedEntities, g2d);
 
         PlayerState state = ControllerForView.getInstance().getPlayerState();
         if (state.name().startsWith("ATTACK")) {
@@ -78,7 +79,6 @@ public class ConcreteDrawer extends AbstractDrawer {
         }
 
         // --- LAYER FOREGROUND (disegnati sopra a tutto, non ordinati) ---
-        drawDestructions(g2d); // Qui vengono disegnati i blocchi che esplodono
         drawFire(g2d);
         drawTransition(g2d);
         drawDebugGrid(g2d);
@@ -178,8 +178,8 @@ public class ConcreteDrawer extends AbstractDrawer {
      */
     private void drawHUD(Graphics2D g2d) {
         // --- 1. CALCOLO FPS ---
-        frameCount++;
         long currentTime = System.currentTimeMillis();
+        frameCount++;
         if (currentTime - lastFpsTime >= 1000) {
             currentFPS = frameCount;
             frameCount = 0;
@@ -199,60 +199,74 @@ public class ConcreteDrawer extends AbstractDrawer {
 
         String timeString = String.format("%02d:%02d", totalSec / 60, totalSec % 60);
 
-        // --- 3. LAYOUT ---
-        int panelX = utils.Config.GRID_OFFSET_X
-                + (utils.Config.GRID_WIDTH * utils.Config.TILE_SIZE)
-                + utils.Config.TILE_SIZE
-                + 18;
+        // --- 3. LAYOUT: Riquadro nero del cabinato a destra ---
+        // Coordinate del pannello HUD dentro il riquadro nero del cabinet
+        int panelX = 1072;   // Margine sinistro del riquadro nero
+        int panelW = 145;    // Larghezza utile del riquadro
+        int currentY = 200;  // Y di inizio (sotto la cornice superiore del riquadro)
 
-        int currentY = 55;
-        int lineGap  = 28;
-
-        // --- 4. TESTO STATISTICHE ---
-        g2d.setColor(Color.WHITE);
-        g2d.setFont(new Font("Arial", Font.BOLD, 18));
-        g2d.drawString("VITE: "  + lives,      panelX, currentY);  currentY += lineGap;
-        g2d.drawString("TEMPO: " + timeString,  panelX, currentY);  currentY += lineGap;
-
-        // --- 4b. PUNTEGGIO ---
-        // Colore dorato pulsante per il punteggio
+        // --- 4. PUNTEGGIO (in alto, ben visibile) ---
         float pulse = 0.75f + 0.25f * (float) Math.abs(Math.sin(System.currentTimeMillis() / 600.0));
         g2d.setColor(new Color(1.0f, 0.85f * pulse, 0.0f));
-        g2d.setFont(new Font("Arial", Font.BOLD, 18));
-        g2d.drawString("SCORE:", panelX, currentY);
-        g2d.setFont(new Font("Arial", Font.BOLD, 22));
-        g2d.drawString(String.format("%06d", score), panelX, currentY + 22);
-        currentY += lineGap + 24;
+        g2d.setFont(new Font("Monospaced", Font.BOLD, 15));
+        FontMetrics fmScore = g2d.getFontMetrics();
+        String scoreLabel = "SCORE";
+        g2d.drawString(scoreLabel, panelX + (panelW - fmScore.stringWidth(scoreLabel)) / 2, currentY);
+        currentY += 18;
+        g2d.setFont(new Font("Monospaced", Font.BOLD, 20));
+        fmScore = g2d.getFontMetrics();
+        String scoreVal = String.format("%06d", score);
+        g2d.drawString(scoreVal, panelX + (panelW - fmScore.stringWidth(scoreVal)) / 2, currentY);
+        currentY += 24;
 
-        // --- 5. SEZIONE CONSUMABILI ---
-        drawHudIcon(g2d, panelX, currentY,
+        // --- 5. VITE E TEMPO ---
+        g2d.setColor(Color.WHITE);
+        g2d.setFont(new Font("Monospaced", Font.BOLD, 20));
+        FontMetrics fmStats = g2d.getFontMetrics();
+        String livesStr = "VITE: " + lives;
+        g2d.drawString(livesStr, panelX + (panelW - fmStats.stringWidth(livesStr)) / 2, currentY);
+        currentY += 18;
+        String timeStr = "TEMPO: " + timeString;
+        g2d.drawString(timeStr, panelX + (panelW - fmStats.stringWidth(timeStr)) / 2, currentY);
+        currentY += 24;
+
+        // --- 6. SEZIONE CONSUMABILI (bombe e aura) ---
+        int iconSize = 36;
+        int iconGap  = 6;
+        // Centrati: due icone con contatore, affiancate
+        int totalConsW = iconSize + 28 + iconGap + iconSize + 28; // icona+testo + gap + icona+testo
+        int consX = panelX + (panelW - totalConsW) / 2 - 20; // spostato a sinistra per evitare overflow
+
+        drawHudIcon(g2d, consX, currentY,
                 utils.ItemType.AMMO_BOMB, "HUD_FIRE_SPELL", 0,
                 "HUD_FIRE_SPELL_gray",
                 bombAmmo > 0, "x" + bombAmmo);
-        currentY += 60;
 
-        drawHudIcon(g2d, panelX, currentY,
+        drawHudIcon(g2d, consX + iconSize + 28 + iconGap, currentY,
                 utils.ItemType.AMMO_AURA, "HUD_AURA_SPELL", 0,
                 "HUD_AURA_SPELL_gray",
                 auraAmmo > 0, "x" + auraAmmo);
-        currentY += 60;
+        currentY += iconSize + 12;
 
-        // --- 6. SEZIONE POWER-UP (Orizzontale) ---
-        int pX = panelX;
-        
-        drawHudIcon(g2d, pX, currentY,
+        // --- 7. SEZIONE POWER-UP (3 icone in riga) ---
+        int puSize = 36;
+        int puGap  = 8;
+        int totalPuW = puSize * 3 + puGap * 2;
+        int puX = panelX + (panelW - totalPuW) / 2;
+
+        drawHudIcon(g2d, puX, currentY,
                 utils.ItemType.POWER_SHIELD, "POWER_UPS", 0,
                 "POWER_UPS_0_gray",
                 shield, null);
-        pX += 56; // Spostamento orizzontale per l'icona successiva
+        puX += puSize + puGap;
 
-        drawHudIcon(g2d, pX, currentY,
+        drawHudIcon(g2d, puX, currentY,
                 utils.ItemType.POWER_RADIUS, "POWER_UPS", 1,
                 "POWER_UPS_1_gray",
                 radius, null);
-        pX += 56;
+        puX += puSize + puGap;
 
-        drawHudIcon(g2d, pX, currentY,
+        drawHudIcon(g2d, puX, currentY,
                 utils.ItemType.POWER_SPEED, "POWER_UPS", 2,
                 "POWER_UPS_2_gray",
                 speed, null);
@@ -792,24 +806,31 @@ public class ConcreteDrawer extends AbstractDrawer {
         }
     }
 
-    private void drawDestructions(Graphics2D g2d) {
+    private void gatherDestructions(java.util.List<DrawableEntity> entities, Graphics2D g2d) {
         int count = ControllerForView.getInstance().getDestructionCount();
+        String theme = ControllerForView.getInstance().getCurrentTheme();
+        String animKey = "FOREST".equals(theme) ? "BUSH_BREAK" : "CRATE_BREAK";
 
         for (int i = 0; i < count; i++) {
             int row = ControllerForView.getInstance().getDestructionRow(i);
             int col = ControllerForView.getInstance().getDestructionCol(i);
             int elapsed = ControllerForView.getInstance().getDestructionElapsedTime(i);
 
-            int currentFrame = elapsed / Config.DESTRUCTION_FRAME_DURATION;
+            int frameDur = "BUSH_BREAK".equals(animKey) ? 60 : Config.DESTRUCTION_FRAME_DURATION;
+            int currentFrame = elapsed / frameDur;
             if (currentFrame >= Config.DESTRUCTION_FRAMES)
                 currentFrame = Config.DESTRUCTION_FRAMES - 1;
 
             int screenX = Config.GRID_OFFSET_X + col * Config.TILE_SIZE;
             int screenY = Config.GRID_OFFSET_Y + row * Config.TILE_SIZE;
 
-            BufferedImage sprite = SpriteManager.getInstance().getSprite("CRATE_BREAK", currentFrame);
+            BufferedImage sprite = SpriteManager.getInstance().getSprite(animKey, currentFrame);
             if (sprite != null) {
-                g2d.drawImage(sprite, screenX, screenY, Config.TILE_SIZE, Config.TILE_SIZE, null);
+                // I piedi della distruzione sono alla base della tile
+                int feetY = screenY + Config.TILE_SIZE;
+                entities.add(new DrawableEntity(feetY, () -> {
+                    g2d.drawImage(sprite, screenX, screenY, Config.TILE_SIZE, Config.TILE_SIZE, null);
+                }));
             }
         }
     }

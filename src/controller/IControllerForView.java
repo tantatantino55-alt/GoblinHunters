@@ -129,7 +129,6 @@ public interface IControllerForView {
     void triggerPickupAnimation(utils.ItemType type);
 
     /** Ritorna il punteggio totale corrente. */
-    int getScore();
 
     // --- PAUSE ---
     /** Returns true when the game is paused (logic frozen, pause overlay visible). */

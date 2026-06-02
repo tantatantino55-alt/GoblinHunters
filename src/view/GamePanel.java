@@ -117,8 +117,9 @@ public class GamePanel extends JPanel {
         this.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
-                // In MENU state i tasti non fanno nulla (interazione solo mouse)
-                if (ControllerForView.getInstance().getGameState() == GameState.MENU) return;
+                // In MENU o GAME_OVER state i tasti non fanno nulla (interazione solo mouse)
+                if (ControllerForView.getInstance().getGameState() == GameState.MENU ||
+                    ControllerForView.getInstance().getGameState() == GameState.GAME_OVER) return;
 
                 // --- PLAYING STATE: pausa e rebind ---
                 if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {

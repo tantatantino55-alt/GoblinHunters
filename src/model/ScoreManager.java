@@ -84,12 +84,18 @@ class ScoreManager {
 
     void generateGoblinDrop(double x, double y, List<Collectible> activeItems, Player player) {
         List<ItemType> available = new ArrayList<>();
-        if (!player.hasShield())     available.add(ItemType.POWER_SHIELD);
-        if (!player.hasMaxRadius())  available.add(ItemType.POWER_RADIUS);
-        if (!player.hasMaxSpeed())   available.add(ItemType.POWER_SPEED);
+        boolean isBossZone = model.getCurrentZone() == 2;
+
+        if (!isBossZone) {
+            // Fuori dalla zona boss: droppa power-up mancanti
+            if (!player.hasShield())     available.add(ItemType.POWER_SHIELD);
+            if (!player.hasMaxRadius())  available.add(ItemType.POWER_RADIUS);
+            if (!player.hasMaxSpeed())   available.add(ItemType.POWER_SPEED);
+        }
+        // In zona boss: nessun power-up (evita che lo scudo si rigeneri ciclicamente)
 
         if (available.isEmpty()) {
-            System.out.println("Nessun drop: il player ha già tutto maxato!");
+            System.out.println("Nessun drop" + (isBossZone ? " (zona boss)" : ": il player ha già tutto maxato!"));
             return;
         }
 

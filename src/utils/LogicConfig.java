@@ -58,7 +58,7 @@ public class LogicConfig {
     public static final int BoneProjectileSpeed = 2;
 
     // --- VITE E DANNI ---
-    public static final int  INITIAL_LIVES             = 1;
+    public static final int  INITIAL_LIVES             = 6;
     public static final long INVINCIBILITY_DURATION_MS = 3000;
 
     // --- BOMBE ---

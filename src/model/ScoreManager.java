@@ -63,6 +63,9 @@ class ScoreManager {
 
             System.out.println("BOSS SCONFITTO IN " + secondsTaken + " SECONDI!");
             System.out.println("Time Bonus: " + timeBonus + " | Punti Totali Boss: " + finalScore);
+
+            // Ripristina tutte le vite originarie
+            model.getPlayer().restoreLives();
         } else {
             int points = 0;
             if (e instanceof ShooterGoblin)       points = Config.SCORE_SHOOTER_GOBLIN;

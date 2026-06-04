@@ -30,8 +30,10 @@ public class Player extends Entity {
     private final long CAST_COOLDOWN_MS = 800;
 
     // --- RISORSE E POWER-UP ---
-    private int bombAmmo = 5;
-    private int auraAmmo = 6;
+    private static final int DEFAULT_BOMB_AMMO = 5;
+    private static final int DEFAULT_AURA_AMMO = 6;
+    private int bombAmmo = DEFAULT_BOMB_AMMO;
+    private int auraAmmo = DEFAULT_AURA_AMMO;
     private boolean hasShield = false;
     private boolean hasMaxRadius = false;
     private boolean hasMaxSpeed = false;
@@ -68,6 +70,7 @@ public class Player extends Entity {
 
     private void updateState() {
         if (currentState == PlayerState.DYING) return; // FIX: non sovrascrivere lo stato di morte
+        if (currentState == PlayerState.HURT_FRONT && isOutOfAmmo()) return; // non interrompere la starvation
 
         if (isMoving) {
             switch (currentDirection) {
@@ -124,6 +127,13 @@ public class Player extends Entity {
     // --- COORDINATE (delegano a x/y da Entity, mantengono i nomi originali) ---
 
     public int getLives() { return lives; }
+    
+    /** Ripristina le vite al valore iniziale (usato dopo la vittoria contro il boss). */
+    public void restoreLives() {
+        this.lives = utils.Config.INITIAL_LIVES;
+        System.out.println("[PLAYER] Vite ripristinate a " + this.lives + " dopo la morte del boss.");
+    }
+
     public double getXCoordinate() { return x; }
     public double getYCoordinate() { return y; }
     public void setXCoordinate(double newX) { this.x = newX; }
@@ -194,6 +204,18 @@ public class Player extends Entity {
     public void clearBossFightSnapshot() {
         this.savedBombAmmo = -1;
         this.savedAuraAmmo = -1;
+    }
+
+    /** Ripristina le munizioni di partenza (rete di sicurezza per evitare che il player resti bloccato). */
+    public void restoreDefaultAmmo() {
+        this.bombAmmo = DEFAULT_BOMB_AMMO;
+        this.auraAmmo = DEFAULT_AURA_AMMO;
+        System.out.println("[RESPAWN] Risorse esaurite: ripristinate a default (bombe=" + DEFAULT_BOMB_AMMO + ", aura=" + DEFAULT_AURA_AMMO + ")");
+    }
+
+    /** Ritorna true se il player non ha né bombe né aura. */
+    public boolean isOutOfAmmo() {
+        return bombAmmo <= 0 && auraAmmo <= 0;
     }
 
     // --- POWER-UP ---

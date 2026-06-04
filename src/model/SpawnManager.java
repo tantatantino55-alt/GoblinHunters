@@ -2,7 +2,9 @@ package model;
 
 import utils.Config;
 
+import java.util.ArrayDeque;
 import java.util.List;
+import java.util.Queue;
 import java.util.Random;
 
 /**
@@ -133,7 +135,49 @@ class SpawnManager {
         for (Enemy e : enemies) {
             if (Math.abs(e.getX() - col) < 0.8 && Math.abs(e.getY() - row) < 0.8) return false;
         }
+
+        // Verifica che la cella sia in un'area abbastanza aperta (almeno MIN_OPEN_AREA celle libere collegate)
+        // Evita che i goblin nascano intrappolati in piccoli sgabuzzini tra le casse
+        if (countConnectedCells(col, row, map) < Config.MIN_SPAWN_OPEN_AREA) return false;
+
         return true;
+    }
+
+    /**
+     * BFS Flood-Fill: conta quante celle calpestabili sono connesse alla cella (startCol, startRow).
+     * La ricerca si ferma non appena vengono trovate almeno maxCount celle,
+     * per evitare di scorrere l'intera mappa ad ogni spawn.
+     *
+     * @param startCol colonna di partenza
+     * @param startRow riga di partenza
+     * @param map      mappa corrente
+     * @return numero di celle libere connesse (capped a maxCount)
+     */
+    private int countConnectedCells(int startCol, int startRow, int[][] map) {
+        final int maxCount = Config.MIN_SPAWN_OPEN_AREA; // smette di contare appena la soglia è raggiunta
+        boolean[][] visited = new boolean[Config.GRID_HEIGHT][Config.GRID_WIDTH];
+        Queue<int[]> queue = new ArrayDeque<>();
+        queue.add(new int[]{startRow, startCol});
+        visited[startRow][startCol] = true;
+        int count = 0;
+
+        int[] dr = {-1, 1, 0, 0};
+        int[] dc = {0, 0, -1, 1};
+
+        while (!queue.isEmpty() && count < maxCount) {
+            int[] curr = queue.poll();
+            count++;
+            for (int d = 0; d < 4; d++) {
+                int nr = curr[0] + dr[d];
+                int nc = curr[1] + dc[d];
+                if (nr >= 0 && nr < Config.GRID_HEIGHT && nc >= 0 && nc < Config.GRID_WIDTH
+                        && !visited[nr][nc] && map[nr][nc] == Config.CELL_EMPTY) {
+                    visited[nr][nc] = true;
+                    queue.add(new int[]{nr, nc});
+                }
+            }
+        }
+        return count;
     }
 
     /** Resetta il timer del portale classico (chiamato quando il portale viene scoperto). */

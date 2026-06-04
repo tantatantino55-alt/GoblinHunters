@@ -37,6 +37,9 @@ public class LogicConfig {
     public static final long SPAWN_INTERVAL_MS  = 3000;
     public static final int SPAWN_SAFE_DISTANCE = 2;
     public static final double MIN_SPAWN_DISTANCE = 5.0;
+    /** Numero minimo di celle libere connesse richieste per generare un goblin in una cella.
+     *  Impedisce che i goblin nascano in sgabuzzini piccoli (1-2 celle) tra le casse. */
+    public static final int MIN_SPAWN_OPEN_AREA = 6;
 
     // --- AI NEMICI ---
     public static final int SMELL_THRESHOLD_DISTANCE = 5;

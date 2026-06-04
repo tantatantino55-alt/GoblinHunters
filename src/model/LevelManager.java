@@ -36,7 +36,7 @@ class LevelManager {
     // Timer boss
     private int bossPreparationTimer;
     private boolean isPreparationPhase = false;
-    private static final int PREP_TIME_SECONDS = 3;
+    private static final int PREP_TIME_SECONDS = 20;
 
     // Portale goblin nella mappa Boss (posizione fissa da Config)
     private boolean bossPortalActive = false;

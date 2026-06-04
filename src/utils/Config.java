@@ -40,6 +40,7 @@ public class Config {
     public static final long   SPAWN_INTERVAL_MS         = LogicConfig.SPAWN_INTERVAL_MS;
     public static final int    SPAWN_SAFE_DISTANCE       = LogicConfig.SPAWN_SAFE_DISTANCE;
     public static final double MIN_SPAWN_DISTANCE        = LogicConfig.MIN_SPAWN_DISTANCE;
+    public static final int    MIN_SPAWN_OPEN_AREA       = LogicConfig.MIN_SPAWN_OPEN_AREA;
 
     public static final int    SMELL_THRESHOLD_DISTANCE  = LogicConfig.SMELL_THRESHOLD_DISTANCE;
     public static final int    SMELL_BLOCK_PENALTY       = LogicConfig.SMELL_BLOCK_PENALTY;

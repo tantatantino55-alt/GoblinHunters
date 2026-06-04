@@ -386,6 +386,7 @@ public class Model implements IModel {
 
         player.resetPowerUps();
         player.resetPerfectLevel();
+        player.clearBossFightSnapshot(); // Cancella il checkpoint boss al cambio livello
 
         // Genera mappa DOPO aver avanzato la zona
         int[][] newMap = mapManager.generateProceduralMap(levelManager.getCurrentZone(), levelManager);
@@ -576,6 +577,9 @@ public class Model implements IModel {
         enemies.add(new BossGoblin(6.0, 5.0));
         scoreManager.startBossFight();
 
+        // Salva le risorse attuali come checkpoint di inizio boss fight
+        player.snapshotBossFightAmmo();
+
         // Attiva il portale goblin fisso nella mappa boss
         levelManager.activateBossPortal();
         spawnManager.resetBossPortalTimer();
@@ -736,6 +740,13 @@ public class Model implements IModel {
                 player.setDelta(0, 0);
                 player.setState(PlayerState.IDLE_FRONT);
                 System.out.println("RESPAWN.");
+
+                // Durante il boss fight, ripristina le risorse del checkpoint
+                boolean bossAlive = enemies.stream()
+                        .anyMatch(e -> e.getType() == utils.EnemyType.BOSS && !e.isDead());
+                if (levelManager.getCurrentZone() == 2 && bossAlive) {
+                    player.restoreBossFightAmmo();
+                }
             }
         }
     }

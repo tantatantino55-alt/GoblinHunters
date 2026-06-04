@@ -36,6 +36,11 @@ public class Player extends Entity {
     private boolean hasMaxRadius = false;
     private boolean hasMaxSpeed = false;
 
+    // --- SNAPSHOT RISORSE BOSS FIGHT ---
+    // Salvate all'inizio del boss fight, ripristinate ad ogni respawn finché il boss vive
+    private int savedBombAmmo  = -1; // -1 = nessun salvataggio attivo
+    private int savedAuraAmmo  = -1;
+
     // Traccia se ha preso danni nel livello corrente per il Perfect Bonus
     private boolean perfectLevel = true;
 
@@ -162,6 +167,34 @@ public class Player extends Entity {
 
     public int getAuraAmmo() { return auraAmmo; }
     public void addAuraAmmo(int amount) { this.auraAmmo += amount; }
+
+    /**
+     * Salva le munizioni attuali come "checkpoint" di inizio boss fight.
+     * Chiamato una sola volta quando esplodono le casse della mappa 3.
+     */
+    public void snapshotBossFightAmmo() {
+        this.savedBombAmmo = this.bombAmmo;
+        this.savedAuraAmmo = this.auraAmmo;
+        System.out.println("[BOSS] Snapshot risorse: bombe=" + savedBombAmmo + ", aura=" + savedAuraAmmo);
+    }
+
+    /**
+     * Ripristina le munizioni al checkpoint salvato (se esiste).
+     * Chiamato ad ogni respawn durante il boss fight.
+     */
+    public void restoreBossFightAmmo() {
+        if (savedBombAmmo >= 0) {
+            this.bombAmmo = savedBombAmmo;
+            this.auraAmmo = savedAuraAmmo;
+            System.out.println("[BOSS] Risorse ripristinate: bombe=" + bombAmmo + ", aura=" + auraAmmo);
+        }
+    }
+
+    /** Cancella il checkpoint (chiamato quando si esce dalla mappa boss). */
+    public void clearBossFightSnapshot() {
+        this.savedBombAmmo = -1;
+        this.savedAuraAmmo = -1;
+    }
 
     // --- POWER-UP ---
 

@@ -12,7 +12,7 @@ package utils;
 public enum CharacterType {
 
     MALE("/wizardmale.png",       "Male Wizard"),
-    GOBLIN("/GoblinWizard.png",   "Goblin Wizard"),
+    GOBLIN("/GoblinWizard.png",   "Skeleton Wizard"),
     VETERAN("/VeteranWizard.png",  "Veteran Wizard"),
     FEMALE("/FemaleWizard.png",   "Female Wizard");
 

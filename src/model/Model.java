@@ -882,14 +882,12 @@ public class Model implements IModel {
 
     private void applyItemEffect(ItemType type) {
         switch (type) {
-            case AMMO_BOMB   -> player.addBombAmmo(10);
-            case AMMO_AURA   -> player.addAuraAmmo(10);
+            case AMMO_BOMB   -> player.addBombAmmo(5);
+            case AMMO_AURA   -> player.addAuraAmmo(3);
             case POWER_SHIELD -> player.setShield(true);
             case POWER_RADIUS -> player.setMaxRadius(true);
             case POWER_SPEED  -> player.setMaxSpeed(true);
         }
-        // Notifica la View (tramite il Controller) per l'animazione HUD
-        controller.ControllerForView.getInstance().triggerPickupAnimation(type);
         System.out.println("RACCOLTO: " + type.name());
     }
 

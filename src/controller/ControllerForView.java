@@ -242,15 +242,6 @@ public class ControllerForView implements IControllerForView {
     @Override public int getBossPortalCol()              { return Model.getInstance().getBossPortalCol(); }
     @Override public long getBossPortalActivationTime()  { return Model.getInstance().getBossPortalActivationTime(); }
 
-    // --- HUD JUICY ANIMATION TRIGGER ---
-    @Override
-    public void triggerPickupAnimation(utils.ItemType type) {
-        // Il Controller fa da ponte: il Model non conosce la View.
-        // Qui deleghiamo direttamente all'HudItemAnimator (componente View puro).
-        view.HudItemAnimator.getInstance().triggerPickupAnimation(type);
-    }
-
-
     // --- PAUSE ---
     @Override
     public boolean isPaused() {

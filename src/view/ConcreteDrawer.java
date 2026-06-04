@@ -343,14 +343,9 @@ public class ConcreteDrawer extends AbstractDrawer {
             g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.50f));
         }
 
-        // B. Scala "juicy" dall'HudItemAnimator
-        float scale = HudItemAnimator.getInstance().getScaleFactor(itemType);
-        int drawSize = Math.round(BASE_SIZE * scale);
-
-        // Centra l'icona ingrandita/rimpicciolita rispetto alla posizione base
-        int offset = (drawSize - BASE_SIZE) / 2;
-        int drawX  = x - offset;
-        int drawY  = y - offset;
+        int drawSize = BASE_SIZE;
+        int drawX    = x;
+        int drawY    = y;
 
         // --- CORREZIONE OFFSETS VISIVI ---
         // Alcune sprites originali in items.png non sono perfettamente centrate.

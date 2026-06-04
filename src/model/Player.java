@@ -31,7 +31,7 @@ public class Player extends Entity {
 
     // --- RISORSE E POWER-UP ---
     private int bombAmmo = 5;
-    private int auraAmmo = 10;
+    private int auraAmmo = 6;
     private boolean hasShield = false;
     private boolean hasMaxRadius = false;
     private boolean hasMaxSpeed = false;

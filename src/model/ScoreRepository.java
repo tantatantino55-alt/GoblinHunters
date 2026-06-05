@@ -29,7 +29,7 @@ public class ScoreRepository {
         return instance;
     }
 
-    private static final Path FILE = Paths.get("scores.txt");
+    private static final Path FILE = Paths.get(System.getProperty("user.home"), "scores.txt");
 
     private ScoreRepository() {
         ensureFile();

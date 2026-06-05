@@ -1,9 +1,11 @@
 package view;
 
 import controller.ControllerForView;
+import model.ScoreRepository;
 import utils.Config;
 
 import java.awt.*;
+import java.util.List;
 
 /**
  * Disegna l'overlay del Game Over sul contesto {@code Graphics2D} del gioco.
@@ -24,7 +26,7 @@ public class GameOverDrawer {
     // Dimensioni pannello (Più piccolo del Pause Menu)
     // =========================================================================
     private static final int PANEL_W  = 440;
-    private static final int PANEL_H  = 350;
+    private static final int PANEL_H  = 560;
     private static final int CORNER_R = 16;
 
     // =========================================================================
@@ -50,14 +52,23 @@ public class GameOverDrawer {
     // =========================================================================
     // Font cache
     // =========================================================================
+    private static final Color BTN_GREEN      = new Color(30, 130, 40);
+    private static final Color BTN_GREEN_DARK = new Color(15, 85, 25);
+
     private final Font fontTitle;
     private final Font fontScore;
     private final Font fontBtn;
+    private final Font fontLeaderHeader;
+    private final Font fontLeaderRow;
+    private final Font fontFeedback;
 
     private GameOverDrawer() {
-        fontTitle   = new Font("Monospaced", Font.BOLD, 36);
-        fontScore   = new Font("Monospaced", Font.BOLD, 20);
-        fontBtn     = new Font("Monospaced", Font.BOLD, 15);
+        fontTitle        = new Font("Monospaced", Font.BOLD, 36);
+        fontScore        = new Font("Monospaced", Font.BOLD, 20);
+        fontBtn          = new Font("Monospaced", Font.BOLD, 15);
+        fontLeaderHeader = new Font("Monospaced", Font.BOLD, 13);
+        fontLeaderRow    = new Font("Monospaced", Font.PLAIN, 13);
+        fontFeedback     = new Font("Monospaced", Font.BOLD, 13);
     }
 
     // =========================================================================
@@ -86,7 +97,11 @@ public class GameOverDrawer {
         cy += 20;
         
         cy = drawScore(g2d, px, cy);
-        
+        cy = drawDivider(g2d, px + 22, cy, PANEL_W - 44);
+        cy += 4;
+        cy = drawLeaderboard(g2d, px, cy);
+        cy = drawFeedback(g2d, px, cy);
+
         drawBottomButtons(g2d, px, py);
     }
 
@@ -168,6 +183,67 @@ public class GameOverDrawer {
         g2d.drawString(text, tx, cy + fm.getAscent());
         
         return cy + fm.getHeight() + 20;
+    }
+
+    private int drawLeaderboard(Graphics2D g2d, int panelX, int cy) {
+        List<ScoreRepository.ScoreRecord> top = ControllerForView.getInstance().getTopScores();
+        int currentScore = ControllerForView.getInstance().getScore();
+        String currentName = ControllerForView.getInstance().getMenuPlayerName().toUpperCase();
+
+        // Header
+        g2d.setFont(fontLeaderHeader);
+        String header = "─── TOP 5 ───";
+        FontMetrics fmH = g2d.getFontMetrics();
+        int hx = panelX + (PANEL_W - fmH.stringWidth(header)) / 2;
+        g2d.setColor(SECTION_YELLOW);
+        g2d.drawString(header, hx, cy + fmH.getAscent());
+        cy += fmH.getHeight() + 6;
+
+        g2d.setFont(fontLeaderRow);
+        FontMetrics fmR = g2d.getFontMetrics();
+        int rowH = fmR.getHeight() + 4;
+
+        for (int i = 0; i < top.size(); i++) {
+            ScoreRepository.ScoreRecord r = top.get(i);
+            boolean isPlayer = r.name.equalsIgnoreCase(currentName) && r.score == currentScore;
+
+            // Evidenzia la riga del giocatore corrente
+            if (isPlayer) {
+                g2d.setColor(new Color(200, 165, 70, 40));
+                g2d.fillRoundRect(panelX + 18, cy, PANEL_W - 36, rowH - 1, 4, 4);
+            }
+
+            String rank  = String.format("#%d", i + 1);
+            String name  = String.format("%-12s", r.name);
+            String score = String.format("%6d", r.score);
+            String line  = rank + "  " + name + "  " + score;
+
+            g2d.setColor(isPlayer ? SECTION_YELLOW : TEXT_WHITE);
+            g2d.drawString(line, panelX + 22, cy + fmR.getAscent());
+            cy += rowH;
+        }
+        return cy + 8;
+    }
+
+    private int drawFeedback(Graphics2D g2d, int panelX, int cy) {
+        boolean inTop5 = ControllerForView.getInstance().isPlayerInTopFive();
+        String msg;
+        Color  col;
+        if (inTop5) {
+            msg = "★ SEI NELLA TOP 5! ★";
+            col = new Color(30, 200, 80);
+        } else {
+            msg = "Riprova per la Top 5!";
+            col = new Color(255, 140, 0);
+        }
+        g2d.setFont(fontFeedback);
+        FontMetrics fm = g2d.getFontMetrics();
+        int tx = panelX + (PANEL_W - fm.stringWidth(msg)) / 2;
+        g2d.setColor(new Color(0, 0, 0, 100));
+        g2d.drawString(msg, tx + 1, cy + fm.getAscent() + 1);
+        g2d.setColor(col);
+        g2d.drawString(msg, tx, cy + fm.getAscent());
+        return cy + fm.getHeight() + 10;
     }
 
     private void drawBottomButtons(Graphics2D g2d, int px, int py) {

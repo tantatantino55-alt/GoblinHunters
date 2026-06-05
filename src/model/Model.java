@@ -40,12 +40,7 @@ public class Model implements IModel {
     /** ID logico della cella che funge da Exit Gate. */
     public static final int EXIT_GATE_ID = 25;
 
-    private int playerDyingTimer     = 0;
-    /** Tick di conto alla rovescia quando il player rimane a 0 munizioni.
-     *  Quando scade, viene applicato un danno che causa respawn o Game Over.
-     *  -1 = inattivo; >0 = in attesa. */
-    private int playerStarvationTimer = -1;
-    private static final int STARVATION_TICKS = 2 * 60; // 2 secondi a 60 FPS
+    private int playerDyingTimer = 0;
 
     // ==========================================================
     // COSTRUTTORE / SINGLETON
@@ -518,36 +513,6 @@ public class Model implements IModel {
             return;
         }
 
-        // --- STARVATION: player a 0 munizioni ---
-        // Verifica se ci sono effetti attivi che potrebbero liberare risorse
-        boolean hasActiveEffects = !activeBombs.isEmpty() || !projectiles.isEmpty() || !activeFire.isEmpty() || !destructionEffects.isEmpty();
-        // Verifica se ci sono cristalli di munizioni già droppati sulla mappa
-        boolean hasAmmoCrystals = activeItems.stream().anyMatch(item -> item.getType() == utils.ItemType.AMMO_BOMB || item.getType() == utils.ItemType.AMMO_AURA);
-        
-        // La starvation parte solo se il player è a zero E non ci sono speranze di recupero a breve
-        boolean canStarve = player.isOutOfAmmo() && !player.isInvincible() && !hasActiveEffects && !hasAmmoCrystals;
-
-        if (canStarve) {
-            if (playerStarvationTimer < 0) {
-                // Prima volta: avvia l'animazione HURT_FRONT e il conto alla rovescia
-                playerStarvationTimer = STARVATION_TICKS;
-                player.setState(utils.PlayerState.HURT_FRONT);
-                player.setDelta(0, 0); // Ferma il movimento
-                System.out.println("[STARVATION] Player a 0 munizioni e nessuna speranza! Countdown avviato.");
-            } else {
-                playerStarvationTimer--;
-                if (playerStarvationTimer <= 0) {
-                    playerStarvationTimer = -1;
-                    // Applica danno: toglie una vita e gestisce respawn/GameOver
-                    handlePlayerHit();
-                }
-            }
-        } else if (playerStarvationTimer > 0 && !canStarve) {
-            // Il player ha recuperato munizioni nel frattempo o è stato generato un effetto: annulla il timer
-            playerStarvationTimer = -1;
-            player.setState(utils.PlayerState.IDLE_FRONT);
-        }
-
         // Timer boss
         if (levelManager.getCurrentZone() == 2 && levelManager.isPreparationPhase()) {
             if (levelManager.tickBossPreparation()) {
@@ -555,19 +520,17 @@ public class Model implements IModel {
             }
         }
 
-        // Player (casting o movimento) — saltato durante la starvation
-        if (playerStarvationTimer < 0) {
-            if (player.isCasting()) {
-                player.decrementCastTimer();
-                if (player.getCastTimer() <= 0) {
-                    player.finishCast();
-                    spawnAuraProjectile();
-                    updateIdleState();
-                }
-            } else {
-                updatePlayerMovement();
-                checkItemPickup();
+        // Player (casting o movimento)
+        if (player.isCasting()) {
+            player.decrementCastTimer();
+            if (player.getCastTimer() <= 0) {
+                player.finishCast();
+                spawnAuraProjectile();
+                updateIdleState();
             }
+        } else {
+            updatePlayerMovement();
+            checkItemPickup();
         }
 
         updateEnemies();
@@ -783,10 +746,6 @@ public class Model implements IModel {
                         .anyMatch(e -> e.getType() == utils.EnemyType.BOSS && !e.isDead());
                 if (levelManager.getCurrentZone() == 2 && bossAlive) {
                     player.restoreBossFightAmmo();
-                } else if (player.isOutOfAmmo()) {
-                    // Rete di sicurezza: se il player è a 0 risorse fuori dal boss fight,
-                    // ripristina le munizioni di default per evitare che rimanga bloccato
-                    player.restoreDefaultAmmo();
                 }
             }
         }
@@ -923,8 +882,8 @@ public class Model implements IModel {
 
     private void applyItemEffect(ItemType type) {
         switch (type) {
-            case AMMO_BOMB   -> player.addBombAmmo(3);
-            case AMMO_AURA   -> player.addAuraAmmo(2);
+            case AMMO_BOMB   -> player.addBombAmmo(5);
+            case AMMO_AURA   -> player.addAuraAmmo(3);
             case POWER_SHIELD -> player.setShield(true);
             case POWER_RADIUS -> player.setMaxRadius(true);
             case POWER_SPEED  -> player.setMaxSpeed(true);

@@ -2,10 +2,13 @@ package controller;
 
 import model.MenuModel;
 import model.Model;
+import model.ScoreRepository;
 import utils.*;
+import view.MenuDrawer;
 import view.ResourceLoader;
 import view.View;
 
+import java.util.List;
 import java.util.function.BiConsumer;
 
 public class ControllerForView implements IControllerForView {
@@ -36,7 +39,12 @@ public class ControllerForView implements IControllerForView {
 
     @Override
     public void menuConfirmSelection() {
-        // Pulsante "Start Game": conferma e avvia
+        if (!MenuModel.getInstance().isNameValid()) {
+            MenuDrawer.getInstance().setShowNameError(true);
+            return;
+        }
+        MenuDrawer.getInstance().setShowNameError(false);
+        MenuModel.getInstance().setTypingName(false);
         MenuModel.getInstance().confirmSelection();
         if (MenuModel.getInstance().isCharacterConfirmed()) {
             startGameWithSelectedCharacter();
@@ -63,8 +71,21 @@ public class ControllerForView implements IControllerForView {
     @Override
     public void resetGame() {
         ControllerForModel.getInstance().resetGame();
-        // Reset del MenuModel per rimuovere il personaggio precedentemente confermato
         MenuModel.getInstance().reset();
+    }
+
+    // --- NOME GIOCATORE ---
+    @Override public void   menuAppendNameChar(char c)  { MenuModel.getInstance().appendNameChar(c); }
+    @Override public void   menuDeleteNameChar()         { MenuModel.getInstance().deleteNameChar(); }
+    @Override public void   menuSetTypingName(boolean v) { MenuModel.getInstance().setTypingName(v); }
+    @Override public String getMenuPlayerName()          { return MenuModel.getInstance().getPlayerName(); }
+
+    // --- LEADERBOARD ---
+    @Override public List<ScoreRepository.ScoreRecord> getTopScores() {
+        return ScoreRepository.getInstance().getTopScores();
+    }
+    @Override public boolean isPlayerInTopFive() {
+        return ScoreRepository.getInstance().isTopFive(Model.getInstance().getScore());
     }
 
     @Override public int getNumColumns() { return Model.getInstance().getNumColumns(); }

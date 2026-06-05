@@ -69,6 +69,10 @@ public class LogicConfig {
     public static final int INITIAL_MAX_BOMBS     = 1;
     public static final int DEFAULT_BOMB_RADIUS   = 1;
 
+    // --- AURA ---
+    /** Numero massimo di colpi d'aura accumulabili. Modificare qui per calibrare. */
+    public static final int MAX_AURA_AMMO = 7;
+
     // --- FUOCO ---
     public static final int FIRE_DURATION_TICKS = 30;
 

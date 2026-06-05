@@ -176,7 +176,9 @@ public class Player extends Entity {
     public void addBombAmmo(int amount) { this.bombAmmo += amount; }
 
     public int getAuraAmmo() { return auraAmmo; }
-    public void addAuraAmmo(int amount) { this.auraAmmo += amount; }
+    public void addAuraAmmo(int amount) {
+        this.auraAmmo = Math.min(this.auraAmmo + amount, utils.Config.MAX_AURA_AMMO);
+    }
 
     /**
      * Salva le munizioni attuali come "checkpoint" di inizio boss fight.

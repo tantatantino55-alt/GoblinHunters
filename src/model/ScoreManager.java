@@ -17,6 +17,7 @@ class ScoreManager {
     private int totalScore = 0;
     private int currentZoneScore = 0;
     private long bossFightStartTime = 0;
+    private int bossFightNumber = 0; // quante volte si è combattuto il boss (1-indexed al momento dello spawn)
 
     ScoreManager(Model model) {
         this.model = model;
@@ -78,8 +79,12 @@ class ScoreManager {
     }
 
     void startBossFight() {
+        bossFightNumber++;
         this.bossFightStartTime = System.currentTimeMillis();
+        System.out.println("[BOSS] Fight #" + bossFightNumber + " | HP: " + BossGoblin.computeHP(bossFightNumber));
     }
+
+    int getBossFightNumber() { return bossFightNumber; }
 
     // ==========================================================
     // DROP

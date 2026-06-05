@@ -348,10 +348,9 @@ public class Model implements IModel {
 
     @Override
     public int getBossMaxHP() {
-        for (Enemy e : enemies) {
-            if (e instanceof BossGoblin) return BossGoblin.MAX_HP;
-        }
-        return 0;
+        for (Enemy e : enemies)
+            if (e instanceof BossGoblin boss) return boss.getMaxHP();
+        return BossGoblin.MAX_HP_CAP;
     }
 
     // --- PORTALE BOSS (Zona 2) ---
@@ -610,8 +609,8 @@ public class Model implements IModel {
     private void triggerGlobalExplosion() {
         System.out.println("DEBUG: Esplosione tutte le casse...");
         mapManager.destroyAllCrates(activeItems, destructionEffects);
-        enemies.add(new BossGoblin(6.0, 5.0));
-        scoreManager.startBossFight();
+        scoreManager.startBossFight(); // incrementa bossFightNumber PRIMA di creare il boss
+        enemies.add(new BossGoblin(6.0, 5.0, scoreManager.getBossFightNumber()));
 
         // Salva le risorse attuali come checkpoint di inizio boss fight
         player.snapshotBossFightAmmo();
@@ -829,6 +828,7 @@ public class Model implements IModel {
                 if (fatal) {
                     if (e.getType() == EnemyType.BOSS) {
                         System.out.println("IL BOSS È SCONFITTO!");
+                        scoreManager.handleEnemyDeath(e, levelManager.getCurrentZone(), activeItems);
                     } else {
                         it.remove();
                         scoreManager.handleEnemyDeath(e, levelManager.getCurrentZone(), activeItems);

@@ -63,6 +63,7 @@ public class Config {
     public static final int    BOMB_DETONATION_TICKS     = LogicConfig.BOMB_DETONATION_TICKS;
     public static final int    INITIAL_MAX_BOMBS         = LogicConfig.INITIAL_MAX_BOMBS;
     public static final int    DEFAULT_BOMB_RADIUS       = LogicConfig.DEFAULT_BOMB_RADIUS;
+    public static final int    MAX_AURA_AMMO             = LogicConfig.MAX_AURA_AMMO;
 
     public static final int    FIRE_DURATION_TICKS       = LogicConfig.FIRE_DURATION_TICKS;
 

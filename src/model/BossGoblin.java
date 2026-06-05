@@ -12,7 +12,19 @@ public class BossGoblin extends Enemy {
     private BossState currentState = BossState.FURY;
 
     private static final long I_FRAME_DURATION  = 1000L;
-    public  static final int  MAX_HP            = 15;
+
+    /** HP base (primo fight). Ogni fight successivo aggiunge 5, fino al cap di 25. */
+    public  static final int  BASE_HP  = 15;
+    public  static final int  HP_STEP  = 5;
+    public  static final int  MAX_HP_CAP = 25;
+
+    /** Calcola gli HP del boss in base al numero di fight (1-indexed). */
+    public static int computeHP(int fightNumber) {
+        int hp = BASE_HP + (fightNumber - 1) * HP_STEP;
+        return Math.min(hp, MAX_HP_CAP);
+    }
+
+    private final int maxHp; // HP massimi per questo fight specifico
 
     private int attackCounter = 0;
     private static final int ATTACKS_BEFORE_REST = 3;
@@ -29,16 +41,17 @@ public class BossGoblin extends Enemy {
     private static final double MIN_Y = 2.1;
     private static final double MAX_Y = 7.9;
 
-    public BossGoblin(double startX, double startY) {
+    public BossGoblin(double startX, double startY, int fightNumber) {
         super(startX, startY, Config.GOBLIN_COMMON_SPEED * 1.5, EnemyType.BOSS);
-        this.hp       = MAX_HP;
+        this.maxHp    = computeHP(fightNumber);
+        this.hp       = this.maxHp;
         this.runSpeed = this.speed;
         this.currentDirection = Direction.values()[rand.nextInt(4)];
     }
 
     @Override public EnemyType getType()  { return EnemyType.BOSS; }
     public int getHP()    { return hp; }
-    public int getMaxHP() { return MAX_HP; }
+    public int getMaxHP() { return maxHp; }
 
     @Override
     public boolean isInvincible() {
@@ -254,7 +267,7 @@ public class BossGoblin extends Enemy {
             }
 
             case IDLE_EXHAUSTED: {
-                long restTime = (hp <= MAX_HP / 2) ? 3500L : 5000L;
+                long restTime = (hp <= maxHp / 2) ? 3500L : 5000L;
                 if (elapsed > restTime) {
                     this.currentDirection = Direction.values()[rand.nextInt(4)];
                     changeState(BossState.FURY);

@@ -508,6 +508,8 @@ public class Model implements IModel {
                 playerDyingTimer--;
                 if (playerDyingTimer <= 0) {
                     System.out.println("GAME OVER! Vite esaurite.");
+                    ScoreRepository.getInstance().saveScore(
+                        MenuModel.getInstance().getPlayerName(), scoreManager.getScore());
                     controller.ControllerForModel.getInstance().setGameState(utils.GameState.GAME_OVER);
                 }
             }

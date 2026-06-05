@@ -2,6 +2,7 @@ package view;
 
 import controller.ControllerForView;
 import controller.PauseController;
+import model.MenuModel;
 import utils.Config;
 import utils.GameState;
 
@@ -117,27 +118,48 @@ public class GamePanel extends JPanel {
         this.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
-                // In MENU o GAME_OVER state i tasti non fanno nulla (interazione solo mouse)
-                if (ControllerForView.getInstance().getGameState() == GameState.MENU ||
-                    ControllerForView.getInstance().getGameState() == GameState.GAME_OVER) return;
+                // --- MENU STATE: cattura tastiera per input nome ---
+                if (ControllerForView.getInstance().getGameState() == GameState.MENU) {
+                    if (MenuModel.getInstance().isTypingName()) {
+                        if (e.getKeyCode() == KeyEvent.VK_BACK_SPACE) {
+                            ControllerForView.getInstance().menuDeleteNameChar();
+                        } else if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                            MenuModel.getInstance().setTypingName(false);
+                        }
+                    }
+                    return; // nel menu gli altri tasti non fanno nulla
+                }
+
+                // In GAME_OVER state i tasti non fanno nulla
+                if (ControllerForView.getInstance().getGameState() == GameState.GAME_OVER) return;
 
                 // --- PLAYING STATE: pausa e rebind ---
                 if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
                     boolean nowPaused = !ControllerForView.getInstance().isPaused();
                     ControllerForView.getInstance().setPaused(nowPaused);
                     if (!nowPaused) {
-                        // Chiusura menu: annulla qualsiasi rebind in corso
                         ControllerForView.getInstance().getPauseController().cancelAllRebinds();
                     }
                     return;
                 }
 
-                // Cattura il tasto premuto durante un rebind (azione principale o WASD)
+                // Cattura il tasto premuto durante un rebind
                 if (ControllerForView.getInstance().isPaused()) {
                     PauseController ctrl = ControllerForView.getInstance().getPauseController();
                     if (ctrl.isRebinding()) {
                         String keyName = KeyEvent.getKeyText(e.getKeyCode());
                         PauseMenuDrawer.getInstance().handleKeyForRebind(keyName, ctrl);
+                    }
+                }
+            }
+
+            @Override
+            public void keyTyped(KeyEvent e) {
+                if (ControllerForView.getInstance().getGameState() == GameState.MENU
+                        && MenuModel.getInstance().isTypingName()) {
+                    char c = e.getKeyChar();
+                    if (Character.isLetterOrDigit(c) || c == '_' || c == ' ') {
+                        ControllerForView.getInstance().menuAppendNameChar(c);
                     }
                 }
             }
@@ -211,14 +233,22 @@ public class GamePanel extends JPanel {
     private void handleMenuClick(int x, int y) {
         MenuDrawer menuView = MenuDrawer.getInstance();
 
-        // 1. Click su un personaggio? (View: hit-testing → Controller: aggiorna Model)
+        // 0. Click sul campo nome? → attiva typing mode
+        if (menuView.getNameFieldRect() != null && menuView.getNameFieldRect().contains(x, y)) {
+            ControllerForView.getInstance().menuSetTypingName(true);
+            return;
+        }
+        // Click fuori dal campo nome → disattiva typing mode
+        MenuModel.getInstance().setTypingName(false);
+
+        // 1. Click su un personaggio?
         int characterIndex = menuView.getCharacterIndexAt(x, y);
         if (characterIndex >= 0) {
             ControllerForView.getInstance().menuHandleClick(characterIndex);
             return;
         }
 
-        // 2. Click sul pulsante "Start Game"? (Controller: conferma e avvia)
+        // 2. Click sul pulsante "Start Game"?
         if (menuView.isStartGameButtonAt(x, y)) {
             ControllerForView.getInstance().menuConfirmSelection();
         }

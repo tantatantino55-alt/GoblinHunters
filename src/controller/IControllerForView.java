@@ -1,7 +1,9 @@
 package controller;
 
+import model.ScoreRepository;
 import utils.*;
 
+import java.util.List;
 import java.util.function.BiConsumer;
 
 public interface IControllerForView {
@@ -127,7 +129,15 @@ public interface IControllerForView {
     /** Ritorna true solo se il bastone è attualmente utilizzabile (mappa 3, fase preparazione). */
     boolean isStaffUsable();
 
-    /** Ritorna il punteggio totale corrente. */
+    // --- NOME GIOCATORE (menu) ---
+    void   menuAppendNameChar(char c);
+    void   menuDeleteNameChar();
+    void   menuSetTypingName(boolean v);
+    String getMenuPlayerName();
+
+    // --- LEADERBOARD ---
+    List<ScoreRepository.ScoreRecord> getTopScores();
+    boolean isPlayerInTopFive();
 
     // --- PAUSE ---
     /** Returns true when the game is paused (logic frozen, pause overlay visible). */

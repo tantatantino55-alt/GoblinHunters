@@ -24,6 +24,10 @@ public class MenuModel {
     // --- CONFERMA ---
     private int confirmedIndex = -1;
 
+    // --- NOME GIOCATORE ---
+    private String  playerName = "";
+    private boolean typingName = false;
+
     private MenuModel() {}
 
     public static MenuModel getInstance() {
@@ -91,5 +95,24 @@ public class MenuModel {
     public void reset() {
         selectedIndex  = -1;
         confirmedIndex = -1;
+        playerName     = "";
+        typingName     = false;
+    }
+
+    // =========================================================================
+    // NOME GIOCATORE
+    // =========================================================================
+
+    public String  getPlayerName()          { return playerName; }
+    public boolean isTypingName()           { return typingName; }
+    public void    setTypingName(boolean v) { typingName = v; }
+    public boolean isNameValid()            { return !playerName.trim().isEmpty(); }
+
+    public void appendNameChar(char c) {
+        if (playerName.length() < 12) playerName += c;
+    }
+
+    public void deleteNameChar() {
+        if (!playerName.isEmpty()) playerName = playerName.substring(0, playerName.length() - 1);
     }
 }

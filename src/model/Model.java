@@ -40,12 +40,7 @@ public class Model implements IModel {
     /** ID logico della cella che funge da Exit Gate. */
     public static final int EXIT_GATE_ID = 25;
 
-    private int playerDyingTimer     = 0;
-    /** Tick di conto alla rovescia quando il player rimane a 0 munizioni.
-     *  Quando scade, viene applicato un danno che causa respawn o Game Over.
-     *  -1 = inattivo; >0 = in attesa. */
-    private int playerStarvationTimer = -1;
-    private static final int STARVATION_TICKS = 2 * 60; // 2 secondi a 60 FPS
+    private int playerDyingTimer = 0;
 
     // ==========================================================
     // COSTRUTTORE / SINGLETON
@@ -541,33 +536,16 @@ public class Model implements IModel {
             }
         }
 
-        // --- STARVATION: player a 0 munizioni ---
-        // Verifica se ci sono effetti attivi che potrebbero liberare risorse
-        boolean hasActiveEffects = !activeBombs.isEmpty() || !projectiles.isEmpty() || !activeFire.isEmpty() || !destructionEffects.isEmpty();
-        // Verifica se ci sono cristalli di munizioni già droppati sulla mappa
-        boolean hasAmmoCrystals = activeItems.stream().anyMatch(item -> item.getType() == utils.ItemType.AMMO_BOMB || item.getType() == utils.ItemType.AMMO_AURA);
+        // --- STARVATION: player a 0 munizioni → respawn immediato ---
+        boolean hasActiveEffects = !activeBombs.isEmpty() || !projectiles.isEmpty()
+                || !activeFire.isEmpty() || !destructionEffects.isEmpty();
+        boolean hasAmmoCrystals = activeItems.stream().anyMatch(
+                item -> item.getType() == utils.ItemType.AMMO_BOMB
+                     || item.getType() == utils.ItemType.AMMO_AURA);
 
-        // La starvation parte solo se il player è a zero E non ci sono speranze di recupero a breve
-        boolean canStarve = player.isOutOfAmmo() && !player.isInvincible() && !hasActiveEffects && !hasAmmoCrystals;
-
-        if (canStarve) {
-            if (playerStarvationTimer < 0) {
-                // Prima volta: avvia l'animazione HURT_FRONT e il conto alla rovescia
-                playerStarvationTimer = STARVATION_TICKS;
-                player.setState(utils.PlayerState.HURT_FRONT);
-                player.setDelta(0, 0);
-                System.out.println("[STARVATION] Player a 0 munizioni e nessuna speranza! Countdown avviato.");
-            } else {
-                playerStarvationTimer--;
-                if (playerStarvationTimer <= 0) {
-                    playerStarvationTimer = -1;
-                    handlePlayerHit();
-                }
-            }
-        } else if (playerStarvationTimer > 0 && !canStarve) {
-            // Il player ha recuperato munizioni o ci sono ancora effetti attivi: annulla il timer
-            playerStarvationTimer = -1;
-            player.setState(utils.PlayerState.IDLE_FRONT);
+        if (player.isOutOfAmmo() && !player.isInvincible()
+                && !hasActiveEffects && !hasAmmoCrystals) {
+            handlePlayerHit();
         }
 
         updateEnemies();
@@ -781,12 +759,10 @@ public class Model implements IModel {
                 // Durante il boss fight, ripristina le risorse del checkpoint
                 boolean bossAlive = enemies.stream()
                         .anyMatch(e -> e.getType() == utils.EnemyType.BOSS && !e.isDead());
-                if (levelManager.getCurrentZone() == 2 && bossAlive) {
-                    player.restoreBossFightAmmo();
+                if (levelManager.getCurrentZone() == 2 && bossAlive && !player.isOutOfAmmo()) {
+                    player.restoreBossFightAmmo(); // colpito dal boss con munizioni → snapshot
                 } else if (player.isOutOfAmmo()) {
-                    // Rete di sicurezza: se il player è a 0 risorse fuori dal boss fight,
-                    // ripristina le munizioni di default per evitare che rimanga bloccato
-                    player.restoreDefaultAmmo();
+                    player.restoreDefaultAmmo();   // starvation → sempre 5 bombe + 6 aure
                 }
             }
         }

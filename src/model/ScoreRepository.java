@@ -33,13 +33,16 @@ public class ScoreRepository {
 
     private ScoreRepository() {
         ensureFile();
+        System.out.println("[ScoreRepository] File scores.txt → " + FILE.toAbsolutePath());
     }
 
     public void saveScore(String name, int score) {
+        System.out.println("[ScoreRepository] saveScore → nome=" + name + " score=" + score);
         List<ScoreRecord> all = readAll();
         all.add(new ScoreRecord(sanitize(name), score, System.currentTimeMillis()));
         all.sort((a, b) -> Integer.compare(b.score, a.score));
         writeAll(all);
+        System.out.println("[ScoreRepository] Scritto in " + FILE.toAbsolutePath());
     }
 
     public List<ScoreRecord> getTopScores() {

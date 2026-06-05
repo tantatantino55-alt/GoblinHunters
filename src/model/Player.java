@@ -69,8 +69,7 @@ public class Player extends Entity {
     }
 
     private void updateState() {
-        if (currentState == PlayerState.DYING) return; // FIX: non sovrascrivere lo stato di morte
-        if (currentState == PlayerState.HURT_FRONT && isOutOfAmmo()) return; // non interrompere la starvation
+        if (currentState == PlayerState.DYING) return;
 
         if (isMoving) {
             switch (currentDirection) {

@@ -31,14 +31,6 @@ public class ScoreRepository {
 
     private static final Path FILE = Paths.get("scores.txt");
 
-    private static final String[] SEED = {
-        "SHADOW:8500:0",
-        "EMBER:7200:1",
-        "BLAZE:5800:2",
-        "STORM:4100:3",
-        "GOBLIN:2300:4"
-    };
-
     private ScoreRepository() {
         ensureFile();
     }
@@ -65,19 +57,11 @@ public class ScoreRepository {
     // --- I/O privato ---
 
     private void ensureFile() {
-        if (Files.notExists(FILE) || isFileEmpty()) {
-            writeAll(parseSeed());
+        if (Files.notExists(FILE)) {
+            try { Files.createFile(FILE); } catch (IOException e) {
+                System.err.println("ScoreRepository: impossibile creare " + FILE);
+            }
         }
-    }
-
-    private boolean isFileEmpty() {
-        try { return Files.size(FILE) == 0; } catch (IOException e) { return true; }
-    }
-
-    private List<ScoreRecord> parseSeed() {
-        List<ScoreRecord> list = new ArrayList<>();
-        for (String s : SEED) list.add(parseLine(s));
-        return list;
     }
 
     private List<ScoreRecord> readAll() {

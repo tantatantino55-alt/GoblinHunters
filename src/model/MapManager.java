@@ -76,11 +76,11 @@ class MapManager {
         // --- LOOT NELLE CASSE ---
         java.util.Collections.shuffle(cratePositions, randomGenerator);
         if (!cratePositions.isEmpty()) {
-            for (int i = 0; i < 10 && i < cratePositions.size(); i++) {
+            for (int i = 0; i < 15 && i < cratePositions.size(); i++) {
                 int[] cc = cratePositions.get(i);
                 hiddenLoot.put(cc[0] + "," + cc[1], ItemType.AMMO_BOMB);
             }
-            for (int i = 10; i < 15 && i < cratePositions.size(); i++) {
+            for (int i = 15; i < 20 && i < cratePositions.size(); i++) {
                 int[] cc = cratePositions.get(i);
                 hiddenLoot.put(cc[0] + "," + cc[1], ItemType.AMMO_AURA);
             }

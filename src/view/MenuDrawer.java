@@ -23,7 +23,34 @@ public class MenuDrawer {
 
     private static MenuDrawer instance = null;
 
-    private MenuDrawer() {}
+    // --- Palette (identica a PauseMenuDrawer) ---
+    private static final Color BG_DARK      = new Color(28, 18, 10, 220);
+    private static final Color BORDER_GOLD  = new Color(200, 165, 70);
+    private static final Color BORDER_INNER = new Color(120, 90, 30);
+    private static final Color BORDER_RED   = new Color(200, 50, 50);
+    private static final Color LABEL_YELLOW = new Color(255, 210, 60);
+    private static final Color TEXT_CREAM   = new Color(240, 235, 220);
+    private static final Color ERROR_RED    = new Color(220, 60, 60);
+
+    // --- Campo nome ---
+    private static final int NAME_FIELD_W = 360;
+    private static final int NAME_FIELD_H = 38;
+
+    private Rectangle nameFieldRect  = null;
+    private boolean   showNameError  = false;
+
+    private final Font fontNameLabel;
+    private final Font fontNameText;
+    private final Font fontNameError;
+
+    private MenuDrawer() {
+        fontNameLabel = new Font("Monospaced", Font.BOLD, 12);
+        fontNameText  = new Font("Monospaced", Font.BOLD, 16);
+        fontNameError = new Font("Monospaced", Font.BOLD, 11);
+    }
+
+    public Rectangle getNameFieldRect()          { return nameFieldRect; }
+    public void      setShowNameError(boolean v) { showNameError = v; }
 
     public static MenuDrawer getInstance() {
         if (instance == null) instance = new MenuDrawer();
@@ -62,8 +89,8 @@ public class MenuDrawer {
             drawSelectedName(g2d, selected);
         }
 
-        // 4. ISTRUZIONI
-        drawInstructions(g2d, selected);
+        // 4. CAMPO NOME GIOCATORE
+        drawNameInput(g2d);
     }
 
     // =========================================================================
@@ -170,25 +197,66 @@ public class MenuDrawer {
         g2d.drawString(name, textX, nameY);
     }
 
-    /**
-     * Istruzioni in basso: cambiano in base allo stato di selezione.
-     */
-    private void drawInstructions(Graphics2D g2d, int selectedIndex) {
-        g2d.setFont(new Font("Arial", Font.PLAIN, 13));
-        g2d.setColor(new Color(210, 210, 210));
 
-        String instructions;
-        if (selectedIndex >= 0) {
-            instructions = "Clicca START GAME per iniziare!";
+    // =========================================================================
+    // CAMPO NOME GIOCATORE
+    // =========================================================================
+
+    private void drawNameInput(Graphics2D g2d) {
+        MenuModel model = MenuModel.getInstance();
+
+        int fieldX = ViewConfig.MENU_DRAW_X + (ViewConfig.MENU_DRAW_W - NAME_FIELD_W) / 2;
+        int fieldY = ViewConfig.MENU_DRAW_Y + ViewConfig.CHAR_FRAME_Y + ViewConfig.CHAR_FRAME_H + 60;
+
+        nameFieldRect = new Rectangle(fieldX, fieldY, NAME_FIELD_W, NAME_FIELD_H);
+
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+        // --- Label "NOME:" ---
+        g2d.setFont(fontNameLabel);
+        g2d.setColor(LABEL_YELLOW);
+        g2d.drawString("INSERISCI IL TUO NOME:", fieldX, fieldY - 6);
+
+        // --- Sfondo campo ---
+        g2d.setColor(BG_DARK);
+        g2d.fillRoundRect(fieldX, fieldY, NAME_FIELD_W, NAME_FIELD_H, 8, 8);
+
+        // --- Bordo (gold se attivo, rosso se errore, inner altrimenti) ---
+        Color borderColor;
+        float strokeW;
+        if (showNameError) {
+            borderColor = BORDER_RED;
+            strokeW = 2f;
+        } else if (model.isTypingName()) {
+            borderColor = BORDER_GOLD;
+            strokeW = 2f;
         } else {
-            instructions = "Clicca un personaggio per selezionarlo";
+            borderColor = BORDER_INNER;
+            strokeW = 1.5f;
         }
+        g2d.setColor(borderColor);
+        g2d.setStroke(new BasicStroke(strokeW));
+        g2d.drawRoundRect(fieldX, fieldY, NAME_FIELD_W, NAME_FIELD_H, 8, 8);
+        g2d.setStroke(new BasicStroke(1f));
 
+        // --- Testo digitato + cursore lampeggiante ---
+        g2d.setFont(fontNameText);
+        g2d.setColor(TEXT_CREAM);
         FontMetrics fm = g2d.getFontMetrics();
-        int tx = ViewConfig.MENU_DRAW_X
-                + (ViewConfig.MENU_DRAW_W - fm.stringWidth(instructions)) / 2;
-        int ty = ViewConfig.MENU_DRAW_Y + ViewConfig.MENU_DRAW_H - 25;
-        g2d.drawString(instructions, tx, ty);
+        int textY = fieldY + (NAME_FIELD_H - fm.getHeight()) / 2 + fm.getAscent();
+        String name = model.getPlayerName();
+        String display = name;
+        if (model.isTypingName() && System.currentTimeMillis() % 800 < 400) {
+            display = name + "|";
+        }
+        g2d.drawString(display, fieldX + 10, textY);
+
+        // --- Messaggio errore ---
+        if (showNameError) {
+            g2d.setFont(fontNameError);
+            g2d.setColor(ERROR_RED);
+            g2d.drawString("⚠  Campo obbligatorio", fieldX, fieldY + NAME_FIELD_H + 14);
+        }
     }
 
     // =========================================================================

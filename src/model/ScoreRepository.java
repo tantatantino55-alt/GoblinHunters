@@ -29,11 +29,13 @@ public class ScoreRepository {
         return instance;
     }
 
-    private static final Path FILE = Paths.get(System.getProperty("user.home"), "scores.txt");
+    private static final Path DIR  = Paths.get(System.getProperty("user.home"), "GoblinHunters");
+    private static final Path FILE = DIR.resolve("scores.txt");
 
     private ScoreRepository() {
         ensureFile();
-        System.out.println("[ScoreRepository] File scores.txt → " + FILE.toAbsolutePath());
+        System.out.println("[ScoreRepository] Cartella dati: " + DIR.toAbsolutePath());
+        System.out.println("[ScoreRepository] File scores  : " + FILE.toAbsolutePath());
     }
 
     public void saveScore(String name, int score) {
@@ -60,10 +62,11 @@ public class ScoreRepository {
     // --- I/O privato ---
 
     private void ensureFile() {
-        if (Files.notExists(FILE)) {
-            try { Files.createFile(FILE); } catch (IOException e) {
-                System.err.println("ScoreRepository: impossibile creare " + FILE);
-            }
+        try {
+            if (Files.notExists(DIR))  Files.createDirectories(DIR);
+            if (Files.notExists(FILE)) Files.createFile(FILE);
+        } catch (IOException e) {
+            System.err.println("[ScoreRepository] ERRORE creazione file: " + e.getMessage());
         }
     }
 

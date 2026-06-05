@@ -206,7 +206,7 @@ public class MenuDrawer {
         MenuModel model = MenuModel.getInstance();
 
         int fieldX = ViewConfig.MENU_DRAW_X + (ViewConfig.MENU_DRAW_W - NAME_FIELD_W) / 2;
-        int fieldY = ViewConfig.MENU_DRAW_Y + ViewConfig.CHAR_FRAME_Y + ViewConfig.CHAR_FRAME_H + 60;
+        int fieldY = ViewConfig.MENU_DRAW_Y + ViewConfig.CHAR_FRAME_Y + ViewConfig.CHAR_FRAME_H + 80;
 
         nameFieldRect = new Rectangle(fieldX, fieldY, NAME_FIELD_W, NAME_FIELD_H);
 
@@ -215,7 +215,7 @@ public class MenuDrawer {
         // --- Label "NOME:" ---
         g2d.setFont(fontNameLabel);
         g2d.setColor(LABEL_YELLOW);
-        g2d.drawString("INSERISCI IL TUO NOME:", fieldX, fieldY - 6);
+        g2d.drawString("INSERT YOUR NICKNAME:", fieldX, fieldY - 6);
 
         // --- Sfondo campo ---
         g2d.setColor(BG_DARK);
@@ -255,7 +255,7 @@ public class MenuDrawer {
         if (showNameError) {
             g2d.setFont(fontNameError);
             g2d.setColor(ERROR_RED);
-            g2d.drawString("⚠  Campo obbligatorio", fieldX, fieldY + NAME_FIELD_H + 14);
+            g2d.drawString("⚠  Required field", fieldX, fieldY + NAME_FIELD_H + 14);
         }
     }
 

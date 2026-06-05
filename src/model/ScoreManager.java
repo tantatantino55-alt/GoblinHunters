@@ -65,8 +65,11 @@ class ScoreManager {
             System.out.println("BOSS SCONFITTO IN " + secondsTaken + " SECONDI!");
             System.out.println("Time Bonus: " + timeBonus + " | Punti Totali Boss: " + finalScore);
 
+            if (model.getPlayer().getLives() == Config.INITIAL_LIVES) {
+                totalScore += 2000;
+                System.out.println("PERFECT BOSS! Bonus +2000 | Totale: " + totalScore);
+            }
             model.getPlayer().restoreLives();
-            model.getPlayer().addLife();
             ScoreRepository.getInstance().saveScore(
                 MenuModel.getInstance().getPlayerName(), totalScore);
         } else {

@@ -134,6 +134,8 @@ public class Player extends Entity {
         System.out.println("[PLAYER] Vite ripristinate a " + this.lives + " dopo la morte del boss.");
     }
 
+    public void addLife() { this.lives++; }
+
     public double getXCoordinate() { return x; }
     public double getYCoordinate() { return y; }
     public void setXCoordinate(double newX) { this.x = newX; }

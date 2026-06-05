@@ -521,19 +521,17 @@ public class Model implements IModel {
             }
         }
 
-        // Player (casting o movimento) — saltato durante la starvation
-        if (playerStarvationTimer < 0) {
-            if (player.isCasting()) {
-                player.decrementCastTimer();
-                if (player.getCastTimer() <= 0) {
-                    player.finishCast();
-                    spawnAuraProjectile();
-                    updateIdleState();
-                }
-            } else {
-                updatePlayerMovement();
-                checkItemPickup();
+        // Player (casting o movimento)
+        if (player.isCasting()) {
+            player.decrementCastTimer();
+            if (player.getCastTimer() <= 0) {
+                player.finishCast();
+                spawnAuraProjectile();
+                updateIdleState();
             }
+        } else {
+            updatePlayerMovement();
+            checkItemPickup();
         }
 
         // --- STARVATION: player a 0 munizioni → respawn immediato ---

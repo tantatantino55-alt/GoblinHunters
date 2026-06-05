@@ -61,9 +61,6 @@ public class MenuDrawer {
         if (selected >= 0) {
             drawSelectedName(g2d, selected);
         }
-
-        // 4. ISTRUZIONI
-        drawInstructions(g2d, selected);
     }
 
     // =========================================================================
@@ -170,26 +167,6 @@ public class MenuDrawer {
         g2d.drawString(name, textX, nameY);
     }
 
-    /**
-     * Istruzioni in basso: cambiano in base allo stato di selezione.
-     */
-    private void drawInstructions(Graphics2D g2d, int selectedIndex) {
-        g2d.setFont(new Font("Arial", Font.PLAIN, 13));
-        g2d.setColor(new Color(210, 210, 210));
-
-        String instructions;
-        if (selectedIndex >= 0) {
-            instructions = "Clicca START GAME per iniziare!";
-        } else {
-            instructions = "Clicca un personaggio per selezionarlo";
-        }
-
-        FontMetrics fm = g2d.getFontMetrics();
-        int tx = ViewConfig.MENU_DRAW_X
-                + (ViewConfig.MENU_DRAW_W - fm.stringWidth(instructions)) / 2;
-        int ty = ViewConfig.MENU_DRAW_Y + ViewConfig.MENU_DRAW_H - 25;
-        g2d.drawString(instructions, tx, ty);
-    }
 
     // =========================================================================
     // HIT-TESTING (usato dal Controller per determinare il target del click)

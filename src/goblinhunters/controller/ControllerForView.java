@@ -1,0 +1,319 @@
+package goblinhunters.controller;
+
+import goblinhunters.model.MenuModel;
+import goblinhunters.model.Model;
+import goblinhunters.model.ScoreRepository;
+import goblinhunters.utils.*;
+import goblinhunters.view.AudioManager;
+import goblinhunters.view.MenuDrawer;
+import goblinhunters.view.ResourceLoader;
+import goblinhunters.view.View;
+
+import java.util.List;
+import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
+
+public class ControllerForView implements IControllerForView {
+
+    private static ControllerForView instance = null;
+    private ControllerForView() {}
+
+    @Override public void openGameGUI() {
+        View.getInstance().openGameGUI();
+        AudioManager.getInstance().loadAndPlay("/goblin_theme.wav");
+    }
+    @Override public void closeGameGUI() { View.getInstance().closeGameGUI(); }
+
+    // =========================================================================
+    // GAME STATE & MENU SELEZIONE (Controller media tra View e MenuModel)
+    // =========================================================================
+
+    @Override
+    public GameState getGameState() {
+        return ControllerForModel.getInstance().getGameState();
+    }
+
+    @Override
+    public void menuHandleClick(int characterIndex) {
+        // Click su un personaggio: aggiorna il Model (sposta la freccia selettore)
+        MenuModel.getInstance().selectCharacter(characterIndex);
+    }
+
+    @Override
+    public void menuConfirmSelection() {
+        if (!MenuModel.getInstance().isNameValid()) {
+            MenuDrawer.getInstance().setShowNameError(true);
+            return;
+        }
+        MenuDrawer.getInstance().setShowNameError(false);
+        MenuModel.getInstance().setTypingName(false);
+        MenuModel.getInstance().confirmSelection();
+        if (MenuModel.getInstance().isCharacterConfirmed()) {
+            startGameWithSelectedCharacter();
+        }
+    }
+
+    /**
+     * Transizione MENU → PLAYING.
+     * 1. Determina il personaggio scelto
+     * 2. Ricarica le animazioni player con lo spritesheet corretto
+     * 3. Cambia lo stato del gioco a PLAYING
+     */
+    private void startGameWithSelectedCharacter() {
+        CharacterType selected = MenuModel.getInstance().getConfirmedCharacterType();
+        if (selected == null) return;
+
+        // Ricarica le animazioni con lo sheet del personaggio scelto
+        ResourceLoader.reloadPlayerAnimations(selected.getSheetPath());
+
+        // Transizione di stato
+        ControllerForModel.getInstance().setGameState(GameState.PLAYING);
+        System.out.println("Game started with: " + selected.getDisplayName());
+    }
+    @Override
+    public void resetGame() {
+        ControllerForModel.getInstance().resetGame();
+        MenuModel.getInstance().reset();
+    }
+
+    // --- NOME GIOCATORE ---
+    @Override public void   menuAppendNameChar(char c)  { MenuModel.getInstance().appendNameChar(c); }
+    @Override public void   menuDeleteNameChar()         { MenuModel.getInstance().deleteNameChar(); }
+    @Override public void   menuSetTypingName(boolean v) { MenuModel.getInstance().setTypingName(v); }
+    @Override public String getMenuPlayerName()          { return MenuModel.getInstance().getPlayerName(); }
+
+    // --- MENU STATE PASSTHROUGH ---
+    @Override public int     getMenuSelectedIndex() { return MenuModel.getInstance().getSelectedIndex(); }
+    @Override public boolean isMenuTypingName()      { return MenuModel.getInstance().isTypingName(); }
+
+    // --- LEADERBOARD ---
+    @Override public List<ScoreEntry> getTopScores() {
+        return ScoreRepository.getInstance().getTopScores().stream()
+                .map(r -> new ScoreEntry(r.name, r.score))
+                .collect(Collectors.toList());
+    }
+    @Override public boolean isPlayerInTopFive() {
+        return ScoreRepository.getInstance().isTopFive(Model.getInstance().getScore());
+    }
+
+    @Override public int getNumColumns() { return Model.getInstance().getNumColumns(); }
+    @Override public int getNumRows() { return Model.getInstance().getNumRows(); }
+    @Override public double getXCoordinatePlayer() { return Model.getInstance().xCoordinatePlayer(); }
+    @Override public double getYCoordinatePlayer() { return Model.getInstance().yCoordinatePlayer(); }
+    @Override public double getDeltaX() { return Model.getInstance().getPlayerDeltaX(); }
+    @Override public double getDeltaY() { return Model.getInstance().getPlayerDeltaY(); }
+    @Override public void setPlayerMovement(double dx, double dy) { Model.getInstance().setPlayerDelta(dx, dy); }
+    @Override public int[][] getGameAreaArray() { return Model.getInstance().getGameAreaArray(); }
+    @Override public void placeBomb() { Model.getInstance().placeBomb(); }
+    @Override public void requestRepaint() { View.getInstance().requestRepaint(); }
+
+    @Override public int getEnemyCount() { return Model.getInstance().getEnemyCount(); }
+    @Override public double getEnemyX(int index) { return Model.getInstance().getEnemyX(index); }
+    @Override public double getEnemyY(int index) { return Model.getInstance().getEnemyY(index); }
+    @Override public Direction getEnemyDirection(int index) { return Model.getInstance().getEnemyDirection(index); }
+    @Override public EnemyType getEnemyType(int index) { return Model.getInstance().getEnemyType(index); }
+    @Override public Direction getEnemyTelegraph(int index) { return Model.getInstance().getEnemyTelegraph(index); }
+
+    @Override public PlayerState getPlayerState() { return Model.getInstance().getPlayerState(); }
+    @Override public long getPlayerStateStartTime() { return Model.getInstance().getPlayerStateStartTime(); }
+    @Override public boolean isPlayerInvincible() { return Model.getInstance().isPlayerInvincible(); }
+    @Override public int getPlayerLives() { return Model.getInstance().getPlayerLives(); }
+    @Override public int getElapsedTimeInSeconds() { return Model.getInstance().getElapsedTimeInSeconds(); }
+    @Override public int getScore() { return Model.getInstance().getScore(); }
+
+    // --- DELEGAZIONE METODI AD INDICE ---
+    @Override public int getBombCount() { return Model.getInstance().getBombCount(); }
+    @Override public int getBombRow(int index) { return Model.getInstance().getBombRow(index); }
+    @Override public int getBombCol(int index) { return Model.getInstance().getBombCol(index); }
+    @Override public int getBombElapsedTime(int index) { return Model.getInstance().getBombElapsedTime(index); }
+
+    @Override public int getProjectileCount() { return Model.getInstance().getProjectileCount(); }
+    @Override public double getProjectileX(int index) { return Model.getInstance().getProjectileX(index); }
+    @Override public double getProjectileY(int index) { return Model.getInstance().getProjectileY(index); }
+    @Override public boolean isProjectileEnemy(int index) { return Model.getInstance().isProjectileEnemy(index); }
+    @Override public int getProjectileDirection(int index) { return Model.getInstance().getProjectileDirection(index); }
+
+    @Override public int getDestructionCount() { return Model.getInstance().getDestructionCount(); }
+    @Override public int getDestructionRow(int index) { return Model.getInstance().getDestructionRow(index); }
+    @Override public int getDestructionCol(int index) { return Model.getInstance().getDestructionCol(index); }
+    @Override public int getDestructionElapsedTime(int index) { return Model.getInstance().getDestructionElapsedTime(index); }
+
+    @Override public int getFireCount() { return Model.getInstance().getFireCount(); }
+    @Override public int getFireRow(int index) { return Model.getInstance().getFireRow(index); }
+    @Override public int getFireCol(int index) { return Model.getInstance().getFireCol(index); }
+    @Override public int getFireType(int index) { return Model.getInstance().getFireType(index); }
+
+    @Override
+    public boolean isEnemyAttacking(int index){
+        return Model.getInstance().isEnemyAttacking(index);
+    }
+
+    @Override
+    public boolean isEnemyWaiting(int index){
+        return Model.getInstance().isEnemyWaiting(index);
+    }
+
+    @Override
+    public void playerShoot() {
+        Model.getInstance().playerShoot();
+    }
+    // In ControllerForView.java
+    @Override
+    public void resetPlayerStateAfterAction() {
+        // Il controller delega la logica al model
+        Model.getInstance().resetPlayerStateAfterAction();
+    }
+
+    @Override
+    public void staffAttack() {
+        Model.getInstance().staffAttack();
+    }
+
+    @Override
+    public boolean isStaffUsable() {
+        // Usabile SOLO durante la fase di preparazione del boss (mappa 3, casse ancora presenti)
+        return Model.getInstance().getCurrentZone() == 2
+                && Model.getInstance().isPreparationPhase();
+    }
+
+    @Override public int getPlayerBombAmmo() { return Model.getInstance().getPlayerBombAmmo(); }
+    @Override public int getPlayerAuraAmmo() { return Model.getInstance().getPlayerAuraAmmo(); }
+    @Override public boolean hasPlayerShield() { return Model.getInstance().hasPlayerShield(); }
+    @Override public boolean hasPlayerMaxRadius() { return Model.getInstance().hasPlayerMaxRadius(); }
+    @Override public boolean hasPlayerMaxSpeed() { return Model.getInstance().hasPlayerMaxSpeed(); }
+
+    @Override
+    public int getPortalRow() {
+        return goblinhunters.model.Model.getInstance().getPortalRow();
+    }
+
+    @Override
+    public int getPortalCol() {
+        return goblinhunters.model.Model.getInstance().getPortalCol();
+    }
+
+    @Override
+    public boolean isPortalRevealed() {
+        return goblinhunters.model.Model.getInstance().isPortalRevealed();
+    }
+    @Override
+    public String getCurrentTheme() {
+        return Model.getInstance().getCurrentTheme();
+    }
+    public boolean isTransitioning(){
+        return Model.getInstance().isTransitioning();
+    }
+    @Override public int getCollectibleCount() {
+        return Model.getInstance().getCollectibleCount();
+    }
+    @Override public double getCollectibleX(int index) {
+        return Model.getInstance().getCollectibleX(index);
+    }
+    @Override public double getCollectibleY(int index) {
+        return Model.getInstance().getCollectibleY(index);
+    }
+    @Override public ItemType getCollectibleType(int index) {
+        return Model.getInstance().getCollectibleType(index);
+    }
+    @Override public long getCollectibleSpawnTime(int index) {
+        return Model.getInstance().getCollectibleSpawnTime(index);
+    }
+
+    @Override
+    public long getPortalRevealTime() {
+        return Model.getInstance().getPortalRevealTime();
+    }
+
+    @Override
+    public boolean isGateActive() {
+        return Model.getInstance().isExitGateActive();
+    }
+
+    @Override
+    public long getGateActivationTime() {
+        return Model.getInstance().getExitGateActivationTime();
+    }
+
+    @Override
+    public int getExitGateCol() {
+        return  Model.getInstance().getExitGateCol();
+    }
+
+    @Override
+    public int getExitGateRow() {
+        return  Model.getInstance().getExitGateRow();
+    }
+    @Override
+    public String getEnemyState(int index){
+        return Model.getInstance().getEnemyState(index);
+    }
+    @Override
+    public boolean isEnemyInvincible(int index){
+        return Model.getInstance().isEnemyInvincible(index);
+    }
+    @Override
+    public long getEnemyStateStartTime(int index){
+        return Model.getInstance().getEnemyStateStartTime(index);
+    }
+
+    // --- CREPE DEL BOSS ---
+    @Override public int getCrackCount()         { return Model.getInstance().getCrackCount(); }
+    @Override public int getCrackRow(int index)  { return Model.getInstance().getCrackRow(index); }
+    @Override public int getCrackCol(int index)  { return Model.getInstance().getCrackCol(index); }
+
+    // --- HUD BOSS ---
+    @Override public int getBossHP()    { return Model.getInstance().getBossHP(); }
+    @Override public int getBossMaxHP() { return Model.getInstance().getBossMaxHP(); }
+
+    // --- PORTALE BOSS (Zona 2) ---
+    @Override public boolean isBossPortalActive()       { return Model.getInstance().isBossPortalActive(); }
+    @Override public int getBossPortalRow()              { return Model.getInstance().getBossPortalRow(); }
+    @Override public int getBossPortalCol()              { return Model.getInstance().getBossPortalCol(); }
+    @Override public long getBossPortalActivationTime()  { return Model.getInstance().getBossPortalActivationTime(); }
+
+    // --- PAUSE ---
+    @Override
+    public boolean isPaused() {
+        return ControllerForModel.getInstance().isPaused();
+    }
+
+    @Override
+    public void setPaused(boolean paused) {
+        ControllerForModel.getInstance().setPaused(paused);
+    }
+
+    // --- PAUSE CONTROLLER ---
+    @Override
+    public PauseController getPauseController() {
+        return PauseController.getInstance();
+    }
+
+    // --- KEY BINDING APPLIER ---
+
+    /**
+     * Callback registrato da {@code GamePanel} una volta sola alla sua costruzione.
+     * Il Controller lo chiama per propagare i rebind verso l'InputMap di Swing.
+     */
+    private BiConsumer<Integer, String> keyBindingApplier = null;
+
+    @Override
+    public void setKeyBindingApplier(BiConsumer<Integer, String> applier) {
+        this.keyBindingApplier = applier;
+    }
+
+    /**
+     * Chiamato da {@link PauseController} quando l'utente conferma un nuovo tasto.
+     * Delega al callback registrato da GamePanel.
+     */
+    @Override
+    public void applyKeyBinding(int actionIndex, String newKeyName) {
+        if (keyBindingApplier != null) {
+            keyBindingApplier.accept(actionIndex, newKeyName);
+        }
+    }
+
+    public static IControllerForView getInstance() {
+        if (instance == null) instance = new ControllerForView();
+        return instance;
+    }
+}

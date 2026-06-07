@@ -4,7 +4,6 @@ import goblinhunters.utils.Config;
 import goblinhunters.utils.Direction;
 
 public abstract class Projectile extends Entity {
-    // x, y, speed sono ora ereditati da Entity
 
     protected Direction direction;
     protected boolean active;
@@ -12,7 +11,7 @@ public abstract class Projectile extends Entity {
     protected long creationTime;
 
     public Projectile(double startX, double startY, Direction dir, double speedMult, boolean isEnemy) {
-        super(startX, startY); // delega x, y a Entity
+        super(startX, startY);
         this.direction = dir;
         this.speed = Config.ENTITY_LOGICAL_SPEED * speedMult;
         this.active = true;
@@ -26,10 +25,10 @@ public abstract class Projectile extends Entity {
         double nextY = y;
 
         switch (direction) {
-            case UP:    nextY -= speed; break;
-            case DOWN:  nextY += speed; break;
-            case LEFT:  nextX -= speed; break;
-            case RIGHT: nextX += speed; break;
+            case UP    -> nextY -= speed;
+            case DOWN  -> nextY += speed;
+            case LEFT  -> nextX -= speed;
+            case RIGHT -> nextX += speed;
         }
 
         handleCollision(nextX, nextY);
@@ -37,9 +36,8 @@ public abstract class Projectile extends Entity {
 
     protected abstract void handleCollision(double nextX, double nextY);
 
-    public boolean isActive() { return active; }
-    public void setActive(boolean active) { this.active = active; }
-    // getX() e getY() ereditati da Entity
-    public boolean isEnemyProjectile() { return isEnemyProjectile; }
-    public Direction getDirection() { return direction; }
+    public boolean isActive()                 { return active; }
+    public void setActive(boolean active)     { this.active = active; }
+    public boolean isEnemyProjectile()        { return isEnemyProjectile; }
+    public Direction getDirection()           { return direction; }
 }

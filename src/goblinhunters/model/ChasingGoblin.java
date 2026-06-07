@@ -28,7 +28,7 @@ public class ChasingGoblin extends Enemy {
         double diffX = Math.abs(x - currentGridX);
         double diffY = Math.abs(y - currentGridY);
 
-        // DECISIONE SOLO AL CENTRO DELLA CELLA
+        // re-evaluate direction only when snapped to a cell centre to avoid jitter
         if (diffX < speed && diffY < speed) {
             if (currentGridX != lastDecisionX || currentGridY != lastDecisionY) {
                 this.x = currentGridX;
@@ -36,12 +36,9 @@ public class ChasingGoblin extends Enemy {
                 this.lastDecisionX = currentGridX;
                 this.lastDecisionY = currentGridY;
 
-                // Se ho appena sbattuto contro un compagno, scelgo una via a caso per smaltire il traffico
                 if (recentlyBounced) {
-                    //changeDirection();
                     recentlyBounced = false;
                 } else {
-                    // Logica "Minvo": Punto il giocatore
                     decideSmartDirection(px, py);
                 }
             }
@@ -54,37 +51,27 @@ public class ChasingGoblin extends Enemy {
         double dy = ty - this.y;
         Direction primary, secondary;
 
-        // Scelgo l'asse dove la distanza è maggiore
+        // prefer the axis with the larger gap so the goblin converges faster
         if (Math.abs(dx) > Math.abs(dy)) {
-            primary = (dx > 0) ? Direction.RIGHT : Direction.LEFT;
-            secondary = (dy > 0) ? Direction.DOWN : Direction.UP;
+            primary   = (dx > 0) ? Direction.RIGHT : Direction.LEFT;
+            secondary = (dy > 0) ? Direction.DOWN  : Direction.UP;
         } else {
-            primary = (dy > 0) ? Direction.DOWN : Direction.UP;
+            primary   = (dy > 0) ? Direction.DOWN  : Direction.UP;
             secondary = (dx > 0) ? Direction.RIGHT : Direction.LEFT;
         }
 
         java.util.List<Direction> valid = getValidDirections();
         Direction opposite = getOppositeDirection();
 
-        // Evita di tornare indietro a meno che non sia un vicolo cieco
-        if (valid.size() > 1) {
-            valid.remove(opposite);
-        }
+        if (valid.size() > 1) valid.remove(opposite); // avoid U-turning unless dead-end
 
-        // 1. Prova la via più diretta
         if (valid.contains(primary)) {
             this.currentDirection = primary;
-        }
-        // 2. Prova la via secondaria per aggirare l'ostacolo
-        else if (valid.contains(secondary)) {
+        } else if (valid.contains(secondary)) {
             this.currentDirection = secondary;
-        }
-        // 3. Prendi una qualsiasi via libera rimasta
-        else if (!valid.isEmpty()) {
+        } else if (!valid.isEmpty()) {
             this.currentDirection = valid.get(0);
-        }
-        // 4. Vicolo cieco, torna indietro
-        else {
+        } else {
             this.currentDirection = opposite;
         }
     }

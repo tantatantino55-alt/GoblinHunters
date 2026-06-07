@@ -9,35 +9,25 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
-/**
- * Gestisce la generazione procedurale della mappa, la griglia di gioco,
- * il loot nascosto nelle casse e la distruzione dei blocchi.
- */
+/** Manages procedural map generation, the game grid, crate loot, and block destruction. */
 class MapManager {
 
     private final java.util.Map<String, ItemType> hiddenLoot = new java.util.HashMap<>();
     private final Random randomGenerator = new Random();
     private final int[][] gameAreaArray;
 
-    // Crepe del Boss: overlay temporaneo (NON modifica gameAreaArray)
+    // boss floor cracks: overlay only — never modifies gameAreaArray
     private final List<FloorCrack> activeCracks = new ArrayList<>();
-
-    private final List<CrackWave> activeWaves = new ArrayList<>();
+    private final List<CrackWave>  activeWaves  = new ArrayList<>();
 
     MapManager() {
         this.gameAreaArray = new int[Config.GRID_HEIGHT][Config.GRID_WIDTH];
     }
 
-    int[][] getGameAreaArray() {
-        return gameAreaArray;
-    }
-
-    java.util.Map<String, ItemType> getHiddenLoot() {
-        return hiddenLoot;
-    }
+    int[][] getGameAreaArray() { return gameAreaArray; }
 
     // ==========================================================
-    // GENERAZIONE MAPPA PROCEDURALE
+    // procedural map generation
     // ==========================================================
 
     int[][] generateProceduralMap(int currentZone, LevelManager levelManager) {
@@ -55,7 +45,6 @@ class MapManager {
             generateBossArena(nextMap, emptyCells, buildingID);
         }
 
-        // --- CASSE CASUALI ---
         int numCrates = 35;
         java.util.Collections.shuffle(emptyCells, randomGenerator);
         for (int i = 0; i < numCrates && i < emptyCells.size(); i++) {
@@ -64,16 +53,12 @@ class MapManager {
             cratePositions.add(pos);
         }
 
-        // --- PORTALE NASCOSTO SOTTO UNA CASSA CASUALE (solo zone 0 e 1) ---
         if (currentZone < 2 && !cratePositions.isEmpty()) {
             java.util.Collections.shuffle(cratePositions, randomGenerator);
             int[] portalPos = cratePositions.get(0);
             levelManager.setPortal(portalPos[0], portalPos[1]);
-            System.out.println("Portal hidden under crate in ["
-                    + portalPos[0] + ", " + portalPos[1] + "]");
         }
 
-        // --- LOOT NELLE CASSE ---
         java.util.Collections.shuffle(cratePositions, randomGenerator);
         if (!cratePositions.isEmpty()) {
             for (int i = 0; i < 12 && i < cratePositions.size(); i++) {
@@ -92,8 +77,8 @@ class MapManager {
     private void generateStandardMap(int[][] map, List<int[]> empty, List<int[]> crates, int buildingID) {
         for (int r = 0; r < Config.GRID_HEIGHT; r++) {
             for (int c = 0; c < Config.GRID_WIDTH; c++) {
-                boolean isSafeZone     = (r == 0 && c == 0) || (r == 0 && c == 1) || (r == 1 && c == 0);
-                boolean isBunkerWall   = (r == 0 && c == 2) || (r == 2 && c == 0);
+                boolean isSafeZone      = (r == 0 && c == 0) || (r == 0 && c == 1) || (r == 1 && c == 0);
+                boolean isBunkerWall    = (r == 0 && c == 2) || (r == 2 && c == 0);
                 boolean isLeftBuilding  = (r == 0) && (c == 3 || c == 4);
                 boolean isRightBuilding = (r == 0) && (c == 8 || c == 9);
 
@@ -124,12 +109,10 @@ class MapManager {
     }
 
     private void generateBossArena(int[][] map, List<int[]> empty, int buildingID) {
-        // Svuota
         for (int r = 0; r < Config.GRID_HEIGHT; r++)
             for (int c = 0; c < Config.GRID_WIDTH; c++)
                 map[r][c] = Config.CELL_EMPTY;
 
-        // Edifici decorativi
         for (int r = 0; r < Config.GRID_HEIGHT; r++) {
             for (int c = 0; c < Config.GRID_WIDTH; c++) {
                 boolean isLeft  = (r == 0) && (c == 3 || c == 4);
@@ -140,7 +123,6 @@ class MapManager {
             }
         }
 
-        // Blocchi dell'arena
         int[][] arenaBlocks = {
             {1,2},{1,4},{1,6},{1,8},{1,10},
             {3,2},{5,2},{7,2},
@@ -151,7 +133,6 @@ class MapManager {
             map[b[0]][b[1]] = Config.CELL_INDESTRUCTIBLE_BLOCK;
         }
 
-        // Celle libere per casse
         for (int r = 0; r < Config.GRID_HEIGHT; r++) {
             for (int c = 0; c < Config.GRID_WIDTH; c++) {
                 boolean isSafe = (r == 0 && c == 0) || (r == 0 && c == 1) || (r == 1 && c == 0);
@@ -163,13 +144,9 @@ class MapManager {
     }
 
     // ==========================================================
-    // DISTRUZIONE BLOCCHI
+    // block destruction
     // ==========================================================
 
-    /**
-     * Distrugge un blocco distruttibile alla posizione (row, col).
-     * Aggiunge l'effetto di distruzione e il drop dell'oggetto nascosto se presente.
-     */
     void destroyBlock(int row, int col, int currentZone, List<Collectible> activeItems,
                       List<BlockDestruction> effects, LevelManager levelManager, ScoreManager scoreManager) {
         if (gameAreaArray[row][col] != Config.CELL_DESTRUCTIBLE_BLOCK) return;
@@ -177,24 +154,17 @@ class MapManager {
         gameAreaArray[row][col] = Config.CELL_EMPTY;
         scoreManager.addScore(Config.SCORE_CRATE, false, currentZone);
 
-        // Drop loot nascosto
         String key = row + "," + col;
         if (hiddenLoot.containsKey(key)) {
             ItemType dropped = hiddenLoot.remove(key);
             activeItems.add(new Collectible(col, row, dropped));
-            System.out.println("Cassa droppa: " + dropped.name());
         }
 
-        // Portale
         levelManager.onBlockDestroyed(row, col);
-
         effects.add(new BlockDestruction(row, col));
-        System.out.println("Cassa distrutta in [" + row + ", " + col + "]");
     }
 
-    /** Distrugge tutte le casse presenti sulla mappa (evento Boss). */
-    void destroyAllCrates(List<Collectible> activeItems,
-                          List<BlockDestruction> effects) {
+    void destroyAllCrates(List<Collectible> activeItems, List<BlockDestruction> effects) {
         for (int r = 0; r < Config.GRID_HEIGHT; r++) {
             for (int c = 0; c < Config.GRID_WIDTH; c++) {
                 if (gameAreaArray[r][c] == Config.CELL_DESTRUCTIBLE_BLOCK) {
@@ -207,7 +177,6 @@ class MapManager {
         hiddenLoot.clear();
     }
 
-    /** Copia una mappa sorgente nell'array interno. */
     void applyMap(int[][] source) {
         for (int r = 0; r < Config.GRID_HEIGHT; r++) {
             System.arraycopy(source[r], 0, gameAreaArray[r], 0, Config.GRID_WIDTH);
@@ -215,42 +184,36 @@ class MapManager {
     }
 
     // ==========================================================
-    // LOGICA ONDA GRADUALE (STEP-BY-STEP)
+    // boss crack wave (step-by-step propagation)
     // ==========================================================
 
     void spawnCrackWave(int originRow, int originCol, Direction dir, int[][] map) {
-        // Invece di creare le crepe subito, lanciamo un'onda che si evolverà nel tempo
         activeWaves.add(new CrackWave(originRow, originCol, dir));
     }
 
     void updateCracks() {
-        // 1. Aggiorna le crepe esistenti (decremento timer)
         Iterator<FloorCrack> it = activeCracks.iterator();
         while (it.hasNext()) {
             if (it.next().tick()) it.remove();
         }
 
-        // 2. Aggiorna le onde in movimento (propagazione)
         Iterator<CrackWave> waveIt = activeWaves.iterator();
         while (waveIt.hasNext()) {
-            if (waveIt.next().update(gameAreaArray)) {
-                waveIt.remove(); // L'onda ha finito la sua corsa
-            }
+            if (waveIt.next().update(gameAreaArray)) waveIt.remove();
         }
     }
 
-    /** Classe interna per gestire la propagazione di un singolo attacco. */
     private class CrackWave {
-        private final int[][] lanePositions; // [3 corsie][riga, colonna]
-        private final boolean[] laneStopped; // corsia bloccata da muro
-        private final int fdr, fdc;          // direzione di avanzamento
+        private final int[][] lanePositions; // [3 lanes][row, col]
+        private final boolean[] laneStopped; // true when a lane hits a wall
+        private final int fdr, fdc;          // forward advance delta
         private int propagationTimer = 0;
-        private static final int PROPAGATION_DELAY = 5; // Velocità: 1 cella ogni 5 tick
+        private static final int PROPAGATION_DELAY = 5; // one cell every 5 ticks
 
         CrackWave(int r, int c, Direction d) {
             int[][] offsets = getLateralOffsets(d);
             this.lanePositions = new int[3][2];
-            this.laneStopped = new boolean[3];
+            this.laneStopped   = new boolean[3];
             for (int i = 0; i < 3; i++) {
                 lanePositions[i][0] = r + offsets[i][0];
                 lanePositions[i][1] = c + offsets[i][1];
@@ -260,7 +223,7 @@ class MapManager {
             this.fdc = front[1];
         }
 
-        /** Ritorna true se l'onda deve essere rimossa. */
+        /** Returns true when all lanes are blocked and the wave should be removed. */
         boolean update(int[][] map) {
             propagationTimer--;
             if (propagationTimer <= 0) {
@@ -273,20 +236,17 @@ class MapManager {
                     int r = lanePositions[i][0];
                     int c = lanePositions[i][1];
 
-                    // Controllo confini
                     if (r < 0 || r >= Config.GRID_HEIGHT || c < 0 || c >= Config.GRID_WIDTH) {
                         laneStopped[i] = true;
                         continue;
                     }
 
-                    // Controllo ostacoli indistruttibili
                     int cell = map[r][c];
                     if (cell == Config.CELL_INDESTRUCTIBLE_BLOCK || cell == Config.CELL_SKELETON_START) {
                         laneStopped[i] = true;
                         continue;
                     }
 
-                    // Piazza la crepa o resetta il timer se esiste già (Overwrite Task 3)
                     FloorCrack existing = getCrackAt(r, c);
                     if (existing != null) {
                         existing.resetTicks(FloorCrack.CRACK_DURATION_TICKS);
@@ -294,23 +254,20 @@ class MapManager {
                         activeCracks.add(new FloorCrack(r, c));
                     }
 
-                    // Avanza la corsia per il prossimo step
                     lanePositions[i][0] += fdr;
                     lanePositions[i][1] += fdc;
                     anyLaneAdvanced = true;
                 }
-                return !anyLaneAdvanced; // Se nessuna corsia può più avanzare, l'onda è finita
+                return !anyLaneAdvanced;
             }
             return false;
         }
     }
 
     // ==========================================================
-    // CREPE DEL BOSS (FLOOR CRACK WAVE)
+    // floor crack accessors
     // ==========================================================
 
-
-    /** Controlla se una cella ha gia' una crepa attiva (booleano). */
     boolean hasCrackAt(int row, int col) {
         for (FloorCrack c : activeCracks) {
             if (c.row == row && c.col == col) return true;
@@ -318,11 +275,6 @@ class MapManager {
         return false;
     }
 
-    /**
-     * Ritorna la FloorCrack esistente nella cella indicata, oppure null
-     * se non c'e' nessuna crepa in quella posizione.
-     * Usato da spawnCrackWave per resettare il timer invece di duplicare.
-     */
     FloorCrack getCrackAt(int row, int col) {
         for (FloorCrack c : activeCracks) {
             if (c.row == row && c.col == col) return c;
@@ -330,39 +282,30 @@ class MapManager {
         return null;
     }
 
-    /** Rimuove tutte le crepe e le onde (es. al cambio livello o riposo Boss). */
     void clearCracks() {
         activeCracks.clear();
         activeWaves.clear();
     }
 
-    // Getters per l'esposizione alla View tramite Model (pattern uguale ad activeFire)
-    List<FloorCrack> getActiveCracks()   { return activeCracks; }
-    int getCrackCount()                   { return activeCracks.size(); }
-    int getCrackRow(int i)                { return activeCracks.get(i).row; }
-    int getCrackCol(int i)                { return activeCracks.get(i).col; }
+    int getCrackCount()                { return activeCracks.size(); }
+    int getCrackRow(int i)             { return activeCracks.get(i).row; }
+    int getCrackCol(int i)             { return activeCracks.get(i).col; }
 
     // ==========================================================
-    // HELPER GEOMETRICI
+    // geometry helpers
     // ==========================================================
 
     /**
-     * Ritorna i 3 offset laterali (dx, dy) rispetto all'origine, in funzione
-     * della direzione di attacco:
-     * - [0]: la corsia centrale (offset 0 rispetto alla direzione laterale)
-     * - [1]: la corsia sinistra (−1 sull'asse perpendicolare)
-     * - [2]: la corsia destra  (+1 sull'asse perpendicolare)
+     * Returns the 3 lateral offsets for a crack wave based on attack direction.
+     * Boss moves along rows (UP/DOWN) → lanes offset across columns, and vice versa.
      */
     private int[][] getLateralOffsets(Direction dir) {
         return switch (dir) {
-            // Il Boss guarda UP/DOWN → si muove lungo le RIGHE → offset laterali sono nelle COLONNE
-            case UP, DOWN -> new int[][]{ {0, 0}, {0, -1}, {0, 1} };
-            // Il Boss guarda LEFT/RIGHT → si muove lungo le COLONNE → offset laterali sono nelle RIGHE
+            case UP, DOWN    -> new int[][]{ {0, 0}, {0, -1}, {0, 1} };
             case LEFT, RIGHT -> new int[][]{ {0, 0}, {-1, 0}, {1, 0} };
         };
     }
 
-    /** Ritorna il delta (dr, dc) della direzione frontale di propagazione. */
     private int[] getFrontDelta(Direction dir) {
         return switch (dir) {
             case UP    -> new int[]{-1,  0};

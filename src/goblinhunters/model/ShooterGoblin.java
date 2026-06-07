@@ -9,22 +9,19 @@ public class ShooterGoblin extends ChasingGoblin {
     private int ammo;
     private int reloadTimer;
     private int telegraphTimer;
-    private int attackAnimTimer; // Nuovo timer dedicato solo ai 2 frame dell'animazione di attacco
-    private Direction telegraphDirection;
+    private int attackAnimTimer;
+    // telegraphDirection is inherited from Enemy
 
-    // Stati più precisi per l'attacco
     private enum State { RELOADING, PATROL_OR_CHASE, TELEGRAPHING, ATTACKING }
     private State state;
 
-    // --- VARIABILI PER L'OFFSET DEL PROIETTILE (Modificale per testare) ---
-    // Questi valori si sommano alla coordinata X/Y (logica) del Goblin.
-    // 1.0 = 1 Cella. 0.5 = Mezza Cella.
-    private final double OFFSET_X_RIGHT = 0.6;
-    private final double OFFSET_X_LEFT = -0.6;
-    private final double OFFSET_Y_DOWN = 0.6;
-    private final double OFFSET_Y_UP = -0.6;
+    // projectile spawn offset in logical units (1.0 = one cell)
+    private final double OFFSET_X_RIGHT =  0.6;
+    private final double OFFSET_X_LEFT  = -0.6;
+    private final double OFFSET_Y_DOWN  =  0.6;
+    private final double OFFSET_Y_UP    = -0.6;
 
-    private java.util.List<Projectile> activeProjectiles;
+    private final java.util.List<Projectile> activeProjectiles;
 
     public ShooterGoblin(double startX, double startY) {
         super(startX, startY, Config.GOBLIN_COMMON_SPEED, EnemyType.SHOOTER);
@@ -32,7 +29,6 @@ public class ShooterGoblin extends ChasingGoblin {
         this.state = State.PATROL_OR_CHASE;
         this.telegraphDirection = null;
         this.reloadTimer = 0;
-
         this.activeProjectiles = new java.util.ArrayList<>();
     }
 
@@ -41,23 +37,14 @@ public class ShooterGoblin extends ChasingGoblin {
         double px = Model.getInstance().xCoordinatePlayer();
         double py = Model.getInstance().yCoordinatePlayer();
 
-        // NESSUNA FUGA DALLA BOMBA: Ora la vedono come un muro!
-
         switch (state) {
-            case RELOADING:
-                handleReloadState(px, py);
-                break;
-            case TELEGRAPHING:
-                handleTelegraphState();
-                break;
-            case ATTACKING:
-                handleAttackingState();
-                break;
-            case PATROL_OR_CHASE:
-                handleNormalState(px, py);
-                break;
+            case RELOADING      -> handleReloadState();
+            case TELEGRAPHING   -> handleTelegraphState();
+            case ATTACKING      -> handleAttackingState();
+            case PATROL_OR_CHASE -> handleNormalState(px, py);
         }
     }
+
     private void handleNormalState(double px, double py) {
         if (ammo > 0 && hasLineOfSight(px, py)) {
             startTelegraphing(px, py);
@@ -67,10 +54,9 @@ public class ShooterGoblin extends ChasingGoblin {
         }
     }
 
-    // FASE 1: Fermo, ti fissa per 0.5 secondi (Usa l'animazione di Idle o Corsa sul posto)
     private void startTelegraphing(double px, double py) {
         state = State.TELEGRAPHING;
-        telegraphTimer = Config.SHOOTER_TELEGRAPH_TIME; // Es. 30 tick = 0.5s
+        telegraphTimer = Config.SHOOTER_TELEGRAPH_TIME;
 
         double dx = px - this.x;
         double dy = py - this.y;
@@ -83,9 +69,7 @@ public class ShooterGoblin extends ChasingGoblin {
         this.currentDirection = telegraphDirection;
         this.speed = 0.0;
 
-        // --- AGGIUNGI QUESTE DUE RIGHE ---
-        // Forza il goblin al centro perfetto del binario prima di sparare.
-        // Impedisce che quando riparte raschi contro gli spigoli dei muri!
+        // snap to cell centre before shooting — prevents clipping against wall corners on resume
         this.x = Math.round(this.x);
         this.y = Math.round(this.y);
     }
@@ -97,11 +81,8 @@ public class ShooterGoblin extends ChasingGoblin {
         }
     }
 
-    // FASE 2: Esegue i 2 frame di attacco
     private void startAttacking() {
         state = State.ATTACKING;
-        // Supponendo 80ms a frame e 60 FPS di logica, 2 frame durano circa 10 tick.
-        // Modifica questo valore se vuoi l'animazione più lenta o più veloce
         attackAnimTimer = 10;
     }
 
@@ -127,53 +108,45 @@ public class ShooterGoblin extends ChasingGoblin {
 
         switch (telegraphDirection) {
             case RIGHT -> projX += OFFSET_X_RIGHT;
-            case LEFT -> projX += OFFSET_X_LEFT;
-            case DOWN -> projY += OFFSET_Y_DOWN;
-            case UP -> projY += OFFSET_Y_UP;
+            case LEFT  -> projX += OFFSET_X_LEFT;
+            case DOWN  -> projY += OFFSET_Y_DOWN;
+            case UP    -> projY += OFFSET_Y_UP;
         }
 
         Projectile p = new BoneProjectile(projX, projY, telegraphDirection);
         Model.getInstance().addProjectile(p);
-
-        // Salviamo il proiettile nella memoria del goblin per seguirne il volo!
         activeProjectiles.add(p);
 
         telegraphDirection = null;
     }
 
-    private void handleReloadState(double px, double py) {
-        // 1. Rimuove automaticamente dalla memoria le ossa che si sono schiantate
+    private void handleReloadState() {
         activeProjectiles.removeIf(p -> !p.isActive());
 
-        // 2. FASE DI ATTESA: Finché c'è almeno un osso in volo, il goblin sta FERMO a guardare
+        // freeze while a bone is still in flight — gives the player time to dodge
         if (!activeProjectiles.isEmpty()) {
             this.speed = 0.0;
-            return; // Interrompe qui e non fa nient'altro
+            return;
         }
 
-        // 3. FASE DI COOLDOWN: Ossa distrutte. Inizia a ricaricare, ma intanto ti insegue!
         reloadTimer--;
-
-        // Rimettiamo la sua velocità normale da inseguitore
         this.speed = Config.GOBLIN_COMMON_SPEED;
-
-        // Chiamiamo la logica di movimento dell'Inseguitore base (ChasingGoblin)
         super.updateBehavior();
 
-        // 4. FINE COOLDOWN: Il timer è scaduto, il caricatore è di nuovo pieno
         if (reloadTimer <= 0) {
             ammo = Config.SHOOTER_MAX_AMMO;
             state = State.PATROL_OR_CHASE;
-            System.out.println("Shooter: Ricarica completata! Torno a mirare.");
         }
     }
 
-    // Aggiungi questo in fondo alla classe, serve alla grafica:
     public boolean isWaiting() {
         return state == State.RELOADING && !activeProjectiles.isEmpty();
     }
 
-    // --- METODI DI VISTA E CONTROLLO ---
+    public boolean isActuallyAttacking() {
+        return state == State.ATTACKING;
+    }
+
     private boolean hasLineOfSight(double px, double py) {
         int cx = (int) (this.x + 0.5);
         int cy = (int) (this.y + 0.5);
@@ -203,17 +176,12 @@ public class ShooterGoblin extends ChasingGoblin {
         return this.telegraphDirection;
     }
 
-    // NUOVO METODO PER LA VIEW: Dice alla View se deve disegnare i 2 frame di attacco!
-    public boolean isActuallyAttacking() {
-        return state == State.ATTACKING;
-    }
-
     /**
-     * Override per esporre lo stato dello Shooter alla View.
-     * TELEGRAPHING → "IDLE" (fermo, sta mirando)
-     * ATTACKING    → "ATTACK" (animazione di lancio)
-     * RELOADING con proiettili in volo → "IDLE" (fermo, guarda il suo osso)
-     * Altrimenti → "RUN" (movimento normale)
+     * State → animation mapping consumed by the View:
+     *   TELEGRAPHING  → "IDLE"   (aiming pause)
+     *   ATTACKING     → "ATTACK" (throw animation)
+     *   RELOADING + projectile in flight → "IDLE" (watching the bone)
+     *   otherwise     → "RUN"
      */
     @Override
     public String getEnemyState() {

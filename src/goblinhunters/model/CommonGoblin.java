@@ -11,10 +11,7 @@ public class CommonGoblin extends Enemy {
 
     @Override
     public void updateBehavior() {
-        // RIMOSSA LA LOGICA DEL CENTRO CELLA!
-        // Ora il Goblin Comune cammina ciecamente dritto.
-        // Quando colpirà un muro o un compagno, la fisica di base (Enemy.java)
-        // chiamerà in automatico handleWallCollision() per farlo svoltare in una via libera.
+        // walks straight ahead; Enemy.handleWallCollision() redirects on impact
         moveInDirection();
     }
 }

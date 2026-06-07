@@ -2,35 +2,30 @@ package goblinhunters.model;
 
 public class Bomb extends Entity {
 
-    // Bomb usa coordinate a griglia (row/col) invece di double x/y
+    // Bomb uses grid row/col rather than the double x/y from Entity
     private final int row;
     private final int col;
-    private int timer; // Timer logico per l'esplosione (gameplay)
+    private int timer;
     private final int radius;
     private boolean exploded;
-
-    // TIMESTAMP: Serve alla View per calcolare l'animazione,
-    // ma per il Model è solo un dato temporale.
-    private final long creationTime;
+    private final long creationTime; // used by the View for sprite animation timing
 
     public Bomb(int row, int col, int timer, int radius) {
-        super(); // Bomb usa row/col a griglia, non coordinate double x/y
+        super();
         this.row = row;
         this.col = col;
         this.timer = timer;
         this.radius = radius;
         this.exploded = false;
-        this.creationTime = System.currentTimeMillis(); // Segniamo l'orario di creazione
+        this.creationTime = System.currentTimeMillis();
     }
 
     public void updateDetonationTimer() {
-        // Solo logica di gameplay (Countdown)
         if (timer > 0) {
             timer--;
         } else {
             exploded = true;
         }
-        // NESSUN calcolo di frame qui!
     }
 
     public void detonate() {
@@ -38,9 +33,9 @@ public class Bomb extends Entity {
         this.exploded = true;
     }
 
-    public int getRow() { return row; }
-    public int getCol() { return col; }
-    public int getRadius() { return radius; }
-    public boolean isExploded() { return exploded; }
+    public int getRow()           { return row; }
+    public int getCol()           { return col; }
+    public int getRadius()        { return radius; }
+    public boolean isExploded()   { return exploded; }
     public long getCreationTime() { return creationTime; }
 }

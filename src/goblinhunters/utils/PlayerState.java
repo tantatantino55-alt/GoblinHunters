@@ -1,36 +1,36 @@
 package goblinhunters.utils;
 
 public enum PlayerState {
-        // --- FRONTE (Giù) ---
-        IDLE_FRONT,
-        RUN_FRONT,
-        ATTACK_FRONT,
-        HURT_FRONT,
-        CAST_FRONT,
 
-        // --- RETRO (Su) ---
-        IDLE_BACK,
-        RUN_BACK,
-        ATTACK_BACK,
-        HURT_BACK,
-        CAST_BACK,
+    // facing down
+    IDLE_FRONT,
+    RUN_FRONT,
+    ATTACK_FRONT,
+    HURT_FRONT,
+    CAST_FRONT,
 
-        // --- SINISTRA ---
-        IDLE_LEFT,
-        RUN_LEFT,
-        ATTACK_LEFT,
-        HURT_LEFT,
-        CAST_LEFT,
+    // facing up
+    IDLE_BACK,
+    RUN_BACK,
+    ATTACK_BACK,
+    HURT_BACK,
+    CAST_BACK,
 
-        // --- DESTRA ---
-        IDLE_RIGHT,
-        RUN_RIGHT,
-        ATTACK_RIGHT,
-        HURT_RIGHT,
-        CAST_RIGHT,
+    // facing left
+    IDLE_LEFT,
+    RUN_LEFT,
+    ATTACK_LEFT,
+    HURT_LEFT,
+    CAST_LEFT,
 
-        // --- STATI SPECIALI ---
-        DYING,
-        DEAD;
+    // facing right
+    IDLE_RIGHT,
+    RUN_RIGHT,
+    ATTACK_RIGHT,
+    HURT_RIGHT,
+    CAST_RIGHT,
 
+    // special states
+    DYING,
+    DEAD;
 }

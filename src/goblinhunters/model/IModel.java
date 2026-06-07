@@ -7,133 +7,128 @@ import goblinhunters.utils.PlayerState;
 
 public interface IModel {
 
+    // map
     int[][] generateProceduralMap();
+    int getNumColumns();
+    int getNumRows();
+    int[][] getGameAreaArray();
+    void destroyBlock(int row, int col);
 
-    public int getNumColumns();
-    public int getNumRows();
-    public double xCoordinatePlayer();
-    public double yCoordinatePlayer();
-    public void setPlayerDelta(double dx, double dy);
-    public double getPlayerDeltaX();
-    public double getPlayerDeltaY();
-    public int[][] getGameAreaArray();
-    public boolean isWalkable(double nextX, double nextY);
-    public void placeBomb();
-    public void updateGameLogic();
-
+    // player position and state
+    double xCoordinatePlayer();
+    double yCoordinatePlayer();
+    void setPlayerDelta(double dx, double dy);
+    double getPlayerDeltaX();
+    double getPlayerDeltaY();
     PlayerState getPlayerState();
     long getPlayerStateStartTime();
+    boolean isPlayerInvincible();
+    int getPlayerLives();
+    int getPlayerBombAmmo();
+    int getPlayerAuraAmmo();
+    boolean hasPlayerShield();
+    boolean hasPlayerMaxRadius();
+    boolean hasPlayerMaxSpeed();
+    int getElapsedTimeInSeconds();
 
+    // player actions
+    void placeBomb();
+    void playerShoot();
+    void staffAttack();
+    void resetPlayerStateAfterAction();
+
+    // collision
+    boolean isWalkable(double nextX, double nextY);
+    boolean isAreaOccupiedByOtherEnemy(double nextX, double nextY, Enemy enemy);
+
+    // enemies
     int getEnemyCount();
     double getEnemyX(int index);
     double getEnemyY(int index);
     Direction getEnemyDirection(int index);
     EnemyType getEnemyType(int index);
     Direction getEnemyTelegraph(int index);
+    String getEnemyState(int index);
+    boolean isEnemyInvincible(int index);
+    boolean isEnemyAttacking(int index);
+    boolean isEnemyWaiting(int index);
+    long getEnemyStateStartTime(int index);
 
-    void addProjectile(Projectile projectile);
-    public boolean isAreaOccupiedByOtherEnemy(double nextX, double nextY, Enemy enemy);
-    public boolean isPlayerInvincible();
-    public int getPlayerLives();
-    public int getElapsedTimeInSeconds();
-    void staffAttack();
-
-    // --- NUOVI METODI A INDICE (Sostituiscono le allocazioni) ---
-    // BOMBE
+    // bombs
     int getBombCount();
     int getBombRow(int index);
     int getBombCol(int index);
     int getBombElapsedTime(int index);
 
-    // PROIETTILI
+    // projectiles
+    void addProjectile(Projectile projectile);
     int getProjectileCount();
     double getProjectileX(int index);
     double getProjectileY(int index);
     boolean isProjectileEnemy(int index);
     int getProjectileDirection(int index);
-    public void playerShoot();
-    public void destroyBlock(int row, int col);
 
-    // EFFETTI DISTRUZIONE CASSE
+    // fire
+    int getFireCount();
+    int getFireRow(int index);
+    int getFireCol(int index);
+    int getFireType(int index);
+
+    // crate destruction effects
     int getDestructionCount();
     int getDestructionRow(int index);
     int getDestructionCol(int index);
     int getDestructionElapsedTime(int index);
 
-    // FUOCO
-    int getFireCount();
-    int getFireRow(int index);
-    int getFireCol(int index);
-    int getFireType(int index);
-    public boolean isEnemyAttacking(int index);
-
-    public boolean isEnemyWaiting(int index);
-
-    void resetPlayerStateAfterAction();
-
-    // Accesso ai collectible tramite indice (nessuna esposizione del tipo concreto)
-    long getCollectibleSpawnTime(int index);
-
-    int getPlayerBombAmmo();
-    int getPlayerAuraAmmo();
-    boolean hasPlayerShield();
-    boolean hasPlayerMaxRadius();
-    boolean hasPlayerMaxSpeed();
-
-    int getPortalRow();
-    int getPortalCol();
-    boolean isPortalRevealed();
-
-    // --- GESTIONE LIVELLI E CAMBIO MAPPA (GATE) ---
-    int getCurrentZone();
-    int getDifficultyCycle();
-    boolean isExitGateActive();
-    String getCurrentTheme();
-    boolean isPreparationPhase();
-
-    boolean isGateActive();
-
-    boolean isLevelCompletedFlag();
-
-    long getGateExitActivationTime();
-
-    void prepareNextLevel(int[][] newMap);
-    boolean isTransitioning();
-    void setTransitioning(boolean transitioning);
-    // Collectibles (oggetti a terra) – accesso esclusivamente tramite indice
+    // collectibles
     int getCollectibleCount();
     double getCollectibleX(int index);
     double getCollectibleY(int index);
     ItemType getCollectibleType(int index);
-    long getPortalRevealTime();
+    long getCollectibleSpawnTime(int index);
 
-    long getExitGateActivationTime();
+    // portal and exit gate
+    int getPortalRow();
+    int getPortalCol();
+    boolean isPortalRevealed();
+    long getPortalRevealTime();
     int getExitGateRow();
     int getExitGateCol();
+    boolean isExitGateActive();
+    boolean isGateActive();
+    long getExitGateActivationTime();
+    long getGateExitActivationTime();
 
-    int getScore();
+    // levels and zones
+    int getCurrentZone();
+    int getDifficultyCycle();
+    String getCurrentTheme();
+    boolean isPreparationPhase();
+    boolean isLevelCompletedFlag();
+    boolean isTransitioning();
+    void setTransitioning(boolean transitioning);
+    void prepareNextLevel(int[][] newMap);
 
-    String getEnemyState(int index);
-    boolean isEnemyInvincible(int index);
-    long getEnemyStateStartTime(int index);
-
-    // --- CREPE DEL BOSS (Floor Crack overlay) ---
+    // boss floor cracks
     int getCrackCount();
     int getCrackRow(int index);
     int getCrackCol(int index);
 
-    // --- HUD BOSS ---
-    /** Ritorna gli HP correnti del Boss (0 se non presente). */
+    // boss HUD
     int getBossHP();
-    /** Ritorna gli HP massimi del Boss (0 se non presente). */
     int getBossMaxHP();
 
-    // --- PORTALE BOSS (Zona 2) ---
+    // boss portal (zone 2)
     boolean isBossPortalActive();
     int getBossPortalRow();
     int getBossPortalCol();
     long getBossPortalActivationTime();
 
+    // score and game state
+    int getScore();
     boolean isGameOverPending();
-    void    clearGameOverPending();
+    void clearGameOverPending();
+
+    // game loop
+    void updateGameLogic();
 }

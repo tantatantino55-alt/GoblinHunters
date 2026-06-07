@@ -4,21 +4,15 @@ import goblinhunters.utils.Config;
 
 import java.util.List;
 
-/**
- * Gestisce tutte le verifiche di collisione:
- * walkability della mappa, hitbox delle entità, bombe.
- */
+/** Handles all collision checks: map walkability, entity hitboxes, bombs. */
 class CollisionManager {
 
     CollisionManager(Model model) {
-        // Il model è il mediatore, ma CollisionManager riceve i dati come parametri
-        // per mantenere la dipendenza esplicita e testabile.
-        // Il costruttore accetta Model per coerenza col pattern Facade.
+        // accepts Model for consistency with the Facade pattern, but all data is passed as parameters
+        // so this class remains explicitly testable without coupling to the singleton
     }
 
-    // ==========================================================
-    // WALKABILITY
-    // ==========================================================
+    // walkability
 
     boolean isWalkable(double nextX, double nextY, int[][] map, List<Bomb> activeBombs, Player player, List<Enemy> enemies) {
         double hbW = Config.ENTITY_LOGICAL_HITBOX_WIDTH;
@@ -71,9 +65,7 @@ class CollisionManager {
         return bomb != null && !isPlayerCurrentlyInside(r, c, player);
     }
 
-    // ==========================================================
-    // OCCUPAZIONE AREA
-    // ==========================================================
+    // area occupation
 
     boolean isOccupiedByEnemies(double nextX, double nextY, List<Enemy> enemies) {
         double margin = 0.15;
@@ -115,9 +107,7 @@ class CollisionManager {
         return false;
     }
 
-    // ==========================================================
-    // HELPER
-    // ==========================================================
+    // helpers
 
     private boolean isPlayerCurrentlyInside(int r, int c, Player player) {
         double pX  = player.getXCoordinate();

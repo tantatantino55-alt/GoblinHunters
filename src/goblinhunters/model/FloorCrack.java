@@ -2,7 +2,7 @@ package goblinhunters.model;
 
 class FloorCrack {
 
-    /** Durata ridotta a 2.5 secondi (150 tick @ 60FPS) per facilitare il movimento. */
+    // 2.5 s at 60 FPS — short enough that players can move off before the lava appears
     static final int CRACK_DURATION_TICKS = 150;
 
     final int row;
@@ -24,7 +24,4 @@ class FloorCrack {
         return remainingTicks <= 0;
     }
 
-    int getElapsedTicks() {
-        return CRACK_DURATION_TICKS - remainingTicks;
-    }
 }

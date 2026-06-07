@@ -1,11 +1,11 @@
 package goblinhunters.utils;
 
 public enum ItemType {
-    // Risorse (Casse)
+    // crate drops (ammo crystals)
     AMMO_BOMB,
     AMMO_AURA,
 
-    // Power-up (Goblin)
+    // goblin drops (power-ups)
     POWER_SHIELD,
     POWER_RADIUS,
     POWER_SPEED

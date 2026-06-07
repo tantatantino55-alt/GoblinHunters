@@ -12,20 +12,19 @@ public class BossGoblin extends Enemy {
 
     private BossState currentState = BossState.FURY;
 
-    private static final long I_FRAME_DURATION  = 1000L;
+    private static final long I_FRAME_DURATION = 1000L;
 
-    /** HP base (primo fight). Ogni fight successivo aggiunge 5, fino al cap di 25. */
-    public  static final int  BASE_HP  = 15;
-    public  static final int  HP_STEP  = 5;
-    public  static final int  MAX_HP_CAP = 25;
+    public static final int BASE_HP    = 15;
+    public static final int HP_STEP    = 5;
+    public static final int MAX_HP_CAP = 25;
 
-    /** Calcola gli HP del boss in base al numero di fight (1-indexed). */
+    /** HP scales with fight number; each rematch adds HP_STEP up to MAX_HP_CAP. */
     public static int computeHP(int fightNumber) {
         int hp = BASE_HP + (fightNumber - 1) * HP_STEP;
         return Math.min(hp, MAX_HP_CAP);
     }
 
-    private final int maxHp; // HP massimi per questo fight specifico
+    private final int maxHp;
 
     private int attackCounter = 0;
     private static final int ATTACKS_BEFORE_REST = 3;
@@ -33,14 +32,16 @@ public class BossGoblin extends Enemy {
     private final double runSpeed;
     private final Random rand = new Random();
 
-    // Flag "Modalita' Guardia": true quando il Boss e' fermo in attesa in FURY
+    // true while the boss is stationary in FURY, waiting for an alignment shot
     private boolean guarding = false;
 
-    // Limiti del ring interno
+    // inner ring boundaries — boss stays inside this area during combat
     private static final double MIN_X = 3.1;
     private static final double MAX_X = 8.9;
     private static final double MIN_Y = 2.1;
     private static final double MAX_Y = 7.9;
+
+    // instance methods
 
     public BossGoblin(double startX, double startY, int fightNumber) {
         super(startX, startY, Config.GOBLIN_COMMON_SPEED * 1.5, EnemyType.BOSS);
@@ -61,8 +62,7 @@ public class BossGoblin extends Enemy {
 
     @Override
     public String getEnemyState() {
-        // Se il Boss e' in FURY ma fermo in posizione di guardia, segnala uno stato
-        // distinto alla View cosi' che possa usare l'animazione IDLE anziche' RUN.
+        // signal a distinct state so the View uses IDLE instead of RUN while guarding
         if (currentState == BossState.FURY && guarding) return "FURY_GUARD";
         return currentState.name();
     }
@@ -70,7 +70,7 @@ public class BossGoblin extends Enemy {
     private void changeState(BossState newState) {
         this.currentState   = newState;
         this.stateStartTime = System.currentTimeMillis();
-        this.guarding       = false; // reset flag guardia ad ogni cambio stato
+        this.guarding       = false;
     }
 
     @Override
@@ -79,15 +79,13 @@ public class BossGoblin extends Enemy {
 
         long now = System.currentTimeMillis();
 
-        // Bypass I-Frames per danni simultanei (Combo Bombe)
+        // simultaneous hits within 50 ms bypass i-frames so bomb combos register fully
         if (now - lastHitTime < 50) {
             hp -= damage;
-        }
-        else if (now - lastHitTime > I_FRAME_DURATION) {
+        } else if (now - lastHitTime > I_FRAME_DURATION) {
             hp -= damage;
             lastHitTime = now;
-        }
-        else {
+        } else {
             return false;
         }
 
@@ -107,9 +105,8 @@ public class BossGoblin extends Enemy {
         long elapsed = System.currentTimeMillis() - stateStartTime;
         Model model  = (Model) Model.getInstance();
 
-        // VERE coordinate del player (Usate SEMPRE per la mira)
-        double pX    = model.xCoordinatePlayer();
-        double pY    = model.yCoordinatePlayer();
+        double pX = model.xCoordinatePlayer();
+        double pY = model.yCoordinatePlayer();
 
         switch (currentState) {
 
@@ -119,7 +116,6 @@ public class BossGoblin extends Enemy {
                 boolean onLeft   = Math.abs(this.x - MIN_X) < 0.1;
                 boolean onRight  = Math.abs(this.x - MAX_X) < 0.1;
 
-                // 1. MIRA E ATTACCO (Usa le coordinate VERE: pX e pY)
                 boolean alignedX = Math.abs(this.x - pX) < 0.5;
                 boolean alignedY = Math.abs(this.y - pY) < 0.5;
 
@@ -136,22 +132,20 @@ public class BossGoblin extends Enemy {
                     break;
                 }
 
-                // 2. MOVIMENTO E FUGA (Usa le coordinate BERSAGLIO)
                 double targetX = pX;
                 double targetY = pY;
 
                 double margin = 0.5;
-                boolean inRing = pX >= MIN_X && pX <= MAX_X && pY >= MIN_Y && pY <= MAX_Y;
-
+                boolean inRing       = pX >= MIN_X && pX <= MAX_X && pY >= MIN_Y && pY <= MAX_Y;
                 boolean onTopEdge    = pY <= MIN_Y + margin && pX >= MIN_X - margin && pX <= MAX_X + margin;
                 boolean onBottomEdge = pY >= MAX_Y - margin && pX >= MIN_X - margin && pX <= MAX_X + margin;
                 boolean onLeftEdge   = pX <= MIN_X + margin && pY >= MIN_Y - margin && pY <= MAX_Y + margin;
                 boolean onRightEdge  = pX >= MAX_X - margin && pY >= MIN_Y - margin && pY <= MAX_Y + margin;
 
                 boolean isGuardMode = false;
-                guarding = false; // Resetta all'inizio del tick; verra' settato sotto se necessario
+                guarding = false; // recalculated each tick below
 
-                // Logica Cecchino: PRIORITÀ ASSI (La tua idea: Top/Bottom dominano su Left/Right)
+                // top/bottom edges take priority over left/right so boss converges faster
                 if (onTopEdge) {
                     targetY = MAX_Y;
                 } else if (onBottomEdge) {
@@ -161,17 +155,15 @@ public class BossGoblin extends Enemy {
                 } else if (onRightEdge) {
                     targetX = MIN_X;
                 } else if (!inRing) {
-                    // Modalità Guardia per le zone morte lontane (es. Spawn)
+                    // player is in a dead zone (e.g. spawn corner) — retreat to ring centre
                     targetX = 6.0;
                     targetY = 5.0;
                     isGuardMode = true;
                 }
 
-                // Clamp di sicurezza
                 targetX = Math.max(MIN_X, Math.min(MAX_X, targetX));
                 targetY = Math.max(MIN_Y, Math.min(MAX_Y, targetY));
 
-                // Rientro nel ring se sta fluttuando
                 if (!onTop && !onBottom && !onLeft && !onRight) {
                     switch (this.currentDirection) {
                         case UP    -> this.y -= runSpeed;
@@ -180,7 +172,6 @@ public class BossGoblin extends Enemy {
                         case RIGHT -> this.x += runSpeed;
                     }
                 } else {
-                    // Pattugliamento intelligente
                     boolean moveX = onTop || onBottom;
                     boolean moveY = onLeft || onRight;
 
@@ -194,14 +185,10 @@ public class BossGoblin extends Enemy {
                             if (this.x < targetX) { this.x += runSpeed; this.currentDirection = Direction.RIGHT; }
                             else                  { this.x -= runSpeed; this.currentDirection = Direction.LEFT; }
                         } else {
-                            // EVITA RI-ASSEGNAZIONI INUTILI SE È GIÀ IN POSIZIONE
-                            if (Math.abs(this.x - targetX) > 0.01) {
-                                this.x = targetX;
-                            }
-
+                            if (Math.abs(this.x - targetX) > 0.01) this.x = targetX;
                             if (isGuardMode) {
                                 this.currentDirection = Direction.DOWN;
-                                guarding = true; // Segnala alla View: usa animazione IDLE
+                                guarding = true;
                             } else {
                                 this.currentDirection = (pY > this.y) ? Direction.DOWN : Direction.UP;
                             }
@@ -211,14 +198,10 @@ public class BossGoblin extends Enemy {
                             if (this.y < targetY) { this.y += runSpeed; this.currentDirection = Direction.DOWN; }
                             else                  { this.y -= runSpeed; this.currentDirection = Direction.UP; }
                         } else {
-                            // EVITA RI-ASSEGNAZIONI INUTILI SE È GIÀ IN POSIZIONE
-                            if (Math.abs(this.y - targetY) > 0.01) {
-                                this.y = targetY;
-                            }
-
+                            if (Math.abs(this.y - targetY) > 0.01) this.y = targetY;
                             if (isGuardMode) {
                                 this.currentDirection = Direction.DOWN;
-                                guarding = true; // Segnala alla View: usa animazione IDLE
+                                guarding = true;
                             } else {
                                 this.currentDirection = (pX > this.x) ? Direction.RIGHT : Direction.LEFT;
                             }
@@ -251,14 +234,12 @@ public class BossGoblin extends Enemy {
             case EXHAUSTED: {
                 if (Math.abs(this.x - 6.0) > runSpeed) {
                     if (this.x < 6.0) { this.x += runSpeed; this.currentDirection = Direction.RIGHT; }
-                    else              { this.x -= runSpeed; this.currentDirection = Direction.LEFT;  }
-                }
-                else if (Math.abs(this.y - 5.0) > runSpeed) {
+                    else              { this.x -= runSpeed; this.currentDirection = Direction.LEFT; }
+                } else if (Math.abs(this.y - 5.0) > runSpeed) {
                     this.x = 6.0;
                     if (this.y < 5.0) { this.y += runSpeed; this.currentDirection = Direction.DOWN; }
-                    else              { this.y -= runSpeed; this.currentDirection = Direction.UP;   }
-                }
-                else {
+                    else              { this.y -= runSpeed; this.currentDirection = Direction.UP; }
+                } else {
                     this.x = 6.0;
                     this.y = 5.0;
                     changeState(BossState.IDLE_EXHAUSTED);
@@ -268,6 +249,7 @@ public class BossGoblin extends Enemy {
             }
 
             case IDLE_EXHAUSTED: {
+                // rest shorter when HP is below half — higher-HP boss is more aggressive
                 long restTime = (hp <= maxHp / 2) ? 3500L : 5000L;
                 if (elapsed > restTime) {
                     this.currentDirection = Direction.values()[rand.nextInt(4)];

@@ -7,63 +7,53 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-/**
- * Facade del layer Model.
- * Implementa IModel delegando la logica ai manager specializzati.
- * È l'unico punto di accesso visibile dall'esterno del package model.
- */
+/** Model facade. Implements IModel by delegating to specialised managers. */
 public class Model implements IModel {
 
     private static Model instance = null;
 
-    // --- MANAGER ---
+    // managers
     private final MapManager       mapManager;
     private final CollisionManager collisionManager;
     private final SpawnManager     spawnManager;
     private final ScoreManager     scoreManager;
     private final LevelManager     levelManager;
 
-    // --- ENTITÀ ---
+    // entities
     private Player player;
     private List<Enemy> enemies;
 
-    // --- BOMBE, PROIETTILI, FUOCO ---
-    private final List<Bomb>          activeBombs        = new ArrayList<>();
-    private       List<Projectile>    projectiles        = new ArrayList<>();
-    private final List<int[]>         activeFire         = new ArrayList<>();
+    // active game objects
+    private final List<Bomb>             activeBombs        = new ArrayList<>();
+    private       List<Projectile>       projectiles        = new ArrayList<>();
+    private final List<int[]>            activeFire         = new ArrayList<>();
     private final List<BlockDestruction> destructionEffects = new ArrayList<>();
-    private final List<Collectible>   activeItems        = new ArrayList<>();
+    private final List<Collectible>      activeItems        = new ArrayList<>();
 
-    // --- CRONOMETRO ---
     private int elapsedTicks = 0;
 
-    /** ID logico della cella che funge da Exit Gate. */
     public static final int EXIT_GATE_ID = 25;
 
     private int     playerDyingTimer = 0;
-    private boolean gameOverPending   = false;
+    private boolean gameOverPending  = false;
 
     // ==========================================================
-    // COSTRUTTORE / SINGLETON
+    // constructor / singleton
     // ==========================================================
 
     private Model() {
-        // 1. Crea i manager (usano this come mediatore)
         this.mapManager       = new MapManager();
         this.collisionManager = new CollisionManager(this);
         this.spawnManager     = new SpawnManager(this);
         this.scoreManager     = new ScoreManager(this);
         this.levelManager     = new LevelManager(this);
 
-        // 2. Inizializza player e nemici
         this.player  = new Player(0.0, 0.0);
         this.enemies = new ArrayList<>();
 
-        // 3. Genera mappa iniziale
         int[][] initialMap = mapManager.generateProceduralMap(levelManager.getCurrentZone(), levelManager);
         mapManager.applyMap(initialMap);
 
-        // 4. Spawn nemici iniziali (secondo la configurazione della zona)
         int initialCount = levelManager.getInitialEnemyCount();
         for (int i = 0; i < initialCount; i++) {
             spawnManager.spawnEnemy(enemies, player, mapManager.getGameAreaArray(), levelManager);
@@ -75,31 +65,27 @@ public class Model implements IModel {
         return instance;
     }
 
-    /**
-     * Resetta completamente l'istanza del Model, creando una nuova partita
-     * con stato, punteggi e configurazioni pulite.
-     */
     public static void resetInstance() {
         instance = new Model();
     }
 
     // ==========================================================
-    // PACKAGE-PRIVATE: accesso per i Manager (Mediator)
+    // package-private access for managers (mediator pattern)
     // ==========================================================
 
-    Player getPlayer()                  { return player; }
-    List<Enemy> getEnemies()            { return enemies; }
-    List<Bomb> getActiveBombs()         { return activeBombs; }
-    List<Projectile> getProjectiles()   { return projectiles; }
-    List<int[]> getActiveFire()         { return activeFire; }
-    List<Collectible> getActiveItemsList() { return activeItems; }
-    List<BlockDestruction> getDestructionEffects() { return destructionEffects; }
-    SpawnManager getSpawnManager()      { return spawnManager; }
-    LevelManager getLevelManager()      { return levelManager; }
-    MapManager   getMapManager()        { return mapManager; }
+    Player getPlayer()                               { return player; }
+    List<Enemy> getEnemies()                         { return enemies; }
+    List<Bomb> getActiveBombs()                      { return activeBombs; }
+    List<Projectile> getProjectiles()                { return projectiles; }
+    List<int[]> getActiveFire()                      { return activeFire; }
+    List<Collectible> getActiveItemsList()           { return activeItems; }
+    List<BlockDestruction> getDestructionEffects()   { return destructionEffects; }
+    SpawnManager getSpawnManager()                   { return spawnManager; }
+    LevelManager getLevelManager()                   { return levelManager; }
+    MapManager   getMapManager()                     { return mapManager; }
 
     // ==========================================================
-    // IModel – MAPPA
+    // IModel – map
     // ==========================================================
 
     @Override
@@ -107,9 +93,9 @@ public class Model implements IModel {
         return mapManager.generateProceduralMap(levelManager.getCurrentZone(), levelManager);
     }
 
-    @Override public int getNumRows()       { return mapManager.getGameAreaArray().length; }
-    @Override public int getNumColumns()    { return mapManager.getGameAreaArray()[0].length; }
-    @Override public int[][] getGameAreaArray() { return mapManager.getGameAreaArray(); }
+    @Override public int getNumRows()            { return mapManager.getGameAreaArray().length; }
+    @Override public int getNumColumns()         { return mapManager.getGameAreaArray()[0].length; }
+    @Override public int[][] getGameAreaArray()  { return mapManager.getGameAreaArray(); }
 
     @Override
     public void destroyBlock(int row, int col) {
@@ -118,22 +104,22 @@ public class Model implements IModel {
     }
 
     // ==========================================================
-    // IModel – PLAYER
+    // IModel – player
     // ==========================================================
 
-    @Override public double xCoordinatePlayer()    { return player.getXCoordinate(); }
-    @Override public double yCoordinatePlayer()    { return player.getYCoordinate(); }
-    @Override public double getPlayerDeltaX()      { return player.getDeltaX(); }
-    @Override public double getPlayerDeltaY()      { return player.getDeltaY(); }
-    @Override public PlayerState getPlayerState()  { return player.getState(); }
-    @Override public long getPlayerStateStartTime(){ return player.getStateStartTime(); }
-    @Override public boolean isPlayerInvincible()  { return player.isInvincible(); }
-    @Override public int getPlayerLives()          { return player.getLives(); }
-    @Override public int getPlayerBombAmmo()       { return player.getBombAmmo(); }
-    @Override public int getPlayerAuraAmmo()       { return player.getAuraAmmo(); }
-    @Override public boolean hasPlayerShield()     { return player.hasShield(); }
-    @Override public boolean hasPlayerMaxRadius()  { return player.hasMaxRadius(); }
-    @Override public boolean hasPlayerMaxSpeed()   { return player.hasMaxSpeed(); }
+    @Override public double xCoordinatePlayer()      { return player.getXCoordinate(); }
+    @Override public double yCoordinatePlayer()      { return player.getYCoordinate(); }
+    @Override public double getPlayerDeltaX()        { return player.getDeltaX(); }
+    @Override public double getPlayerDeltaY()        { return player.getDeltaY(); }
+    @Override public PlayerState getPlayerState()    { return player.getState(); }
+    @Override public long getPlayerStateStartTime()  { return player.getStateStartTime(); }
+    @Override public boolean isPlayerInvincible()    { return player.isInvincible(); }
+    @Override public int getPlayerLives()            { return player.getLives(); }
+    @Override public int getPlayerBombAmmo()         { return player.getBombAmmo(); }
+    @Override public int getPlayerAuraAmmo()         { return player.getAuraAmmo(); }
+    @Override public boolean hasPlayerShield()       { return player.hasShield(); }
+    @Override public boolean hasPlayerMaxRadius()    { return player.hasMaxRadius(); }
+    @Override public boolean hasPlayerMaxSpeed()     { return player.hasMaxSpeed(); }
 
     @Override
     public void setPlayerDelta(double dx, double dy) {
@@ -149,21 +135,21 @@ public class Model implements IModel {
     }
 
     // ==========================================================
-    // IModel – NEMICI
+    // IModel – enemies
     // ==========================================================
 
     @Override public int getEnemyCount() { return enemies.size(); }
 
-    @Override public double getEnemyX(int i)          { return isValidIndex(i) ? enemies.get(i).getX() : 0; }
-    @Override public double getEnemyY(int i)          { return isValidIndex(i) ? enemies.get(i).getY() : 0; }
-    @Override public Direction getEnemyDirection(int i){ return isValidIndex(i) ? enemies.get(i).getDirection() : Direction.DOWN; }
-    @Override public EnemyType getEnemyType(int i)    { return isValidIndex(i) ? enemies.get(i).getType() : EnemyType.COMMON; }
-    @Override public Direction getEnemyTelegraph(int i){ return isValidIndex(i) ? enemies.get(i).getTelegraphDirection() : null; }
+    @Override public double    getEnemyX(int i)          { return isValidIndex(i) ? enemies.get(i).getX() : 0; }
+    @Override public double    getEnemyY(int i)          { return isValidIndex(i) ? enemies.get(i).getY() : 0; }
+    @Override public Direction getEnemyDirection(int i)  { return isValidIndex(i) ? enemies.get(i).getDirection() : Direction.DOWN; }
+    @Override public EnemyType getEnemyType(int i)       { return isValidIndex(i) ? enemies.get(i).getType() : EnemyType.COMMON; }
+    @Override public Direction getEnemyTelegraph(int i)  { return isValidIndex(i) ? enemies.get(i).getTelegraphDirection() : null; }
     @Override public String getEnemyState(int i) {
-        if (player.getState() == goblinhunters.utils.PlayerState.DYING) return "IDLE";
+        if (player.getState() == PlayerState.DYING) return "IDLE";
         return isValidIndex(i) ? enemies.get(i).getEnemyState() : "RUN";
     }
-    @Override public boolean isEnemyInvincible(int i) { return isValidIndex(i) && enemies.get(i).isInvincible(); }
+    @Override public boolean isEnemyInvincible(int i)    { return isValidIndex(i) && enemies.get(i).isInvincible(); }
 
     @Override
     public boolean isEnemyAttacking(int i) {
@@ -185,7 +171,7 @@ public class Model implements IModel {
     private boolean isValidIndex(int i) { return i >= 0 && i < enemies.size(); }
 
     // ==========================================================
-    // IModel – COLLISIONI (delegano a CollisionManager)
+    // IModel – collision
     // ==========================================================
 
     @Override
@@ -200,12 +186,12 @@ public class Model implements IModel {
     }
 
     // ==========================================================
-    // IModel – BOMBE
+    // IModel – bombs
     // ==========================================================
 
     @Override
     public void placeBomb() {
-        if (player.getBombAmmo() <= 0) { System.out.println("Bombs exhausted!"); return; }
+        if (player.getBombAmmo() <= 0) return;
 
         double centerX = player.getXCoordinate() + (Config.ENTITY_LOGICAL_HITBOX_WIDTH / 2.0);
         double centerY = player.getYCoordinate() + 0.35;
@@ -223,16 +209,15 @@ public class Model implements IModel {
 
         player.addBombAmmo(-1);
         activeBombs.add(new Bomb(row, col, Config.BOMB_DETONATION_TICKS, player.getBombRadius()));
-        System.out.println("Bomba piazzata in [" + row + "," + col + "] (Rimaste: " + player.getBombAmmo() + ")");
     }
 
-    @Override public int getBombCount()                     { return activeBombs.size(); }
-    @Override public int getBombRow(int i)                  { return isValidBombIndex(i) ? activeBombs.get(i).getRow() : 0; }
-    @Override public int getBombCol(int i)                  { return isValidBombIndex(i) ? activeBombs.get(i).getCol() : 0; }
+    @Override public int getBombCount()          { return activeBombs.size(); }
+    @Override public int getBombRow(int i)       { return isValidBombIndex(i) ? activeBombs.get(i).getRow() : 0; }
+    @Override public int getBombCol(int i)       { return isValidBombIndex(i) ? activeBombs.get(i).getCol() : 0; }
     @Override public int getBombElapsedTime(int i) {
         return isValidBombIndex(i) ? (int)(System.currentTimeMillis() - activeBombs.get(i).getCreationTime()) : 0;
     }
-    private boolean isValidBombIndex(int i)  { return i >= 0 && i < activeBombs.size(); }
+    private boolean isValidBombIndex(int i) { return i >= 0 && i < activeBombs.size(); }
 
     private void updateBombs() {
         Iterator<Bomb> it = activeBombs.iterator();
@@ -251,10 +236,10 @@ public class Model implements IModel {
         Bomb chain = collisionManager.getBombAt(r, c, activeBombs);
         if (chain != null && !chain.isExploded()) chain.detonate();
 
-        expandFire(r, c, -1, 0, rad, 4, 8);
-        expandFire(r, c,  1, 0, rad, 5, 1);
-        expandFire(r, c,  0,-1, rad, 2, 6);
-        expandFire(r, c,  0, 1, rad, 3, 7);
+        expandFire(r, c, -1,  0, rad, 4, 8);
+        expandFire(r, c,  1,  0, rad, 5, 1);
+        expandFire(r, c,  0, -1, rad, 2, 6);
+        expandFire(r, c,  0,  1, rad, 3, 7);
     }
 
     private void expandFire(int sr, int sc, int dr, int dc, int rad, int midType, int tipType) {
@@ -262,19 +247,15 @@ public class Model implements IModel {
         for (int i = 1; i <= rad; i++) {
             int cr = sr + dr * i, cc = sc + dc * i;
             if (cr < 0 || cr >= Config.GRID_HEIGHT || cc < 0 || cc >= Config.GRID_WIDTH) break;
-            
+
             int cell = map[cr][cc];
             if (cell == Config.CELL_INDESTRUCTIBLE_BLOCK || cell == Config.CELL_ORNAMENT || cell == Config.CELL_SKELETON_START) break;
-            
-            if (cell == Config.CELL_DESTRUCTIBLE_BLOCK) { 
-                destroyBlock(cr, cc); 
-                break; 
-            }
-            
+            if (cell == Config.CELL_DESTRUCTIBLE_BLOCK) { destroyBlock(cr, cc); break; }
+
             Bomb chainBomb = collisionManager.getBombAt(cr, cc, activeBombs);
             if (chainBomb != null && !chainBomb.isExploded()) {
                 chainBomb.detonate();
-                break; // Il fuoco colpisce la bomba, innescandola e fermando la sua espansione in questa direzione
+                break; // fire hits this bomb and chain-triggers it; does not continue past it
             }
 
             boolean tip = (i == rad);
@@ -284,61 +265,60 @@ public class Model implements IModel {
     }
 
     // ==========================================================
-    // IModel – PROIETTILI
+    // IModel – projectiles
     // ==========================================================
 
-    @Override public void addProjectile(Projectile p) { projectiles.add(p); }
-    @Override public int getProjectileCount()         { return projectiles.size(); }
-    @Override public double getProjectileX(int i)     { return isValidProjIndex(i) ? projectiles.get(i).getX() : 0; }
-    @Override public double getProjectileY(int i)     { return isValidProjIndex(i) ? projectiles.get(i).getY() : 0; }
-    @Override public boolean isProjectileEnemy(int i) { return isValidProjIndex(i) && projectiles.get(i).isEnemyProjectile(); }
-    @Override public int getProjectileDirection(int i){ return isValidProjIndex(i) ? projectiles.get(i).getDirection().ordinal() : 0; }
-    private boolean isValidProjIndex(int i)  { return i >= 0 && i < projectiles.size(); }
+    @Override public void addProjectile(Projectile p)    { projectiles.add(p); }
+    @Override public int getProjectileCount()            { return projectiles.size(); }
+    @Override public double getProjectileX(int i)        { return isValidProjIndex(i) ? projectiles.get(i).getX() : 0; }
+    @Override public double getProjectileY(int i)        { return isValidProjIndex(i) ? projectiles.get(i).getY() : 0; }
+    @Override public boolean isProjectileEnemy(int i)    { return isValidProjIndex(i) && projectiles.get(i).isEnemyProjectile(); }
+    @Override public int getProjectileDirection(int i)   { return isValidProjIndex(i) ? projectiles.get(i).getDirection().ordinal() : 0; }
+    private boolean isValidProjIndex(int i)              { return i >= 0 && i < projectiles.size(); }
 
     // ==========================================================
-    // IModel – FUOCO
+    // IModel – fire
     // ==========================================================
 
-    @Override public int getFireCount()      { return activeFire.size(); }
-    @Override public int getFireRow(int i)   { return isValidFireIndex(i) ? activeFire.get(i)[0] : 0; }
-    @Override public int getFireCol(int i)   { return isValidFireIndex(i) ? activeFire.get(i)[1] : 0; }
-    @Override public int getFireType(int i)  { return isValidFireIndex(i) ? activeFire.get(i)[2] : 0; }
-    private boolean isValidFireIndex(int i)  { return i >= 0 && i < activeFire.size(); }
+    @Override public int getFireCount()     { return activeFire.size(); }
+    @Override public int getFireRow(int i)  { return isValidFireIndex(i) ? activeFire.get(i)[0] : 0; }
+    @Override public int getFireCol(int i)  { return isValidFireIndex(i) ? activeFire.get(i)[1] : 0; }
+    @Override public int getFireType(int i) { return isValidFireIndex(i) ? activeFire.get(i)[2] : 0; }
+    private boolean isValidFireIndex(int i) { return i >= 0 && i < activeFire.size(); }
 
     // ==========================================================
-    // IModel – DISTRUZIONI
+    // IModel – destruction effects
     // ==========================================================
 
-    @Override public int getDestructionCount()         { return destructionEffects.size(); }
-    @Override public int getDestructionRow(int i)      { return isValidDestIndex(i) ? destructionEffects.get(i).getRow() : 0; }
-    @Override public int getDestructionCol(int i)      { return isValidDestIndex(i) ? destructionEffects.get(i).getCol() : 0; }
+    @Override public int getDestructionCount()           { return destructionEffects.size(); }
+    @Override public int getDestructionRow(int i)        { return isValidDestIndex(i) ? destructionEffects.get(i).getRow() : 0; }
+    @Override public int getDestructionCol(int i)        { return isValidDestIndex(i) ? destructionEffects.get(i).getCol() : 0; }
     @Override public int getDestructionElapsedTime(int i){
         return isValidDestIndex(i) ? (int)(System.currentTimeMillis() - destructionEffects.get(i).getCreationTime()) : 0;
     }
-    private boolean isValidDestIndex(int i)  { return i >= 0 && i < destructionEffects.size(); }
+    private boolean isValidDestIndex(int i) { return i >= 0 && i < destructionEffects.size(); }
 
     // ==========================================================
-    // IModel – COLLECTIBLE
+    // IModel – collectibles
     // ==========================================================
 
-    @Override public int getCollectibleCount()          { return activeItems.size(); }
-    @Override public double getCollectibleX(int i)      { return isValidItemIndex(i) ? activeItems.get(i).getX() : 0; }
-    @Override public double getCollectibleY(int i)      { return isValidItemIndex(i) ? activeItems.get(i).getY() : 0; }
-    @Override public ItemType getCollectibleType(int i) { return isValidItemIndex(i) ? activeItems.get(i).getType() : ItemType.AMMO_BOMB; }
-    @Override public long getCollectibleSpawnTime(int i){ return isValidItemIndex(i) ? activeItems.get(i).getSpawnTime() : 0; }
-    private boolean isValidItemIndex(int i)  { return i >= 0 && i < activeItems.size(); }
+    @Override public int getCollectibleCount()           { return activeItems.size(); }
+    @Override public double getCollectibleX(int i)       { return isValidItemIndex(i) ? activeItems.get(i).getX() : 0; }
+    @Override public double getCollectibleY(int i)       { return isValidItemIndex(i) ? activeItems.get(i).getY() : 0; }
+    @Override public ItemType getCollectibleType(int i)  { return isValidItemIndex(i) ? activeItems.get(i).getType() : ItemType.AMMO_BOMB; }
+    @Override public long getCollectibleSpawnTime(int i) { return isValidItemIndex(i) ? activeItems.get(i).getSpawnTime() : 0; }
+    private boolean isValidItemIndex(int i)              { return i >= 0 && i < activeItems.size(); }
 
-    // --- CREPE DEL BOSS ---
-    @Override public int getCrackCount()     { return mapManager.getCrackCount(); }
-    @Override public int getCrackRow(int i)  { return (i >= 0 && i < mapManager.getCrackCount()) ? mapManager.getCrackRow(i) : 0; }
-    @Override public int getCrackCol(int i)  { return (i >= 0 && i < mapManager.getCrackCount()) ? mapManager.getCrackCol(i) : 0; }
+    // boss floor cracks
+    @Override public int getCrackCount()    { return mapManager.getCrackCount(); }
+    @Override public int getCrackRow(int i) { return (i >= 0 && i < mapManager.getCrackCount()) ? mapManager.getCrackRow(i) : 0; }
+    @Override public int getCrackCol(int i) { return (i >= 0 && i < mapManager.getCrackCount()) ? mapManager.getCrackCol(i) : 0; }
 
-    // --- HUD BOSS: cerca il BossGoblin nella lista enemies ---
+    // boss HUD — searches the enemy list for the BossGoblin instance
     @Override
     public int getBossHP() {
-        for (Enemy e : enemies) {
+        for (Enemy e : enemies)
             if (e instanceof BossGoblin boss) return boss.getHP();
-        }
         return 0;
     }
 
@@ -349,35 +329,35 @@ public class Model implements IModel {
         return BossGoblin.MAX_HP_CAP;
     }
 
-    // --- PORTALE BOSS (Zona 2) ---
-    @Override public boolean isBossPortalActive()       { return levelManager.isBossPortalActive(); }
-    @Override public int getBossPortalRow()              { return levelManager.getBossPortalRow(); }
-    @Override public int getBossPortalCol()              { return levelManager.getBossPortalCol(); }
-    @Override public long getBossPortalActivationTime()  { return levelManager.getBossPortalActivationTime(); }
+    // boss portal (zone 2)
+    @Override public boolean isBossPortalActive()      { return levelManager.isBossPortalActive(); }
+    @Override public int getBossPortalRow()            { return levelManager.getBossPortalRow(); }
+    @Override public int getBossPortalCol()            { return levelManager.getBossPortalCol(); }
+    @Override public long getBossPortalActivationTime(){ return levelManager.getBossPortalActivationTime(); }
 
     // ==========================================================
-    // IModel – LIVELLI / GATE / PORTALE
+    // IModel – levels / gate / portal
     // ==========================================================
 
-    @Override public int getCurrentZone()              { return levelManager.getCurrentZone(); }
-    @Override public int getDifficultyCycle()          { return levelManager.getDifficultyCycle(); }
-    @Override public boolean isExitGateActive()        { return levelManager.isExitGateActive(); }
-    @Override public boolean isGateActive()            { return levelManager.isExitGateActive(); }
-    @Override public boolean isPreparationPhase()      { return levelManager.isPreparationPhase(); }
-    @Override public boolean isLevelCompletedFlag()    { return levelManager.isLevelCompletedFlag(); }
-    @Override public boolean isGameOverPending()       { return gameOverPending; }
-    @Override public void    clearGameOverPending()    { gameOverPending = false; }
-    @Override public String getCurrentTheme()          { return levelManager.getCurrentTheme(); }
-    @Override public int getPortalRow()                { return levelManager.getPortalRow(); }
-    @Override public int getPortalCol()                { return levelManager.getPortalCol(); }
-    @Override public boolean isPortalRevealed()        { return levelManager.isPortalRevealed(); }
-    @Override public long getPortalRevealTime()        { return levelManager.getPortalRevealTime(); }
-    @Override public int getExitGateRow()              { return levelManager.getExitGateRow(); }
-    @Override public int getExitGateCol()              { return levelManager.getExitGateCol(); }
-    @Override public long getExitGateActivationTime()  { return levelManager.getExitGateActivationTime(); }
-    @Override public long getGateExitActivationTime()  { return levelManager.getExitGateActivationTime(); }
-    @Override public boolean isTransitioning()         { return levelManager.isTransitioning(); }
-    @Override public void setTransitioning(boolean t)  { levelManager.setTransitioning(t); }
+    @Override public int getCurrentZone()             { return levelManager.getCurrentZone(); }
+    @Override public int getDifficultyCycle()         { return levelManager.getDifficultyCycle(); }
+    @Override public boolean isExitGateActive()       { return levelManager.isExitGateActive(); }
+    @Override public boolean isGateActive()           { return levelManager.isExitGateActive(); }
+    @Override public boolean isPreparationPhase()     { return levelManager.isPreparationPhase(); }
+    @Override public boolean isLevelCompletedFlag()   { return levelManager.isLevelCompletedFlag(); }
+    @Override public boolean isGameOverPending()      { return gameOverPending; }
+    @Override public void    clearGameOverPending()   { gameOverPending = false; }
+    @Override public String getCurrentTheme()         { return levelManager.getCurrentTheme(); }
+    @Override public int getPortalRow()               { return levelManager.getPortalRow(); }
+    @Override public int getPortalCol()               { return levelManager.getPortalCol(); }
+    @Override public boolean isPortalRevealed()       { return levelManager.isPortalRevealed(); }
+    @Override public long getPortalRevealTime()       { return levelManager.getPortalRevealTime(); }
+    @Override public int getExitGateRow()             { return levelManager.getExitGateRow(); }
+    @Override public int getExitGateCol()             { return levelManager.getExitGateCol(); }
+    @Override public long getExitGateActivationTime() { return levelManager.getExitGateActivationTime(); }
+    @Override public long getGateExitActivationTime() { return levelManager.getExitGateActivationTime(); }
+    @Override public boolean isTransitioning()        { return levelManager.isTransitioning(); }
+    @Override public void setTransitioning(boolean t) { levelManager.setTransitioning(t); }
 
     @Override public int getScore() { return scoreManager.getScore(); }
 
@@ -388,45 +368,39 @@ public class Model implements IModel {
 
         player.resetPowerUps();
         player.resetPerfectLevel();
-        player.clearBossFightSnapshot(); // Cancella il checkpoint boss al cambio livello
+        player.clearBossFightSnapshot();
 
-        // Genera mappa DOPO aver avanzato la zona
         int[][] newMap = mapManager.generateProceduralMap(levelManager.getCurrentZone(), levelManager);
         mapManager.applyMap(newMap);
 
-        // Pulisce entità e overlay temporanei
         activeBombs.clear();
         projectiles.clear();
         activeFire.clear();
         activeItems.clear();
         enemies.clear();
-        mapManager.clearCracks();  // Rimuove le crepe del Boss al cambio livello
+        mapManager.clearCracks();
 
-        // Riposiziona player
         player.setXCoordinate(0.0);
         player.setYCoordinate(0.0);
         player.setDelta(0, 0);
         player.setState(PlayerState.IDLE_FRONT);
 
-        // Spawn iniziale (non nella mappa boss)
         if (levelManager.getCurrentZone() != 2) {
             int initialCount = levelManager.getInitialEnemyCount();
             for (int i = 0; i < initialCount; i++) {
                 spawnManager.spawnEnemy(enemies, player, mapManager.getGameAreaArray(), levelManager);
             }
-            System.out.println("Initial spawn: " + initialCount + " enemies (zone "
-                    + levelManager.getCurrentZone() + ", cycle " + levelManager.getDifficultyCycle() + ")");
         }
     }
 
     // ==========================================================
-    // IModel – AZIONI PLAYER
+    // IModel – player actions
     // ==========================================================
 
     @Override
     public void playerShoot() {
         if (!player.canCast() || player.isCasting()) return;
-        if (player.getAuraAmmo() <= 0) { System.out.println("Aura shots exhausted!"); return; }
+        if (player.getAuraAmmo() <= 0) return;
         player.addAuraAmmo(-1);
         player.startCast();
         player.setDelta(0, 0);
@@ -436,7 +410,6 @@ public class Model implements IModel {
             case LEFT  -> player.setState(PlayerState.CAST_LEFT);
             case RIGHT -> player.setState(PlayerState.CAST_RIGHT);
         }
-        System.out.println("Player: Starting Aura launch... (Ammo: " + player.getAuraAmmo() + ")");
     }
 
     @Override
@@ -464,12 +437,10 @@ public class Model implements IModel {
         Iterator<Enemy> eIt = enemies.iterator();
         while (eIt.hasNext()) {
             Enemy e = eIt.next();
-            // Il Boss è troppo corazzato: ignorato dallo staff
-            if (e.getType() == EnemyType.BOSS) continue;
+            if (e.getType() == EnemyType.BOSS) continue; // boss is immune to the staff
             if (hitbox.intersects(new Rectangle2D.Double(e.getX(), e.getY(), 0.6, 0.6))) {
                 eIt.remove();
                 scoreManager.handleEnemyDeath(e, levelManager.getCurrentZone(), activeItems);
-                System.out.println("Goblin eliminated with the staff!");
                 break;
             }
         }
@@ -494,18 +465,17 @@ public class Model implements IModel {
     }
 
     // ==========================================================
-    // IModel – GAME LOOP
+    // IModel – game loop
     // ==========================================================
 
     @Override
     public void updateGameLogic() {
         elapsedTicks++;
 
-        if (player.getState() == goblinhunters.utils.PlayerState.DYING) {
+        if (player.getState() == PlayerState.DYING) {
             if (playerDyingTimer > 0) {
                 playerDyingTimer--;
                 if (playerDyingTimer <= 0) {
-                    System.out.println("GAME OVER! Lives exhausted.");
                     ScoreRepository.getInstance().saveScore(
                         MenuModel.getInstance().getPlayerName(), scoreManager.getScore());
                     this.gameOverPending = true;
@@ -517,14 +487,12 @@ public class Model implements IModel {
             return;
         }
 
-        // Timer boss
         if (levelManager.getCurrentZone() == 2 && levelManager.isPreparationPhase()) {
             if (levelManager.tickBossPreparation()) {
                 triggerGlobalExplosion();
             }
         }
 
-        // Player (casting o movimento)
         if (player.isCasting()) {
             player.decrementCastTimer();
             if (player.getCastTimer() <= 0) {
@@ -537,12 +505,12 @@ public class Model implements IModel {
             checkItemPickup();
         }
 
-        // --- STARVATION: player a 0 munizioni → respawn immediato ---
+        // zero-ammo with no active effects on the board → force a respawn to prevent soft-lock
         boolean hasActiveEffects = !activeBombs.isEmpty() || !projectiles.isEmpty()
                 || !activeFire.isEmpty() || !destructionEffects.isEmpty();
         boolean hasAmmoCrystals = activeItems.stream().anyMatch(
-                item -> item.getType() == goblinhunters.utils.ItemType.AMMO_BOMB
-                     || item.getType() == goblinhunters.utils.ItemType.AMMO_AURA);
+                item -> item.getType() == ItemType.AMMO_BOMB
+                     || item.getType() == ItemType.AMMO_AURA);
 
         if (player.isOutOfAmmo() && !player.isInvincible()
                 && !hasActiveEffects && !hasAmmoCrystals) {
@@ -553,20 +521,17 @@ public class Model implements IModel {
         updateBombs();
         updateProjectiles();
 
-        // Aggiorna timer crepe Boss (overlay indipendente dalla mappa)
         mapManager.updateCracks();
 
         checkCollisions();
         spawnManager.manageSpawning(enemies, levelManager.getPortalCol(), levelManager.getPortalRow(),
                 levelManager.isPortalRevealed(), levelManager);
 
-        // Spawn goblin dal portale boss (solo zona 2, dopo preparazione)
         if (levelManager.getCurrentZone() == 2) {
             spawnManager.manageBossSpawning(enemies, levelManager.isBossPortalActive());
             checkBossPortalDeactivation();
         }
 
-        // Fuoco
         Iterator<int[]> it = activeFire.iterator();
         while (it.hasNext()) {
             int[] f = it.next();
@@ -584,40 +549,29 @@ public class Model implements IModel {
     }
 
     // ==========================================================
-    // LOGICA INTERNA PRIVATA
+    // private logic
     // ==========================================================
 
     private void triggerGlobalExplosion() {
-        System.out.println("DEBUG: Esplosione tutte le casse...");
         mapManager.destroyAllCrates(activeItems, destructionEffects);
-        scoreManager.startBossFight(); // incrementa bossFightNumber PRIMA di creare il boss
+        scoreManager.startBossFight(); // increments bossFightNumber before creating the boss
         enemies.add(new BossGoblin(6.0, 5.0, scoreManager.getBossFightNumber()));
 
-        // Salva le risorse attuali come checkpoint di inizio boss fight
         player.snapshotBossFightAmmo();
 
-        // Attiva il portale goblin fisso nella mappa boss
         levelManager.activateBossPortal();
         spawnManager.resetBossPortalTimer();
-
-        System.out.println("The Boss has entered the arena!");
     }
 
-    /**
-     * Controlla se il portale boss deve essere disattivato.
-     * Condizione: il Boss e' morto (o rimosso) E non ci sono goblin vivi.
-     */
     private void checkBossPortalDeactivation() {
         if (!levelManager.isBossPortalActive()) return;
 
-        // Cerca se c'e' ancora un boss vivo
         boolean bossAlive = enemies.stream()
-                .anyMatch(e -> e.getType() == goblinhunters.utils.EnemyType.BOSS && !e.isDead());
+                .anyMatch(e -> e.getType() == EnemyType.BOSS && !e.isDead());
         if (bossAlive) return;
 
-        // Boss morto/rimosso: conta i goblin rimanenti vivi
         long livingGoblins = enemies.stream()
-                .filter(e -> !e.isDead() && e.getType() != goblinhunters.utils.EnemyType.BOSS)
+                .filter(e -> !e.isDead() && e.getType() != EnemyType.BOSS)
                 .count();
 
         if (livingGoblins == 0) {
@@ -639,7 +593,6 @@ public class Model implements IModel {
         double CORNER_TOLERANCE = 0.60;
         int[][] map = mapManager.getGameAreaArray();
 
-        // ASSE X
         if (deltaX != 0) {
             double rawNextX = currentX + deltaX;
             double clampedNextX = rawNextX;
@@ -664,12 +617,11 @@ public class Model implements IModel {
                 boolean canUp   = !collisionManager.isCellBlocked(rUp,   targetCol, map, activeBombs, player) && isWalkable(rawNextX, tYUp)   && !collisionManager.isOccupiedByEnemies(rawNextX, tYUp,   enemies);
                 boolean canDown = !collisionManager.isCellBlocked(rDown, targetCol, map, activeBombs, player) && isWalkable(rawNextX, tYDown)  && !collisionManager.isOccupiedByEnemies(rawNextX, tYDown, enemies);
                 double dUp = Math.abs(currentY - tYUp), dDown = Math.abs(currentY - tYDown);
-                if (canUp  && dUp   < CORNER_TOLERANCE && (!canDown || dUp < dDown))  { if (dUp   > 0.01) player.setYCoordinate(currentY - Math.min(alignSpeed, dUp));   }
-                else if (canDown && dDown < CORNER_TOLERANCE && (!canUp  || dDown < dUp)) { if (dDown > 0.01) player.setYCoordinate(currentY + Math.min(alignSpeed, dDown)); }
+                if (canUp  && dUp   < CORNER_TOLERANCE && (!canDown || dUp  < dDown)) { if (dUp   > 0.01) player.setYCoordinate(currentY - Math.min(alignSpeed, dUp));   }
+                else if (canDown && dDown < CORNER_TOLERANCE && (!canUp || dDown < dUp))  { if (dDown > 0.01) player.setYCoordinate(currentY + Math.min(alignSpeed, dDown)); }
             }
         }
 
-        // ASSE Y
         currentX = player.getXCoordinate(); currentY = player.getYCoordinate();
         if (deltaY != 0) {
             double rawNextY = currentY + deltaY, clampedNextY = rawNextY;
@@ -695,7 +647,7 @@ public class Model implements IModel {
                 boolean canRight = !collisionManager.isCellBlocked(targetRow, cRight, map, activeBombs, player) && isWalkable(tXRight, rawNextY) && !collisionManager.isOccupiedByEnemies(tXRight, rawNextY, enemies);
                 double dLeft = Math.abs(currentX - tXLeft), dRight = Math.abs(currentX - tXRight);
                 if (canLeft  && dLeft  < CORNER_TOLERANCE && (!canRight || dLeft  < dRight)) { if (dLeft  > 0.01) player.setXCoordinate(currentX - Math.min(alignSpeed, dLeft));  }
-                else if (canRight && dRight < CORNER_TOLERANCE && (!canLeft  || dRight < dLeft)) { if (dRight > 0.01) player.setXCoordinate(currentX + Math.min(alignSpeed, dRight)); }
+                else if (canRight && dRight < CORNER_TOLERANCE && (!canLeft || dRight < dLeft))  { if (dRight > 0.01) player.setXCoordinate(currentX + Math.min(alignSpeed, dRight)); }
             }
         }
     }
@@ -722,7 +674,6 @@ public class Model implements IModel {
         double pX = player.getXCoordinate(), pY = player.getYCoordinate();
         double pHW = Config.ENTITY_LOGICAL_HITBOX_WIDTH, pHH = Config.ENTITY_LOGICAL_HITBOX_HEIGHT;
 
-        // --- COLLISIONE CON NEMICI VIVI ---
         for (Enemy e : enemies) {
             if (e.isDead()) continue;
             boolean cx = pX < e.getX() + pHW && pX + pHW > e.getX();
@@ -730,11 +681,10 @@ public class Model implements IModel {
             if (cx && cy) { handlePlayerHit(); break; }
         }
 
-        // --- DANNO DA CREPE DEL BOSS ---
-        // Le crepe sono un overlay: se il player calpesta una crepa attiva subisce danno
+        // boss floor cracks deal damage via overlap, not just on creation
         if (!player.isInvincible()) {
             int pCol = (int) Math.floor(pX + pHW / 2.0);
-            int pRow = (int) Math.floor(pY + 0.6);  // punto ai piedi del player
+            int pRow = (int) Math.floor(pY + 0.6); // foot of the player sprite
             if (mapManager.hasCrackAt(pRow, pCol)) {
                 handlePlayerHit();
             }
@@ -742,28 +692,25 @@ public class Model implements IModel {
     }
 
     private void handlePlayerHit() {
-        if (player.isInvincible() || player.getState() == goblinhunters.utils.PlayerState.DYING) return;
+        if (player.isInvincible() || player.getState() == PlayerState.DYING) return;
         boolean lifeLost = player.takeDamage();
         if (lifeLost) {
             if (player.getLives() <= 0) {
-                System.out.println("GAME IN DEATH TRANSITION...");
-                player.setState(goblinhunters.utils.PlayerState.DYING);
+                player.setState(PlayerState.DYING);
                 player.setDelta(0, 0);
-                playerDyingTimer = 80; // Pause before Game Over screen (approx 1.3 seconds)
+                playerDyingTimer = 80; // ~1.3 s pause before the Game Over screen
             } else {
                 player.setXCoordinate(0.0);
                 player.setYCoordinate(0.0);
                 player.setDelta(0, 0);
                 player.setState(PlayerState.IDLE_FRONT);
-                System.out.println("RESPAWN.");
 
-                // Durante il boss fight, ripristina le risorse del checkpoint
                 boolean bossAlive = enemies.stream()
-                        .anyMatch(e -> e.getType() == goblinhunters.utils.EnemyType.BOSS && !e.isDead());
+                        .anyMatch(e -> e.getType() == EnemyType.BOSS && !e.isDead());
                 if (levelManager.getCurrentZone() == 2 && bossAlive && !player.isOutOfAmmo()) {
-                    player.restoreBossFightAmmo(); // colpito dal boss con munizioni → snapshot
+                    player.restoreBossFightAmmo();
                 } else if (player.isOutOfAmmo()) {
-                    player.restoreDefaultAmmo();   // starvation → sempre 5 bombe + 6 aure
+                    player.restoreDefaultAmmo();
                 }
             }
         }
@@ -774,13 +721,9 @@ public class Model implements IModel {
         while (it.hasNext()) {
             Enemy e = it.next();
 
-            // TASK 4: despawn cadavere Boss dopo 2 secondi nello stato DYING
+            // boss corpse lingers for 2 s (death animation) then despawns
             if (e instanceof BossGoblin boss && boss.isReadyToDespawn()) {
                 it.remove();
-                // Il boss e' gia' morto: scoreManager.handleEnemyDeath e' gia' stato
-                // chiamato in checkExplosionDamage / updateProjectiles al momento del
-                // colpo fatale, quindi qui non lo richiamiamo.
-                System.out.println("Boss removed from list (despawn).");
                 continue;
             }
 
@@ -796,7 +739,6 @@ public class Model implements IModel {
             Enemy e = it.next();
             if (e.isDead()) continue;
 
-            // Usa la stessa hitbox logica (piu' piccola) del Player per evitare morti ingiuste
             double eW = Config.ENTITY_LOGICAL_HITBOX_WIDTH, eH = Config.ENTITY_LOGICAL_HITBOX_HEIGHT;
             double eL = e.getX() + (1.0 - eW) / 2.0, eR = eL + eW;
             double eB = e.getY() + 1.0 - 0.4,         eT = eB - eH;
@@ -806,12 +748,10 @@ public class Model implements IModel {
                 boolean fatal = e.takeDamage(1);
                 if (fatal) {
                     if (e.getType() == EnemyType.BOSS) {
-                        System.out.println("THE BOSS IS DEFEATED!");
                         scoreManager.handleEnemyDeath(e, levelManager.getCurrentZone(), activeItems);
                     } else {
                         it.remove();
                         scoreManager.handleEnemyDeath(e, levelManager.getCurrentZone(), activeItems);
-                        System.out.println("Goblin eliminated by explosion in [" + row + "," + col + "]!");
                     }
                 }
             }
@@ -837,33 +777,25 @@ public class Model implements IModel {
             if (!p.isActive()) { it.remove(); continue; }
 
             if (p.isEnemyProjectile()) {
-                // Proiettile nemico vs Player
                 if (Math.abs(p.getX() - player.getXCoordinate()) < 0.5 &&
                     Math.abs(p.getY() - player.getYCoordinate()) < 0.5) {
                     handlePlayerHit();
                     p.setActive(false);
                 }
             } else {
-                // Proiettile player (Aura) vs Nemici
                 Iterator<Enemy> eIt = enemies.iterator();
                 boolean hit = false;
                 while (eIt.hasNext()) {
                     Enemy e = eIt.next();
-                    if (e.isDead()) continue;  // non colpisce i cadaveri
+                    if (e.isDead()) continue;
                     if (Math.abs(p.getX() - e.getX()) < 0.6 && Math.abs(p.getY() - e.getY()) < 0.6) {
                         if (e.getType() == EnemyType.BOSS) {
-                            // Il Boss non viene mai rimosso dalla lista:
-                            // takeDamage() gestisce internamente gli I-Frames.
-                            // Il proiettile si distrugge sempre all'impatto.
+                            // boss is never removed from the list; takeDamage handles i-frames
                             boolean fatal = e.takeDamage(1);
-                            if (fatal) {
-                                System.out.println("THE BOSS IS DEFEATED! (Aura)");
-                                scoreManager.handleEnemyDeath(e, levelManager.getCurrentZone(), activeItems);
-                            }
+                            if (fatal) scoreManager.handleEnemyDeath(e, levelManager.getCurrentZone(), activeItems);
                         } else {
                             eIt.remove();
                             scoreManager.handleEnemyDeath(e, levelManager.getCurrentZone(), activeItems);
-                            System.out.println("Goblin struck by Aura!");
                         }
                         hit = true;
                         break;
@@ -901,13 +833,11 @@ public class Model implements IModel {
 
     private void applyItemEffect(ItemType type) {
         switch (type) {
-            case AMMO_BOMB   -> player.addBombAmmo(3);
-            case AMMO_AURA   -> player.addAuraAmmo(2);
+            case AMMO_BOMB    -> player.addBombAmmo(3);
+            case AMMO_AURA    -> player.addAuraAmmo(2);
             case POWER_SHIELD -> player.setShield(true);
             case POWER_RADIUS -> player.setMaxRadius(true);
             case POWER_SPEED  -> player.setMaxSpeed(true);
         }
-        System.out.println("RACCOLTO: " + type.name());
     }
-
 }

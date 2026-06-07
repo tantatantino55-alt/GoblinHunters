@@ -1,20 +1,17 @@
 package goblinhunters.utils;
 
 /**
- * Facade di compatibilità.
- * Tutte le costanti sono state migrate in:
- *   - {@link LogicConfig}  → logica di gioco (Model / Controller)
- *   - {@link ViewConfig}   → rendering e risorse grafiche (View)
+ * Backward-compatible facade. All constants have been migrated to:
+ *   - {@link LogicConfig} — game logic (Model / Controller)
+ *   - {@link ViewConfig}  — rendering and graphic assets (View)
  *
- * Questa classe reindirizza ogni costante alla nuova sorgente, così
- * il codice esistente che importa Config.XYZ continua a compilare
- * senza modifiche. Nel tempo conviene aggiornare i file uno per uno
- * per importare direttamente LogicConfig o ViewConfig.
+ * Existing code that references Config.XYZ continues to compile without changes.
+ * Prefer importing LogicConfig or ViewConfig directly in new code.
  */
 public class Config {
 
     // =====================================================================
-    // LOGICA DI GIOCO  →  LogicConfig
+    // game logic → LogicConfig
     // =====================================================================
     public static final int GRID_WIDTH                  = LogicConfig.GRID_WIDTH;
     public static final int GRID_HEIGHT                 = LogicConfig.GRID_HEIGHT;
@@ -54,8 +51,8 @@ public class Config {
 
     public static final double GOBLIN_COMMON_SPEED       = LogicConfig.GOBLIN_COMMON_SPEED;
 
-    public static final int    AuraProjectileSpeed       = LogicConfig.AuraProjectileSpeed;
-    public static final int    BoneProjectileSpeed       = LogicConfig.BoneProjectileSpeed;
+    public static final int    AURA_PROJECTILE_SPEED     = LogicConfig.AURA_PROJECTILE_SPEED;
+    public static final int    BONE_PROJECTILE_SPEED     = LogicConfig.BONE_PROJECTILE_SPEED;
 
     public static final int    INITIAL_LIVES             = LogicConfig.INITIAL_LIVES;
     public static final long   INVINCIBILITY_DURATION_MS = LogicConfig.INVINCIBILITY_DURATION_MS;
@@ -84,14 +81,13 @@ public class Config {
     public static final int    MAX_BOSS_TIME_BONUS       = LogicConfig.MAX_BOSS_TIME_BONUS;
     public static final int    BOSS_BONUS_DECAY_PER_SEC  = LogicConfig.BOSS_BONUS_DECAY_PER_SEC;
 
-    // --- PORTALE BOSS (Zona 2) ---
     public static final int    BOSS_PORTAL_ROW                = LogicConfig.BOSS_PORTAL_ROW;
     public static final int    BOSS_PORTAL_COL                = LogicConfig.BOSS_PORTAL_COL;
     public static final long   BOSS_PORTAL_SPAWN_INTERVAL_MS  = LogicConfig.BOSS_PORTAL_SPAWN_INTERVAL_MS;
     public static final int    BOSS_PORTAL_MAX_GOBLINS        = LogicConfig.BOSS_PORTAL_MAX_GOBLINS;
 
     // =====================================================================
-    // VIEW / RENDERING  →  ViewConfig
+    // view / rendering → ViewConfig
     // =====================================================================
     public static final int    TILE_SIZE                 = ViewConfig.TILE_SIZE;
     public static final int    GAME_PANEL_WIDTH          = ViewConfig.GAME_PANEL_WIDTH;
@@ -245,7 +241,7 @@ public class Config {
     public static final int    BOSS_RUN_RIGHT_START       = ViewConfig.BOSS_RUN_RIGHT_START;
 
     // =====================================================================
-    // MENU SELEZIONE PERSONAGGIO  →  ViewConfig
+    // character selection menu → ViewConfig
     // =====================================================================
     public static final String START_GAME_BG               = ViewConfig.START_GAME_BG;
     public static final int    MENU_DRAW_X                 = ViewConfig.MENU_DRAW_X;

@@ -34,17 +34,13 @@ public class ScoreRepository {
 
     private ScoreRepository() {
         ensureFile();
-        System.out.println("[ScoreRepository] Cartella dati: " + DIR.toAbsolutePath());
-        System.out.println("[ScoreRepository] File scores  : " + FILE.toAbsolutePath());
     }
 
     public void saveScore(String name, int score) {
-        System.out.println("[ScoreRepository] saveScore → nome=" + name + " score=" + score);
         List<ScoreRecord> all = readAll();
         all.add(new ScoreRecord(sanitize(name), score, System.currentTimeMillis()));
         all.sort((a, b) -> Integer.compare(b.score, a.score));
         writeAll(all);
-        System.out.println("[ScoreRepository] Scritto in " + FILE.toAbsolutePath());
     }
 
     public List<ScoreRecord> getTopScores() {
@@ -59,14 +55,14 @@ public class ScoreRepository {
         return score > top.get(top.size() - 1).score;
     }
 
-    // --- I/O privato ---
+    // private I/O
 
     private void ensureFile() {
         try {
             if (Files.notExists(DIR))  Files.createDirectories(DIR);
             if (Files.notExists(FILE)) Files.createFile(FILE);
         } catch (IOException e) {
-            System.err.println("[ScoreRepository] ERRORE creazione file: " + e.getMessage());
+            System.err.println("[ScoreRepository] Failed to create data file: " + e.getMessage());
         }
     }
 
@@ -87,7 +83,7 @@ public class ScoreRepository {
             for (ScoreRecord r : records)
                 w.write(r.name + ":" + r.score + ":" + r.timestamp + "\n");
         } catch (IOException e) {
-            System.err.println("ScoreRepository: errore scrittura — " + e.getMessage());
+            System.err.println("[ScoreRepository] Write error: " + e.getMessage());
         }
     }
 
@@ -102,7 +98,7 @@ public class ScoreRepository {
     }
 
     private String sanitize(String name) {
-        if (name == null || name.isBlank()) return "ANONIMO";
+        if (name == null || name.isBlank()) return "UNKNOWN";
         String s = name.replaceAll(":", "").trim();
         return s.substring(0, Math.min(12, s.length())).toUpperCase();
     }

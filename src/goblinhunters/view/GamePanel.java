@@ -12,17 +12,17 @@ import java.awt.event.*;
 public class GamePanel extends JPanel {
     private AbstractDrawer drawer = null;
 
-    private boolean canPlaceBomb = true;
-    private boolean canShootAura = true;
+    private boolean canPlaceBomb   = true;
+    private boolean canShootAura   = true;
     private boolean canStaffAttack = true;
 
-    // =========================================================================
-    // KEY BINDING RUNTIME STATE
-    // =========================================================================
+    // ==========================================================
+    // key binding state
+    // ==========================================================
 
     /**
-     * Nomi delle azioni nell'ActionMap per i tasti premuti.
-     * Indice coerente con PauseModel.ACTION_MOVE_UP … ACTION_STAFF.
+     * Action names in the ActionMap for key-press events.
+     * Index matches PauseModel.ACTION_MOVE_UP … ACTION_STAFF.
      */
     private static final String[] PRESS_ACTIONS = {
             "moveUp", "moveDown", "moveLeft", "moveRight",
@@ -30,8 +30,8 @@ public class GamePanel extends JPanel {
     };
 
     /**
-     * Nomi delle azioni nell'ActionMap per i tasti rilasciati.
-     * Indice coerente con PRESS_ACTIONS.
+     * Action names in the ActionMap for key-release events.
+     * Index matches PRESS_ACTIONS.
      */
     private static final String[] RELEASE_ACTIONS = {
             "stopUp", "stopDown", "stopLeft", "stopRight",
@@ -39,10 +39,9 @@ public class GamePanel extends JPanel {
     };
 
     /**
-     * Tracking locale dei keybindings correnti (formato uppercase KeyStroke).
-     * Inizializzati con gli stessi valori di default del PauseModel per garantire
-     * la coerenza senza creare una dipendenza View → Model.
-     * Aggiornati da {@link #applyKeyRebind} ad ogni rebind.
+     * Local tracking of current keybindings (uppercase KeyStroke format).
+     * Initialised from PauseModel defaults for consistency without a View→Model dependency.
+     * Updated by {@link #applyKeyRebind} on every rebind.
      */
     private final String[] currentInputBindings = {
             "UP", "DOWN", "LEFT", "RIGHT", "SPACE", "X", "Z"
@@ -50,74 +49,55 @@ public class GamePanel extends JPanel {
 
     public GamePanel(AbstractDrawer drawer) {
         this.drawer = drawer;
-        // Obbliga il pannello ad avere le dimensioni ESATTE dell'immagine di sfondo
-// Obbliga il pannello ad avere le dimensioni ESATTE dell'immagine di sfondo
-        this.setPreferredSize(new Dimension(goblinhunters.utils.ViewConfig.WINDOW_PREFERRED_WIDTH, goblinhunters.utils.ViewConfig.WINDOW_PREFERRED_HEIGHT));        this.setBackground(Color.black);
+        this.setPreferredSize(new Dimension(
+                goblinhunters.utils.ViewConfig.WINDOW_PREFERRED_WIDTH,
+                goblinhunters.utils.ViewConfig.WINDOW_PREFERRED_HEIGHT));
+        this.setBackground(Color.black);
         this.setDoubleBuffered(true);
         this.setFocusable(true);
-        setupMenuControls();   // Input per il menu di selezione personaggio
+        setupMenuControls();
         setupKeyBindings();
         setupPauseControls();
-        // Registra il callback: permette a PauseController di aggiornare l'InputMap
-        // al momento del rebind, senza che il Controller conosca GamePanel.
+        // passes the rebind callback so PauseController can update the InputMap
+        // without knowing about GamePanel
         ControllerForView.getInstance().setKeyBindingApplier(this::applyKeyRebind);
     }
 
-    // =========================================================================
-    // MENU SELEZIONE PERSONAGGIO — Click-only (freccia selettore)
-    // =========================================================================
+    // ==========================================================
+    // character selection menu — click only
+    // ==========================================================
 
-    /**
-     * Configura i listener per il menu di selezione personaggio.
-     * L'interazione è esclusivamente tramite click (nessun hover).
-     * Il click viene gestito in {@link #setupPauseControls()} nel mouseClicked,
-     * che delega a {@link #handleMenuClick(int, int)}.
-     */
     private void setupMenuControls() {
-        // Nessun listener aggiuntivo necessario:
-        // il click del mouse viene intercettato da setupPauseControls()
-        // e indirizzato a handleMenuClick() quando lo stato è MENU.
+        // no extra listener needed: mouse clicks are intercepted by setupPauseControls()
+        // and routed to handleMenuClick() when in MENU state
     }
 
     @Override
     public void paintComponent(Graphics g) {
-        // Il Double Buffering è garantito da setDoubleBuffered(true) nel costruttore
         super.paintComponent(g);
 
-        // 1. DISEGNO DELLO SFONDO (Cabinet Arcade) - Livello Inferiore
-        java.awt.image.BufferedImage cabinetImg = goblinhunters.view.SpriteManager.getInstance().getSprite("ARCADE_CABINET", 0);
+        java.awt.image.BufferedImage cabinetImg =
+                goblinhunters.view.SpriteManager.getInstance().getSprite("ARCADE_CABINET", 0);
         if (cabinetImg != null) {
-            // Disegna coprendo l'intero ContentPane senza tagliare nulla
             g.drawImage(cabinetImg, 0, 0,
                     goblinhunters.utils.ViewConfig.WINDOW_PREFERRED_WIDTH,
-                    goblinhunters.utils.ViewConfig.WINDOW_PREFERRED_HEIGHT, this);        }
+                    goblinhunters.utils.ViewConfig.WINDOW_PREFERRED_HEIGHT, this);
+        }
 
-        // 2. DISEGNO AREA DI GIOCO (Griglia e HUD) - Livello Superiore
-        // Creiamo una copia del Graphics per non inquinare il set originale
         Graphics2D g2d = (Graphics2D) g.create();
-
-        // --- INCASTONAMENTO NELLO SCHERMO ---
-        // Spostiamo il punto di origine (0,0) della griglia di gioco
-        // esattamente alle coordinate (57, 46) in modo che cada dentro al monitor del
-        // cabinato
-        // g2d.translate(57, 46);
-
         drawer.draw(g2d);
-
         g2d.dispose();
     }
 
-    // =========================================================================
-    // PAUSE — ESC key + mouse routing
-    // =========================================================================
+    // ==========================================================
+    // pause — ESC key + mouse routing
+    // ==========================================================
 
     private void setupPauseControls() {
 
-        // ESC: toggling della pausa e cancellazione rebind in corso.
         this.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
-                // --- MENU STATE: cattura tastiera per input nome ---
                 if (ControllerForView.getInstance().getGameState() == GameState.MENU) {
                     if (ControllerForView.getInstance().isMenuTypingName()) {
                         if (e.getKeyCode() == KeyEvent.VK_BACK_SPACE) {
@@ -126,13 +106,11 @@ public class GamePanel extends JPanel {
                             ControllerForView.getInstance().menuSetTypingName(false);
                         }
                     }
-                    return; // nel menu gli altri tasti non fanno nulla
+                    return;
                 }
 
-                // In GAME_OVER state i tasti non fanno nulla
                 if (ControllerForView.getInstance().getGameState() == GameState.GAME_OVER) return;
 
-                // --- PLAYING STATE: pausa e rebind ---
                 if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
                     boolean nowPaused = !ControllerForView.getInstance().isPaused();
                     ControllerForView.getInstance().setPaused(nowPaused);
@@ -142,7 +120,6 @@ public class GamePanel extends JPanel {
                     return;
                 }
 
-                // Cattura il tasto premuto durante un rebind
                 if (ControllerForView.getInstance().isPaused()) {
                     PauseController ctrl = ControllerForView.getInstance().getPauseController();
                     if (ctrl.isRebinding()) {
@@ -164,98 +141,73 @@ public class GamePanel extends JPanel {
             }
         });
 
-        // Click del mouse: routing basato sullo stato.
         this.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                // --- MENU STATE: click su riquadri personaggio o NEW GAME ---
                 if (ControllerForView.getInstance().getGameState() == GameState.MENU) {
                     handleMenuClick(e.getX(), e.getY());
                     return;
                 }
 
-                // --- GAME OVER STATE ---
                 if (ControllerForView.getInstance().getGameState() == GameState.GAME_OVER) {
                     PauseMenuDrawer.ClickResult result = GameOverDrawer.getInstance().handleClick(e.getX(), e.getY());
                     switch (result) {
-                        case QUIT -> System.exit(0);
+                        case QUIT                -> System.exit(0);
                         case RETURN_TO_MAIN_MENU -> ControllerForView.getInstance().resetGame();
                         default -> {}
                     }
                     return;
                 }
 
-                // --- PLAYING STATE (pausa): routing tramite PauseMenuDrawer ---
-                if (!ControllerForView.getInstance().isPaused())
-                    return;
+                if (!ControllerForView.getInstance().isPaused()) return;
 
                 PauseController ctrl = ControllerForView.getInstance().getPauseController();
-                PauseMenuDrawer.ClickResult result = PauseMenuDrawer.getInstance().handleClick(e.getX(), e.getY(),
-                        ctrl);
+                PauseMenuDrawer.ClickResult result = PauseMenuDrawer.getInstance().handleClick(
+                        e.getX(), e.getY(), ctrl);
 
-                // GamePanel è l'orchestratore: riceve il ClickResult e gestisce
-                // tutte le azioni di lifecycle. PauseController si occupa solo
-                // della pulizia del proprio stato interno.
+                // GamePanel is the orchestrator: it receives the ClickResult and handles all
+                // lifecycle actions. PauseController is responsible only for its own internal state.
                 switch (result) {
                     case RESUME -> {
-                        ctrl.onResumeClicked(); // pulizia rebind
-                        ControllerForView.getInstance().setPaused(false); // lifecycle
+                        ctrl.onResumeClicked();
+                        ControllerForView.getInstance().setPaused(false);
                     }
                     case QUIT -> {
-                        ctrl.onQuitClicked(); // pulizia stato interno
-                        System.exit(0); // lifecycle
+                        ctrl.onQuitClicked();
+                        System.exit(0);
                     }
                     case RETURN_TO_MAIN_MENU -> {
-                        ctrl.onReturnToMainMenuClicked(); // log TODO
-                        // TODO: navigare verso la scena del Main Menu
+                        ctrl.onReturnToMainMenuClicked();
                     }
-                    // RESET_DEFAULTS, TOGGLE_AUDIO, REBIND_START, NONE
-                    // → già gestiti internamente da PauseMenuDrawer + PauseController
-                    default -> {
-                        /* nessuna azione aggiuntiva necessaria */ }
+                    default -> {}
                 }
             }
         });
     }
 
-    /**
-     * Gestisce i click nella schermata del menu di selezione.
-     *
-     * <p>Flusso MVC:</p>
-     * <ol>
-     *   <li><b>View</b> (MenuDrawer): hit-testing → coordinate pixel → indice personaggio</li>
-     *   <li><b>Controller</b> (ControllerForView): riceve l'indice e aggiorna il Model</li>
-     *   <li><b>Model</b> (MenuModel): memorizza l'indice selezionato</li>
-     *   <li><b>View</b> (MenuDrawer): nel frame successivo, legge il Model e disegna la freccia</li>
-     * </ol>
-     */
     private void handleMenuClick(int x, int y) {
         MenuDrawer menuView = MenuDrawer.getInstance();
 
-        // 0. Click sul campo nome? → attiva typing mode
         if (menuView.getNameFieldRect() != null && menuView.getNameFieldRect().contains(x, y)) {
             ControllerForView.getInstance().menuSetTypingName(true);
             return;
         }
-        // Click fuori dal campo nome → disattiva typing mode
         ControllerForView.getInstance().menuSetTypingName(false);
 
-        // 1. Click su un personaggio?
         int characterIndex = menuView.getCharacterIndexAt(x, y);
         if (characterIndex >= 0) {
             ControllerForView.getInstance().menuHandleClick(characterIndex);
             return;
         }
 
-        // 2. Click sul pulsante "Start Game"?
         if (menuView.isStartGameButtonAt(x, y)) {
             ControllerForView.getInstance().menuConfirmSelection();
         }
     }
 
-    // =========================================================================
-    // GAMEPLAY KEY BINDINGS
-    // =========================================================================
+    // ==========================================================
+    // gameplay key bindings
+    // ==========================================================
 
     private void setupKeyBindings() {
         InputMap im = this.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
@@ -379,8 +331,7 @@ public class GamePanel extends JPanel {
             public void actionPerformed(ActionEvent e) {
                 if (ControllerForView.getInstance().getGameState() != GameState.PLAYING || ControllerForView.getInstance().isPaused())
                     return;
-                if (!ControllerForView.getInstance().isStaffUsable())
-                    return; // Bastone non disponibile in questa fase
+                if (!ControllerForView.getInstance().isStaffUsable()) return;
                 if (canStaffAttack) {
                     ControllerForView.getInstance().staffAttack();
                     canStaffAttack = false;
@@ -395,48 +346,31 @@ public class GamePanel extends JPanel {
             }
         });
     }
-    // =========================================================================
-    // KEY BINDING — RUNTIME REBIND
-    // =========================================================================
+
+    // ==========================================================
+    // runtime key rebind
+    // ==========================================================
 
     /**
-     * Aggiorna l'InputMap di Swing per riflettere un rebind effettuato nel menu di
-     * pausa.
-     * <p>
-     * Questo metodo è passato come callback a
-     * {@code IControllerForView.setKeyBindingApplier()}
-     * nel costruttore: il Controller lo chiama senza conoscere questa classe.
-     * </p>
+     * Updates the Swing InputMap to reflect a rebind made in the pause menu.
+     * Passed as a callback to {@code IControllerForView.setKeyBindingApplier()}
+     * so the Controller can invoke it without knowing about this class.
      *
-     * <h3>Flusso</h3>
-     * <ol>
-     * <li>Rimuove il vecchio KeyStroke (press + released) dall'InputMap</li>
-     * <li>Aggiunge il nuovo KeyStroke → stessa ActionName (l'ActionMap resta
-     * invariata)</li>
-     * <li>Aggiorna {@code currentInputBindings} per tenere traccia del binding
-     * corrente</li>
-     * </ol>
-     *
-     * @param actionIndex indice azione 0-6 (coerente con PauseModel.ACTION_*)
-     * @param newKeyName  nuovo tasto in formato KeyStroke uppercase, es. "W", "UP",
-     *                    "SPACE"
+     * @param actionIndex action index 0-6 (matches PauseModel.ACTION_*)
+     * @param newKeyName  new key in uppercase KeyStroke format, e.g. "W", "UP", "SPACE"
      */
     private void applyKeyRebind(int actionIndex, String newKeyName) {
-        if (actionIndex < 0 || actionIndex >= PRESS_ACTIONS.length)
-            return;
+        if (actionIndex < 0 || actionIndex >= PRESS_ACTIONS.length) return;
 
         InputMap im = getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
         String oldKey = currentInputBindings[actionIndex];
 
-        // 1. Rimuovi il vecchio binding (press + released)
         im.remove(KeyStroke.getKeyStroke(oldKey));
         im.remove(KeyStroke.getKeyStroke("released " + oldKey));
 
-        // 2. Aggiungi il nuovo binding (stessa ActionName → stessa logica)
         im.put(KeyStroke.getKeyStroke(newKeyName), PRESS_ACTIONS[actionIndex]);
         im.put(KeyStroke.getKeyStroke("released " + newKeyName), RELEASE_ACTIONS[actionIndex]);
 
-        // 3. Aggiorna il tracking locale
         currentInputBindings[actionIndex] = newKeyName;
     }
 }

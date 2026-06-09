@@ -25,8 +25,8 @@ public class Player extends Entity {
     private long lastCastTime = 0;
     private final long CAST_COOLDOWN_MS = 800;
 
-    private static final int DEFAULT_BOMB_AMMO = 5;
-    private static final int DEFAULT_AURA_AMMO = 6;
+    private static final int DEFAULT_BOMB_AMMO = 10;
+    private static final int DEFAULT_AURA_AMMO = 5;
     private int bombAmmo = DEFAULT_BOMB_AMMO;
     private int auraAmmo = DEFAULT_AURA_AMMO;
     private boolean hasShield = false;

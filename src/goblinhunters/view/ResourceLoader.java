@@ -6,19 +6,13 @@ import goblinhunters.utils.ViewConfig;
 
 import java.awt.image.BufferedImage;
 
-/**
- * Classe dedicata esclusivamente alla configurazione e al caricamento
- * iniziale delle risorse grafiche nel sistema.
- */
+/** Loads and registers all game sprites, animations, and tile themes into SpriteManager/TileManager. */
 public class ResourceLoader {
 
     public void loadAllResources() {
         SpriteManager sm = SpriteManager.getInstance();
 
-        // --- MENU: risorse per la schermata di selezione personaggio ---
         loadMenuResources(sm);
-
-        // --- GAMEPLAY: animazioni player con lo sheet di default ---
         loadPlayerAnimations(sm, Config.PLAYER1_SHEET);
         loadBombResources(sm);
         loadDestructionAnimations(sm);
@@ -33,390 +27,291 @@ public class ResourceLoader {
         loadPowerUps(sm);
         loadConsumables(sm);
         loadHUDIcons(sm);
-
-        // --- Grayscale HUD: genera una sola volta le versioni "non raccolto" ---
         buildGrayscaleHudIcons(sm);
     }
 
     /**
-     * Carica tutte le animazioni del player da uno spritesheet.
-     * Il metodo è parametrizzato per supportare la selezione del personaggio:
-     * la struttura dei frame è identica per tutti gli sheet.
+     * Loads all player animations from a sprite sheet.
+     * Parameterised so any character sheet (same structure) can be swapped in.
      *
-     * @param sm    SpriteManager in cui registrare le animazioni
-     * @param sheet percorso dello spritesheet (es. "/wizardmale.png")
+     * @param sm    SpriteManager to register animations into
+     * @param sheet path to the sprite sheet (e.g. "/wizardmale.png")
      */
     private void loadPlayerAnimations(SpriteManager sm, String sheet) {
         int size = Config.ENTITY_FRAME_SIZE;
 
-        // --- FRONTE (Giù) -> FRONT ---
+        // facing down
         sm.loadAnimation(PlayerState.ATTACK_FRONT, sheet, 58, 10, size);
-        sm.loadAnimation(PlayerState.CAST_FRONT,   sheet, 58, 10, size); // Stesse immagini dell'attack!
+        sm.loadAnimation(PlayerState.CAST_FRONT,   sheet, 58, 10, size); // same frames as attack
         sm.loadAnimation(PlayerState.HURT_FRONT,   sheet, 68, 10, size);
         sm.loadAnimation(PlayerState.IDLE_FRONT,   sheet, 78, 16, size);
         sm.loadAnimation(PlayerState.RUN_FRONT,    sheet, 94, 12, size);
 
-        // --- RETRO (Su) -> BACK ---
+        // facing up
         sm.loadAnimation(PlayerState.ATTACK_BACK, sheet, 0, 10, size);
-        sm.loadAnimation(PlayerState.CAST_BACK,   sheet, 0, 10, size); // Stesse immagini dell'attack!
+        sm.loadAnimation(PlayerState.CAST_BACK,   sheet, 0, 10, size); // same frames as attack
         sm.loadAnimation(PlayerState.HURT_BACK,   sheet, 10, 10, size);
         sm.loadAnimation(PlayerState.IDLE_BACK,   sheet, 20, 16, size);
         sm.loadAnimation(PlayerState.RUN_BACK,    sheet, 36, 12, size);
 
-        // --- SINISTRA -> LEFT ---
+        // facing left
         sm.loadAnimation(PlayerState.ATTACK_LEFT, sheet, 106, 10, size);
-        sm.loadAnimation(PlayerState.CAST_LEFT,   sheet, 106, 10, size); // Stesse immagini dell'attack!
+        sm.loadAnimation(PlayerState.CAST_LEFT,   sheet, 106, 10, size); // same frames as attack
         sm.loadAnimation(PlayerState.HURT_LEFT,   sheet, 116, 10, size);
         sm.loadAnimation(PlayerState.IDLE_LEFT,   sheet, 126, 16, size);
         sm.loadAnimation(PlayerState.RUN_LEFT,    sheet, 142, 12, size);
 
-        // --- DESTRA -> RIGHT ---
+        // facing right
         sm.loadAnimation(PlayerState.ATTACK_RIGHT, sheet, 154, 10, size);
-        sm.loadAnimation(PlayerState.CAST_RIGHT,   sheet, 154, 10, size); // Stesse immagini dell'attack!
+        sm.loadAnimation(PlayerState.CAST_RIGHT,   sheet, 154, 10, size); // same frames as attack
         sm.loadAnimation(PlayerState.HURT_RIGHT,   sheet, 164, 10, size);
         sm.loadAnimation(PlayerState.IDLE_RIGHT,   sheet, 174, 16, size);
         sm.loadAnimation(PlayerState.RUN_RIGHT,    sheet, 190, 12, size);
 
-        // --- STATI SPECIALI ---
         sm.loadAnimation(PlayerState.DYING, sheet, 48, 10, size);
     }
 
     private void loadBombResources(SpriteManager sm) {
-        sm.loadAnimation(
-                "BOMB_ANIM",                // Chiave univoca
-                Config.ITEM_SHEET,   // File (/Consumabili.png)// Colonna Start
-                Config.BOMB_SPRITE_START,     // Riga (0)
-                Config.BOMB_FRAMES,         // Numero Frame (8)
-                64                          // Dimensione (64px)
-        );
-        System.out.println("ResourceLoader: Bomb resources loaded.");
+        sm.loadAnimation("BOMB_ANIM", Config.ITEM_SHEET, Config.BOMB_SPRITE_START, Config.BOMB_FRAMES, 64);
     }
+
     private void loadDestructionAnimations(SpriteManager sm) {
-        sm.loadAnimation(
-                "CRATE_BREAK",                // Chiave univoca
-                Config.VILLAGE_SHEET,             // File (/MapItems.png)
-                Config.DESTRUCTION_START,
-                Config.DESTRUCTION_FRAMES,    // Quanti frame caricare (3 -> Col 3, 4, 5)
-                64                            // Dimensione Tile
-        );
-        System.out.println("ResourceLoader: Destruction animation loaded (Frame 3-5).");
-        
-        sm.loadAnimation(
-                "BUSH_BREAK",                 // Chiave univoca
-                Config.FOREST_SHEET,          // File (/Forest.png)
-                3,                            // L'animazione di esplosione parte dall'indice 3
-                3,                            // Quanti frame caricare (3 frame)
-                64                            // Dimensione Tile
-        );
-        System.out.println("ResourceLoader: Bush Break animation loaded.");
+        sm.loadAnimation("CRATE_BREAK", Config.VILLAGE_SHEET, Config.DESTRUCTION_START, Config.DESTRUCTION_FRAMES, 64);
+        sm.loadAnimation("BUSH_BREAK",  Config.FOREST_SHEET,  3, 3, 64);
     }
 
     private void loadFireResources(SpriteManager sm) {
         String sheet = Config.ITEM_SHEET;
         int size = 64;
-        // Carichiamo i 9 sprite come animazioni da 1 frame ciascuna per semplicità
-        sm.loadAnimation("FIRE_0", sheet, 12, 1, size); // Center
-        sm.loadAnimation("FIRE_1", sheet, 13, 1, size); // End Down (2nd)
-        sm.loadAnimation("FIRE_2", sheet, 14, 1, size); // Central Left (3rd)
-        sm.loadAnimation("FIRE_3", sheet, 15, 1, size); // Central Right (4th)
-        sm.loadAnimation("FIRE_4", sheet, 16, 1, size); // Central Up (5th)
-        sm.loadAnimation("FIRE_5", sheet, 17, 1, size); // Central Down (6th)
-        sm.loadAnimation("FIRE_6", sheet, 18, 1, size); // End Left (7th)
-        sm.loadAnimation("FIRE_7", sheet, 19, 1, size); // End Right (8th)
-        sm.loadAnimation("FIRE_8", sheet, 20, 1, size); // End Up (9th - Row 3 Col 0)
+        sm.loadAnimation("FIRE_0", sheet, 12, 1, size); // center
+        sm.loadAnimation("FIRE_1", sheet, 13, 1, size); // end down
+        sm.loadAnimation("FIRE_2", sheet, 14, 1, size); // central left
+        sm.loadAnimation("FIRE_3", sheet, 15, 1, size); // central right
+        sm.loadAnimation("FIRE_4", sheet, 16, 1, size); // central up
+        sm.loadAnimation("FIRE_5", sheet, 17, 1, size); // central down
+        sm.loadAnimation("FIRE_6", sheet, 18, 1, size); // end left
+        sm.loadAnimation("FIRE_7", sheet, 19, 1, size); // end right
+        sm.loadAnimation("FIRE_8", sheet, 20, 1, size); // end up
     }
+
     private void loadShooterGoblinAnimations(SpriteManager sm) {
         String sheet = Config.SHOOTERGOBLIN_SHEET;
         int size = Config.ENTITY_FRAME_SIZE;
 
-        // --- BACK (SU) ---
-        sm.loadAnimation("SHOOTER_ATTACK_UP",   sheet, Config.SHOOTER_ATTACK_BACK_START, Config.SHOOTER_ATTACK_FRAMES, size);
-        sm.loadAnimation("SHOOTER_IDLE_UP",     sheet, Config.SHOOTER_IDLE_BACK_START,   Config.GOBLIN_IDLE_FRAMES,    size);
-        sm.loadAnimation("SHOOTER_RUN_UP",      sheet, Config.SHOOTER_RUN_BACK_START,    Config.GOBLIN_RUN_FRAMES,     size);
+        // facing up
+        sm.loadAnimation("SHOOTER_ATTACK_UP",   sheet, Config.SHOOTER_ATTACK_BACK_START,  Config.SHOOTER_ATTACK_FRAMES, size);
+        sm.loadAnimation("SHOOTER_IDLE_UP",     sheet, Config.SHOOTER_IDLE_BACK_START,    Config.GOBLIN_IDLE_FRAMES,    size);
+        sm.loadAnimation("SHOOTER_RUN_UP",      sheet, Config.SHOOTER_RUN_BACK_START,     Config.GOBLIN_RUN_FRAMES,     size);
 
-        // --- FRONT (GIÙ) ---
+        // facing down
         sm.loadAnimation("SHOOTER_ATTACK_DOWN", sheet, Config.SHOOTER_ATTACK_FRONT_START, Config.SHOOTER_ATTACK_FRAMES, size);
         sm.loadAnimation("SHOOTER_IDLE_DOWN",   sheet, Config.SHOOTER_IDLE_FRONT_START,   Config.GOBLIN_IDLE_FRAMES,    size);
         sm.loadAnimation("SHOOTER_RUN_DOWN",    sheet, Config.SHOOTER_RUN_FRONT_START,    Config.GOBLIN_RUN_FRAMES,     size);
 
-        // --- LEFT (SINISTRA) ---
-        sm.loadAnimation("SHOOTER_ATTACK_LEFT", sheet, Config.SHOOTER_ATTACK_LEFT_START, Config.SHOOTER_ATTACK_FRAMES, size);
-        sm.loadAnimation("SHOOTER_IDLE_LEFT",   sheet, Config.SHOOTER_IDLE_LEFT_START,   Config.GOBLIN_IDLE_FRAMES,    size);
-        sm.loadAnimation("SHOOTER_RUN_LEFT",    sheet, Config.SHOOTER_RUN_LEFT_START,    Config.GOBLIN_RUN_FRAMES,     size);
+        // facing left
+        sm.loadAnimation("SHOOTER_ATTACK_LEFT", sheet, Config.SHOOTER_ATTACK_LEFT_START,  Config.SHOOTER_ATTACK_FRAMES, size);
+        sm.loadAnimation("SHOOTER_IDLE_LEFT",   sheet, Config.SHOOTER_IDLE_LEFT_START,    Config.GOBLIN_IDLE_FRAMES,    size);
+        sm.loadAnimation("SHOOTER_RUN_LEFT",    sheet, Config.SHOOTER_RUN_LEFT_START,     Config.GOBLIN_RUN_FRAMES,     size);
 
-        // --- RIGHT (DESTRA) ---
+        // facing right
         sm.loadAnimation("SHOOTER_ATTACK_RIGHT", sheet, Config.SHOOTER_ATTACK_RIGHT_START, Config.SHOOTER_ATTACK_FRAMES, size);
         sm.loadAnimation("SHOOTER_IDLE_RIGHT",   sheet, Config.SHOOTER_IDLE_RIGHT_START,   Config.GOBLIN_IDLE_FRAMES,    size);
         sm.loadAnimation("SHOOTER_RUN_RIGHT",    sheet, Config.SHOOTER_RUN_RIGHT_START,    Config.GOBLIN_RUN_FRAMES,     size);
     }
+
     private void loadCommonGoblinAnimations(SpriteManager sm) {
         String sheet = Config.COMMON_GOBLIN;
         int size = Config.ENTITY_FRAME_SIZE;
         int runFrames = Config.GOBLIN_RUN_FRAMES;
 
-        // --- BACK ---
+        // facing up
         sm.loadAnimation("COMMON_RUN_UP",     sheet, Config.COMMON_RUN_BACK_START,   runFrames, size);
-        sm.loadAnimation("COMMON_IDLE_UP",    sheet, Config.COMMON_RUN_BACK_START,   1, size); // Fallback
+        sm.loadAnimation("COMMON_IDLE_UP",    sheet, Config.COMMON_RUN_BACK_START,   1, size); // fallback
 
-        // --- FRONT ---
+        // facing down
         sm.loadAnimation("COMMON_RUN_DOWN",   sheet, Config.COMMON_RUN_FRONT_START,  runFrames, size);
-        sm.loadAnimation("COMMON_IDLE_DOWN",  sheet, Config.COMMON_RUN_FRONT_START,  1, size); // Fallback
+        sm.loadAnimation("COMMON_IDLE_DOWN",  sheet, Config.COMMON_RUN_FRONT_START,  1, size); // fallback
 
-        // --- LEFT ---
+        // facing left
         sm.loadAnimation("COMMON_RUN_LEFT",   sheet, Config.COMMON_RUN_LEFT_START,   runFrames, size);
-        sm.loadAnimation("COMMON_IDLE_LEFT",  sheet, Config.COMMON_RUN_LEFT_START,   1, size); // Fallback
+        sm.loadAnimation("COMMON_IDLE_LEFT",  sheet, Config.COMMON_RUN_LEFT_START,   1, size); // fallback
 
-        // --- RIGHT ---
+        // facing right
         sm.loadAnimation("COMMON_RUN_RIGHT",  sheet, Config.COMMON_RUN_RIGHT_START,  runFrames, size);
-        sm.loadAnimation("COMMON_IDLE_RIGHT", sheet, Config.COMMON_RUN_RIGHT_START,  1, size); // Fallback
+        sm.loadAnimation("COMMON_IDLE_RIGHT", sheet, Config.COMMON_RUN_RIGHT_START,  1, size); // fallback
     }
 
     private void loadChasingGoblinAnimations(SpriteManager sm) {
         String sheet = Config.CHASING_GOBLIN_SHEET;
         int size = Config.ENTITY_FRAME_SIZE;
         int idleFrames = Config.GOBLIN_IDLE_FRAMES;
-        int runFrames = Config.GOBLIN_RUN_FRAMES;
+        int runFrames  = Config.GOBLIN_RUN_FRAMES;
 
-        // --- BACK ---
+        // facing up
         sm.loadAnimation("HUNTER_IDLE_UP",    sheet, Config.CHASING_IDLE_BACK_START,  idleFrames, size);
         sm.loadAnimation("HUNTER_RUN_UP",     sheet, Config.CHASING_RUN_BACK_START,   runFrames,  size);
 
-        // --- FRONT ---
+        // facing down
         sm.loadAnimation("HUNTER_IDLE_DOWN",  sheet, Config.CHASING_IDLE_FRONT_START, idleFrames, size);
         sm.loadAnimation("HUNTER_RUN_DOWN",   sheet, Config.CHASING_RUN_FRONT_START,  runFrames,  size);
 
-        // --- LEFT ---
+        // facing left
         sm.loadAnimation("HUNTER_IDLE_LEFT",  sheet, Config.CHASING_IDLE_LEFT_START,  idleFrames, size);
         sm.loadAnimation("HUNTER_RUN_LEFT",   sheet, Config.CHASING_RUN_LEFT_START,   runFrames,  size);
 
-        // --- RIGHT ---
+        // facing right
         sm.loadAnimation("HUNTER_IDLE_RIGHT", sheet, Config.CHASING_IDLE_RIGHT_START, idleFrames, size);
         sm.loadAnimation("HUNTER_RUN_RIGHT",  sheet, Config.CHASING_RUN_RIGHT_START,  runFrames,  size);
     }
+
     private void loadBossGoblinAnimations(SpriteManager sm) {
         String sheet = Config.BOSS_GOBLIN_SHEET;
-        int size = Config.BOSS_FRAME_SIZE; // Dimensione specifica dei frame del Boss
+        int size = Config.BOSS_FRAME_SIZE;
 
-        // --- BACK (SU) ---
+        // facing up
         sm.loadAnimation("BOSS_ATTACK_UP",   sheet, Config.BOSS_ATTACK_BACK_START, Config.BOSS_ATTACK_FRAMES, size);
         sm.loadAnimation("BOSS_IDLE_UP",     sheet, Config.BOSS_IDLE_BACK_START,   Config.BOSS_IDLE_FRAMES,   size);
         sm.loadAnimation("BOSS_RUN_UP",      sheet, Config.BOSS_RUN_BACK_START,    Config.BOSS_RUN_FRAMES,    size);
 
-        // --- DYING (MORTE) ---
-        // Aggiunta specifica per il boss, indipendente dalla direzione
+        // direction-independent dying animation
         sm.loadAnimation("BOSS_DYING",       sheet, Config.BOSS_DYING_START,       Config.BOSS_DYING_FRAMES,  size);
 
-        // --- FRONT (GIÙ) ---
+        // facing down
         sm.loadAnimation("BOSS_ATTACK_DOWN", sheet, Config.BOSS_ATTACK_FRONT_START, Config.BOSS_ATTACK_FRAMES, size);
         sm.loadAnimation("BOSS_IDLE_DOWN",   sheet, Config.BOSS_IDLE_FRONT_START,   Config.BOSS_IDLE_FRAMES,   size);
         sm.loadAnimation("BOSS_RUN_DOWN",    sheet, Config.BOSS_RUN_FRONT_START,    Config.BOSS_RUN_FRAMES,    size);
 
-        // --- LEFT (SINISTRA) ---
+        // facing left
         sm.loadAnimation("BOSS_ATTACK_LEFT", sheet, Config.BOSS_ATTACK_LEFT_START, Config.BOSS_ATTACK_FRAMES, size);
         sm.loadAnimation("BOSS_IDLE_LEFT",   sheet, Config.BOSS_IDLE_LEFT_START,   Config.BOSS_IDLE_FRAMES,   size);
         sm.loadAnimation("BOSS_RUN_LEFT",    sheet, Config.BOSS_RUN_LEFT_START,    Config.BOSS_RUN_FRAMES,    size);
 
-        // --- RIGHT (DESTRA) ---
+        // facing right
         sm.loadAnimation("BOSS_ATTACK_RIGHT", sheet, Config.BOSS_ATTACK_RIGHT_START, Config.BOSS_ATTACK_FRAMES, size);
         sm.loadAnimation("BOSS_IDLE_RIGHT",   sheet, Config.BOSS_IDLE_RIGHT_START,   Config.BOSS_IDLE_FRAMES,   size);
         sm.loadAnimation("BOSS_RUN_RIGHT",    sheet, Config.BOSS_RUN_RIGHT_START,    Config.BOSS_RUN_FRAMES,    size);
     }
+
     private void loadProjectiles(SpriteManager sm) {
-        String sheet = Config.ITEM_SHEET; // "/Items.png"
+        String sheet = Config.ITEM_SHEET;
         int size = 64;
 
-        // 1. OSSA (Proiettili Goblin)
+        // bone projectiles (enemy)
         sm.loadAnimation("BONE_DOWN",  sheet, Config.BONE_DOWN_INDEX,  1, size);
         sm.loadAnimation("BONE_LEFT",  sheet, Config.BONE_LEFT_INDEX,  1, size);
         sm.loadAnimation("BONE_RIGHT", sheet, Config.BONE_RIGHT_INDEX, 1, size);
         sm.loadAnimation("BONE_UP",    sheet, Config.BONE_UP_INDEX,    1, size);
 
-
-        // 2. AURA (Proiettili Player) - Animazioni a 12 Frame
-        // Carichiamo usando gli START index definiti in Config
+        // aura projectiles (player) — 12-frame animations
         sm.loadAnimation("AURA_LEFT",  sheet, Config.AURA_LEFT_START,  Config.AURA_FRAMES, size);
         sm.loadAnimation("AURA_RIGHT", sheet, Config.AURA_RIGHT_START, Config.AURA_FRAMES, size);
         sm.loadAnimation("AURA_DOWN",  sheet, Config.AURA_DOWN_START,  Config.AURA_FRAMES, size);
         sm.loadAnimation("AURA_UP",    sheet, Config.AURA_UP_START,    Config.AURA_FRAMES, size);
-
-        System.out.println("ResourceLoader: Aura projectiles loaded (12 frames).");
-
     }
 
     private void loadMapThemes(SpriteManager sm) {
-        System.out.println("ResourceLoader: Starting loading of all map themes...");
-
-        // Chiamiamo i metodi operai uno per uno
         loadVillageTheme(sm);
         loadForestTheme(sm);
         loadCaveTheme(sm);
-
-        System.out.println("ResourceLoader: All map themes loaded successfully!");
     }
 
-    // ---------------------------------------------------------
-    // 1. TEMA VILLAGGIO
-    // ---------------------------------------------------------
     private void loadVillageTheme(SpriteManager sm) {
-        int size = goblinhunters.utils.Config.TILE_SIZE;
-        BufferedImage[] villageTiles = new BufferedImage[goblinhunters.utils.Config.THEME_FRAME_INDEX + 1];
+        int size = Config.TILE_SIZE;
+        BufferedImage[] tiles = new BufferedImage[Config.THEME_FRAME_INDEX + 1];
 
-        villageTiles[goblinhunters.utils.Config.CELL_EMPTY] = sm.extractTile(Config.VILLAGE_SHEET, goblinhunters.utils.Config.VILLAGE_FLOOR_COL, goblinhunters.utils.Config.VILLAGE_ROW, size, size);
-        villageTiles[goblinhunters.utils.Config.CELL_INDESTRUCTIBLE_BLOCK] = sm.extractTile(goblinhunters.utils.Config.VILLAGE_SHEET, goblinhunters.utils.Config.VILLAGE_WALL_IND_COL, goblinhunters.utils.Config.VILLAGE_ROW, size, size);
-        villageTiles[goblinhunters.utils.Config.CELL_DESTRUCTIBLE_BLOCK] = sm.extractTile(goblinhunters.utils.Config.VILLAGE_SHEET, goblinhunters.utils.Config.VILLAGE_WALL_DEST_COL, goblinhunters.utils.Config.VILLAGE_ROW, size, size);
-
-        // Ornamento: Torre (128x128) - Seconda immagine nello sheet Ornaments
-        villageTiles[goblinhunters.utils.Config.CELL_ORNAMENT] = sm.extractTile(goblinhunters.utils.Config.ORNAMENTS_SHEET, 1, 0, 128, 128);
-
-        villageTiles[goblinhunters.utils.Config.THEME_FRAME_INDEX] = goblinhunters.view.ResourceManager.loadImage(goblinhunters.utils.Config.VILLAGE_FRAME );
-        TileManager.getInstance().loadTheme("VILLAGE", villageTiles);
+        tiles[Config.CELL_EMPTY]               = sm.extractTile(Config.VILLAGE_SHEET, Config.VILLAGE_FLOOR_COL,    Config.VILLAGE_ROW, size, size);
+        tiles[Config.CELL_INDESTRUCTIBLE_BLOCK] = sm.extractTile(Config.VILLAGE_SHEET, Config.VILLAGE_WALL_IND_COL,  Config.VILLAGE_ROW, size, size);
+        tiles[Config.CELL_DESTRUCTIBLE_BLOCK]   = sm.extractTile(Config.VILLAGE_SHEET, Config.VILLAGE_WALL_DEST_COL, Config.VILLAGE_ROW, size, size);
+        tiles[Config.CELL_ORNAMENT]             = sm.extractTile(Config.ORNAMENTS_SHEET, 1, 0, 128, 128); // tower (2nd sprite)
+        tiles[Config.THEME_FRAME_INDEX]         = ResourceManager.loadImage(Config.VILLAGE_FRAME);
+        TileManager.getInstance().loadTheme("VILLAGE", tiles);
     }
 
-    // ---------------------------------------------------------
-    // 2. TEMA FORESTA
-    // ---------------------------------------------------------
     private void loadForestTheme(SpriteManager sm) {
-        int size = goblinhunters.utils.Config.TILE_SIZE;
-        BufferedImage[] forestTiles = new BufferedImage[goblinhunters.utils.Config.THEME_FRAME_INDEX + 1];
+        int size = Config.TILE_SIZE;
+        BufferedImage[] tiles = new BufferedImage[Config.THEME_FRAME_INDEX + 1];
 
-        forestTiles[goblinhunters.utils.Config.CELL_EMPTY] = sm.extractTile(goblinhunters.utils.Config.FOREST_SHEET, goblinhunters.utils.Config.FOREST_FLOOR_COL, goblinhunters.utils.Config.FOREST_ROW, size, size);
-        forestTiles[goblinhunters.utils.Config.CELL_INDESTRUCTIBLE_BLOCK] = sm.extractTile(goblinhunters.utils.Config.FOREST_SHEET, goblinhunters.utils.Config.FOREST_WALL_IND_COL, goblinhunters.utils.Config.FOREST_ROW, size, size);
-        forestTiles[goblinhunters.utils.Config.CELL_DESTRUCTIBLE_BLOCK] = sm.extractTile(goblinhunters.utils.Config.FOREST_SHEET, goblinhunters.utils.Config.FOREST_WALL_DEST_COL, goblinhunters.utils.Config.FOREST_ROW, size, size);
-
-        // Ornamento: Albero Gigante (128x128) - Prima immagine nello sheet Ornaments
-        forestTiles[goblinhunters.utils.Config.CELL_ORNAMENT] = sm.extractTile(goblinhunters.utils.Config.ORNAMENTS_SHEET, 0, 0, 128, 128);
-
-        forestTiles[goblinhunters.utils.Config.THEME_FRAME_INDEX] = goblinhunters.view.ResourceManager.loadImage(goblinhunters.utils.Config.FOREST_FRAME );
-        TileManager.getInstance().loadTheme("FOREST", forestTiles);
+        tiles[Config.CELL_EMPTY]               = sm.extractTile(Config.FOREST_SHEET, Config.FOREST_FLOOR_COL,    Config.FOREST_ROW, size, size);
+        tiles[Config.CELL_INDESTRUCTIBLE_BLOCK] = sm.extractTile(Config.FOREST_SHEET, Config.FOREST_WALL_IND_COL,  Config.FOREST_ROW, size, size);
+        tiles[Config.CELL_DESTRUCTIBLE_BLOCK]   = sm.extractTile(Config.FOREST_SHEET, Config.FOREST_WALL_DEST_COL, Config.FOREST_ROW, size, size);
+        tiles[Config.CELL_ORNAMENT]             = sm.extractTile(Config.ORNAMENTS_SHEET, 0, 0, 128, 128); // giant tree (1st sprite)
+        tiles[Config.THEME_FRAME_INDEX]         = ResourceManager.loadImage(Config.FOREST_FRAME);
+        TileManager.getInstance().loadTheme("FOREST", tiles);
     }
 
-    // ---------------------------------------------------------
-    // 3. TEMA CAVERNA
-    // ---------------------------------------------------------
     private void loadCaveTheme(SpriteManager sm) {
-        int size = goblinhunters.utils.Config.TILE_SIZE;
-        int bSize = goblinhunters.utils.Config.CAVE_BUILDING_SIZE; // 128 pixel per l'edificio gigante
+        int size  = Config.TILE_SIZE;
+        int bSize = Config.CAVE_BUILDING_SIZE;
 
-        // Array del tema (fino all'indice 30 per la cornice)
-        BufferedImage[] caveTiles = new BufferedImage[goblinhunters.utils.Config.THEME_FRAME_INDEX + 1];
+        BufferedImage[] tiles = new BufferedImage[Config.THEME_FRAME_INDEX + 1];
 
-        // --- A. CARICAMENTO BLOCCHI BASE (0-4) ---
-        caveTiles[goblinhunters.utils.Config.CELL_EMPTY] = sm.extractTile(goblinhunters.utils.Config.CAVE_SHEET , goblinhunters.utils.Config.CAVE_FLOOR_COL, goblinhunters.utils.Config.CAVE_ROW, size, size);
-        caveTiles[goblinhunters.utils.Config.CELL_INDESTRUCTIBLE_BLOCK] = sm.extractTile(goblinhunters.utils.Config.CAVE_SHEET , goblinhunters.utils.Config.CAVE_WALL_IND_COL, goblinhunters.utils.Config.CAVE_ROW, size, size);
-        caveTiles[goblinhunters.utils.Config.CELL_DESTRUCTIBLE_BLOCK] = sm.extractTile(goblinhunters.utils.Config.CAVE_SHEET , goblinhunters.utils.Config.CAVE_WALL_DEST_COL, goblinhunters.utils.Config.CAVE_ROW, size, size);
-        caveTiles[goblinhunters.utils.Config.CELL_CRACKED_FLOOR] = sm.extractTile(goblinhunters.utils.Config.CAVE_SHEET , goblinhunters.utils.Config.CAVE_CRACKED_FLOOR_COL, goblinhunters.utils.Config.CAVE_ROW, size, size);
-        caveTiles[goblinhunters.utils.Config.CELL_LAVA_FLOOR] = sm.extractTile(goblinhunters.utils.Config.CAVE_SHEET , goblinhunters.utils.Config.CAVE_LAVA_FLOOR_COL, goblinhunters.utils.Config.CAVE_ROW, size, size);
+        tiles[Config.CELL_EMPTY]               = sm.extractTile(Config.CAVE_SHEET, Config.CAVE_FLOOR_COL,       Config.CAVE_ROW, size, size);
+        tiles[Config.CELL_INDESTRUCTIBLE_BLOCK] = sm.extractTile(Config.CAVE_SHEET, Config.CAVE_WALL_IND_COL,   Config.CAVE_ROW, size, size);
+        tiles[Config.CELL_DESTRUCTIBLE_BLOCK]   = sm.extractTile(Config.CAVE_SHEET, Config.CAVE_WALL_DEST_COL,  Config.CAVE_ROW, size, size);
+        tiles[Config.CELL_CRACKED_FLOOR]        = sm.extractTile(Config.CAVE_SHEET, Config.CAVE_CRACKED_FLOOR_COL, Config.CAVE_ROW, size, size);
+        tiles[Config.CELL_LAVA_FLOOR]           = sm.extractTile(Config.CAVE_SHEET, Config.CAVE_LAVA_FLOOR_COL, Config.CAVE_ROW, size, size);
 
-        // In src/view/ResourceLoader.java -> loadCaveTheme()
-        // --- B. CARICAMENTO EDIFICIO ANIMATO ---
-        sm.loadAnimation("CAVE_BUILDING", goblinhunters.utils.Config.CAVE_SKELETON_SHEET, 0, goblinhunters.utils.Config.SKELETON_FRAMES_COUNT, bSize);
-
-        for (int i = 0; i < goblinhunters.utils.Config.SKELETON_FRAMES_COUNT; i++) {
-            // Mettiamo i frame a partire dall'indice 5 (CELL_SKELETON_START)
-            caveTiles[goblinhunters.utils.Config.CELL_SKELETON_START + i] = sm.getSprite("CAVE_BUILDING", i);
+        sm.loadAnimation("CAVE_BUILDING", Config.CAVE_SKELETON_SHEET, 0, Config.SKELETON_FRAMES_COUNT, bSize);
+        for (int i = 0; i < Config.SKELETON_FRAMES_COUNT; i++) {
+            tiles[Config.CELL_SKELETON_START + i] = sm.getSprite("CAVE_BUILDING", i);
         }
 
-        // --- C. CORNICE (30) ---
-        caveTiles[goblinhunters.utils.Config.THEME_FRAME_INDEX] = ResourceManager.loadImage(goblinhunters.utils.Config.CAVE_FRAME );
-
-        // Salviamo tutto nel TileManager
-        TileManager.getInstance().loadTheme("CAVE", caveTiles);
+        tiles[Config.THEME_FRAME_INDEX] = ResourceManager.loadImage(Config.CAVE_FRAME);
+        TileManager.getInstance().loadTheme("CAVE", tiles);
     }
+
     private void loadPortalAnimation(SpriteManager sm) {
-        sm.loadAnimation(
-                "PORTAL_ANIM",                // Chiave univoca per l'animazione del portale
-                Config.ITEM_SHEET,            // File (/Items.png)
-                69,                           // Indice lineare di partenza
-                6,                            // Quanti frame caricare (56, 57, 58, 59)
-                64                            // Dimensione Tile in pixel
-        );
-        System.out.println("ResourceLoader: Portal animation loaded (Frame 56-59).");
+        sm.loadAnimation("PORTAL_ANIM", Config.ITEM_SHEET, 69, 6, 64);
     }
 
     private void loadPowerUps(SpriteManager sm) {
-        sm.loadAnimation(
-                "POWER_UPS",                  // Chiave univoca (indici 0, 1, 2)
-                Config.ITEM_SHEET,            // File (/Items.png)
-                75,                           // Indice lineare di partenza
-                3,                            // Quanti frame caricare (60, 61, 62)
-                64                            // Dimensione Tile in pixel
-        );
-        System.out.println("ResourceLoader: Power Ups loaded (Frame 60-62).");
+        sm.loadAnimation("POWER_UPS", Config.ITEM_SHEET, 75, 3, 64);
     }
 
     private void loadConsumables(SpriteManager sm) {
-        sm.loadAnimation(
-                "CONSUMABLES",                // Chiave univoca (indici 0, 1)
-                Config.ITEM_SHEET,            // File (/Items.png)
-                78,                           // Indice lineare di partenza
-                2,                            // Quanti frame caricare (63, 64)
-                64                            // Dimensione Tile in pixel
-        );
-        System.out.println("ResourceLoader: Consumables loaded (Frame 63-64).");
+        sm.loadAnimation("CONSUMABLES", Config.ITEM_SHEET, 78, 2, 64);
     }
 
     private void loadHUDIcons(SpriteManager sm) {
-        // Sfondo Cabinato (JFrame Background) collegato globalmente
         sm.loadSingleImage("ARCADE_CABINET", "/CabinetArcade.png");
-
-        // L'utente ha chiesto: Fire Spell prima tile = indice 0
-        sm.loadAnimation("HUD_FIRE_SPELL", Config.ITEM_SHEET, 0, 1, 64);
-        
-        // Aura Spell tile 33
+        sm.loadAnimation("HUD_FIRE_SPELL", Config.ITEM_SHEET, 0,  1, 64);
         sm.loadAnimation("HUD_AURA_SPELL", Config.ITEM_SHEET, 33, 1, 64);
-        
-        // Immagine del bastone
         sm.loadSingleImage("STAFF_ICON", "/staff_icon.png");
-        
-        System.out.println("ResourceLoader: HUD and Menu icons updated (Fire, Aura, Staff).");
     }
 
     /**
-     * Pre-genera le versioni in scala di grigi di tutti gli sprite HUD.
-     * Chiamato UNA SOLA VOLTA al termine del caricamento normali risorse.
-     * Convenzione chiave: "CONSUMABLES_0_gray", "POWER_UPS_2_gray", ecc.
+     * Pre-builds grayscale versions of all HUD sprites.
+     * Called once at the end of resource loading — never per frame.
+     * Key convention: "CONSUMABLES_0_gray", "POWER_UPS_2_gray", etc.
      */
     private void buildGrayscaleHudIcons(SpriteManager sm) {
-        // Icone aggiornate HUD
         sm.buildGrayscale("HUD_FIRE_SPELL", 0, "HUD_FIRE_SPELL_gray");
         sm.buildGrayscale("HUD_AURA_SPELL", 0, "HUD_AURA_SPELL_gray");
-        
-        // Consumabili map drops (eredità vecchio sistema)
         sm.buildGrayscale("CONSUMABLES", 0, "CONSUMABLES_0_gray");
         sm.buildGrayscale("CONSUMABLES", 1, "CONSUMABLES_1_gray");
-        // Power-up:    frame 0 = scudo,  frame 1 = raggio, frame 2 = velocità
-        sm.buildGrayscale("POWER_UPS",   0, "POWER_UPS_0_gray");
-        sm.buildGrayscale("POWER_UPS",   1, "POWER_UPS_1_gray");
-        sm.buildGrayscale("POWER_UPS",   2, "POWER_UPS_2_gray");
-        System.out.println("ResourceLoader: Icone HUD grayscale generate.");
+        // power-ups: frame 0 = shield, frame 1 = radius, frame 2 = speed
+        sm.buildGrayscale("POWER_UPS", 0, "POWER_UPS_0_gray");
+        sm.buildGrayscale("POWER_UPS", 1, "POWER_UPS_1_gray");
+        sm.buildGrayscale("POWER_UPS", 2, "POWER_UPS_2_gray");
     }
 
-    // =========================================================================
-    // MENU SELEZIONE PERSONAGGIO
-    // =========================================================================
+    // ==========================================================
+    // character selection menu
+    // ==========================================================
 
-    /**
-     * Carica le risorse per il menu di selezione.
-     * I personaggi sono già presenti nell'immagine StartGame.png
-     * (caricati manualmente), quindi serve solo lo sfondo.
-     */
     private void loadMenuResources(SpriteManager sm) {
         sm.loadSingleImage("MENU_BG", ViewConfig.START_GAME_BG);
-        System.out.println("ResourceLoader: Sfondo menu caricato (StartGame.png).");
     }
 
     /**
-     * Ricarica le animazioni del player con un nuovo spritesheet.
-     * Chiamato dal Controller dopo la selezione del personaggio.
-     * Sovrascrive le animazioni PlayerState.* già caricate.
+     * Reloads player animations with a different sprite sheet.
+     * Called by the Controller after the player selects a character.
+     * Overwrites previously loaded PlayerState.* animations.
      *
-     * @param sheetPath percorso dello spritesheet selezionato
+     * @param sheetPath path to the selected sprite sheet
      */
     public static void reloadPlayerAnimations(String sheetPath) {
         ResourceLoader loader = new ResourceLoader();
         loader.loadPlayerAnimations(SpriteManager.getInstance(), sheetPath);
-        System.out.println("ResourceLoader: Animazioni player ricaricate con " + sheetPath);
     }
-
 }
-

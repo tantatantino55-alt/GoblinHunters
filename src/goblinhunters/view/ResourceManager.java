@@ -8,56 +8,39 @@ import java.io.InputStream;
 public class ResourceManager {
 
     public static BufferedImage loadImage(String relativePath) {
-        try {
-            // getResourceAsStream usa il ClassLoader per trovare la risorsa
-            InputStream inputStream = ResourceManager.class.getResourceAsStream(relativePath);
-
+        try (InputStream inputStream = ResourceManager.class.getResourceAsStream(relativePath)) {
             if (inputStream == null) {
-                System.err.println("ResourceManager: Risorsa non trovata: " + relativePath);
+                System.err.println("ResourceManager: Resource not found: " + relativePath);
                 return null;
             }
 
             BufferedImage image = ImageIO.read(inputStream);
-            inputStream.close();
 
-            if (image != null) {
-                System.out.println("ResourceManager: Caricata: " + relativePath);
-            } else {
-                System.err.println("ResourceManager: Impossibile decodificare: " + relativePath);
+            if (image == null) {
+                System.err.println("ResourceManager: Failed to decode: " + relativePath);
             }
 
             return image;
 
         } catch (IOException e) {
-            System.err.println("ResourceManager:  Errore caricamento " + relativePath);
-            e.printStackTrace();
+            System.err.println("ResourceManager: Load error: " + relativePath + " — " + e.getMessage());
             return null;
         }
     }
 
     public static boolean resourceExists(String relativePath) {
-        InputStream inputStream = ResourceManager.class.getResourceAsStream(relativePath);
-
-        if (inputStream != null) {
-            try {
-                inputStream.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return true;
+        try (InputStream inputStream = ResourceManager.class.getResourceAsStream(relativePath)) {
+            return inputStream != null;
+        } catch (IOException e) {
+            return false;
         }
-        return false;
     }
 
     public static InputStream getResourceStream(String relativePath) {
         InputStream inputStream = ResourceManager.class.getResourceAsStream(relativePath);
-
         if (inputStream == null) {
-            System.err.println("ResourceManager: Stream non disponibile per: " + relativePath);
+            System.err.println("ResourceManager: Stream unavailable for: " + relativePath);
         }
-
         return inputStream;
     }
-
-
-} // end class
+}

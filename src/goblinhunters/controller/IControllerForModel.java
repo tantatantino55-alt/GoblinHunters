@@ -3,21 +3,19 @@ package goblinhunters.controller;
 import goblinhunters.utils.GameState;
 
 public interface IControllerForModel {
-    public void updateGame();
-    public void startGameLoop();
+    void updateGame();
+    void startGameLoop();
 
-    // --- PAUSE ---
     /** Returns true when the game logic is frozen (pause screen active). */
     boolean isPaused();
     /** Freeze or unfreeze game logic. */
     void setPaused(boolean paused);
 
-    // --- GAME STATE ---
-    /** Ritorna lo stato corrente del gioco (MENU o PLAYING). */
+    /** Returns the current game state (MENU, PLAYING, GAME_OVER). */
     GameState getGameState();
-    /** Imposta lo stato del gioco. */
+    /** Sets the game state. */
     void setGameState(GameState state);
 
-    /** Resetta il loop di gioco al menu principale. */
+    /** Resets the game loop back to the main menu. */
     void resetGame();
 }

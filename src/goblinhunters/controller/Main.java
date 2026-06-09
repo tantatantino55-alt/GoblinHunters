@@ -9,5 +9,5 @@ public class Main {
         ControllerForView.getInstance().openGameGUI();
         ControllerForModel.getInstance().startGameLoop();
     }
+}
 
-}// end class

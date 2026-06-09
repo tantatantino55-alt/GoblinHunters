@@ -12,22 +12,19 @@ public class ConcreteDrawer extends AbstractDrawer {
 
     private final TileManager tileManager;
     private final SpriteManager spriteManager;
-    // --- VARIABILI PER IL CALCOLO FPS ---
-    private long lastFpsTime = System.currentTimeMillis();
-    private int frameCount = 0;
-    private int currentFPS = 0;
-    private float transitionAlpha = Config.MIN_ALPHA; // Partiamo da completamente trasparente
+
+    private float transitionAlpha = Config.MIN_ALPHA;
     private boolean fadingOut = true;
 
     public ConcreteDrawer() {
         this.tileManager = TileManager.getInstance();
         this.spriteManager = SpriteManager.getInstance();
-        // Il background ArcadeCabinet ora è delegato al GamePanel tramite SpriteManager
     }
 
-    // =========================================================================
-    // Y-SORTING SUPPORT
-    // =========================================================================
+    // ==========================================================
+    // Y-sorting support
+    // ==========================================================
+
     private static class DrawableEntity {
         public final int y;
         public final Runnable drawAction;
@@ -38,24 +35,25 @@ public class ConcreteDrawer extends AbstractDrawer {
         }
     }
 
+    // ==========================================================
+    // main draw dispatch
+    // ==========================================================
+
     @Override
     public void draw(Graphics g) {
         Graphics2D g2d = (Graphics2D) g;
 
-        // --- STATE PATTERN: delega al drawer corretto in base allo stato ---
         if (ControllerForView.getInstance().getGameState() == GameState.MENU) {
             MenuDrawer.getInstance().draw(g2d);
             return;
         }
 
-        // --- LAYER BACKGROUND (non ordinati per Y) ---
         drawMap(g2d);
-        drawCracks(g2d); // Crepe del Boss: overlay sul pavimento
-        drawFire(g2d);   // Fuoco: effetto a terra, sempre sotto i personaggi
-        drawPortal(g2d); // Allarme se scopri il portale spawner
+        drawCracks(g2d);
+        drawFire(g2d);
+        drawPortal(g2d);
         drawLevelExitGate(g2d);
 
-        // --- LAYER Y-SORTED (ordinati per Y basato sui 'piedi') ---
         java.util.List<DrawableEntity> sortedEntities = new java.util.ArrayList<>();
 
         gatherBombs(sortedEntities, g2d);
@@ -66,37 +64,35 @@ public class ConcreteDrawer extends AbstractDrawer {
 
         PlayerState state = ControllerForView.getInstance().getPlayerState();
         if (state.name().startsWith("ATTACK")) {
-            gatherStaffAttack(sortedEntities, g2d); // Gestisce i 10 frame
+            gatherStaffAttack(sortedEntities, g2d);
         } else {
-            gatherPlayer(sortedEntities, g2d); // Gestisce IDLE, RUN, CAST e INVINCIBILITÀ
+            gatherPlayer(sortedEntities, g2d);
         }
 
-        // Ordinamento crescente per Y: chi sta "sopra" (Y minore) viene disegnato prima
+        // ascending Y sort: lower Y (closer to top) drawn first
         java.util.Collections.sort(sortedEntities, java.util.Comparator.comparingInt(e -> e.y));
 
-        // Disegno effettivo
         for (DrawableEntity e : sortedEntities) {
             e.drawAction.run();
         }
 
-        // --- LAYER FOREGROUND (disegnati sopra a tutto, non ordinati) ---
         drawTransition(g2d);
-        drawDebugGrid(g2d);
         drawHUD(g2d);
 
-        // --- GAME OVER: Overlay ---
         if (ControllerForView.getInstance().getGameState() == GameState.GAME_OVER) {
             GameOverDrawer.getInstance().draw(g2d);
-        }
-        // --- PAUSA: Overlay del menu di pausa ---
-        else if (ControllerForView.getInstance().isPaused()) {
+        } else if (ControllerForView.getInstance().isPaused()) {
             PauseMenuDrawer.getInstance().draw(g2d,
                     ControllerForView.getInstance().getPauseController());
         }
     }
 
+    // ==========================================================
+    // portal rendering
+    // ==========================================================
+
     private void drawPortal(Graphics2D g2d) {
-        // Portale classico (Mappe 0-1): compare quando si distrugge il blocco che lo contiene
+        // classic portal (zones 0-1): appears when the containing block is destroyed
         if (ControllerForView.getInstance().isPortalRevealed()) {
             int pCol = ControllerForView.getInstance().getPortalCol();
             int pRow = ControllerForView.getInstance().getPortalRow();
@@ -104,7 +100,7 @@ public class ConcreteDrawer extends AbstractDrawer {
             int screenX = (pCol * Config.TILE_SIZE) + Config.GRID_OFFSET_X;
             int screenY = (pRow * Config.TILE_SIZE) + Config.GRID_OFFSET_Y;
 
-            g2d.setColor(new Color(138, 43, 226, 180)); // Viola semi-trasparente
+            g2d.setColor(new Color(138, 43, 226, 180));
             g2d.fillRect(screenX, screenY, Config.TILE_SIZE, Config.TILE_SIZE);
 
             if (System.currentTimeMillis() % 1000 < 500) {
@@ -113,7 +109,7 @@ public class ConcreteDrawer extends AbstractDrawer {
             }
         }
 
-        // Portale Boss (Mappa 2): compare alla fine della fase di preparazione
+        // boss portal (zone 2): appears after the preparation phase ends
         if (ControllerForView.getInstance().isBossPortalActive()) {
             int pCol = ControllerForView.getInstance().getBossPortalCol();
             int pRow = ControllerForView.getInstance().getBossPortalRow();
@@ -131,26 +127,21 @@ public class ConcreteDrawer extends AbstractDrawer {
         }
     }
 
-    // In ConcreteDrawer.java
-
     private void drawLevelExitGate(Graphics2D g2d) {
         if (ControllerForView.getInstance().isGateActive()) {
 
-            // Recuperiamo le coordinate corrette (ora fisse 0, 6 tramite Controller)
             int gateCol = ControllerForView.getInstance().getExitGateCol();
             int gateRow = ControllerForView.getInstance().getExitGateRow();
 
             int screenX = (gateCol * Config.TILE_SIZE) + Config.GRID_OFFSET_X;
             int screenY = (gateRow * Config.TILE_SIZE) + Config.GRID_OFFSET_Y;
 
-            // Recuperiamo il tempo di attivazione dal Controller
             long startTime = ControllerForView.getInstance().getGateActivationTime();
             long elapsed = System.currentTimeMillis() - startTime;
 
             int totalFrames = 6;
-            int currentFrame = (int) (elapsed / 150); // Velocità animazione
+            int currentFrame = (int) (elapsed / 150);
 
-            // BLOCCA L'ANIMAZIONE ALL'ULTIMO FRAME
             if (currentFrame >= totalFrames) {
                 currentFrame = totalFrames - 1;
             }
@@ -163,49 +154,33 @@ public class ConcreteDrawer extends AbstractDrawer {
         }
     }
 
-    // =========================================================================
-    // HUD GRAFICO
-    // =========================================================================
+    // ==========================================================
+    // HUD
+    // ==========================================================
 
     /**
-     * Disegna l'HUD laterale destro con:
-     * - Statistiche testuali (FPS, vite, tempo)
-     * - Icone grafiche per consumabili e power-up con:
-     *     • Scala di grigi + alpha 50% quando non attivi
-     *     • Colori pieni quando attivi
-     *     • Contatore testo per i consumabili
-     *     • Animazione "scale-up" al momento della raccolta
+     * Draws the right-side HUD: lives, timer, score, and icons for
+     * consumables (bomb, aura) and power-ups (shield, radius, speed) with
+     * grayscale + 50% alpha when inactive, full colour when active, and an
+     * animated glow on the staff icon when usable.
      */
     private void drawHUD(Graphics2D g2d) {
-        // --- 1. CALCOLO FPS ---
-        long currentTime = System.currentTimeMillis();
-        frameCount++;
-        if (currentTime - lastFpsTime >= 1000) {
-            currentFPS = frameCount;
-            frameCount = 0;
-            lastFpsTime = currentTime;
-        }
-
-        // --- 2. RECUPERO DATI ---
         goblinhunters.controller.IControllerForView ctrl = goblinhunters.controller.ControllerForView.getInstance();
-        int lives       = ctrl.getPlayerLives();
-        int totalSec    = ctrl.getElapsedTimeInSeconds();
-        int bombAmmo    = ctrl.getPlayerBombAmmo();
-        int auraAmmo    = ctrl.getPlayerAuraAmmo();
-        boolean shield  = ctrl.hasPlayerShield();
-        boolean radius  = ctrl.hasPlayerMaxRadius();
-        boolean speed   = ctrl.hasPlayerMaxSpeed();
-        int score       = ctrl.getScore();
+        int lives      = ctrl.getPlayerLives();
+        int totalSec   = ctrl.getElapsedTimeInSeconds();
+        int bombAmmo   = ctrl.getPlayerBombAmmo();
+        int auraAmmo   = ctrl.getPlayerAuraAmmo();
+        boolean shield = ctrl.hasPlayerShield();
+        boolean radius = ctrl.hasPlayerMaxRadius();
+        boolean speed  = ctrl.hasPlayerMaxSpeed();
+        int score      = ctrl.getScore();
 
         String timeString = String.format("%02d:%02d", totalSec / 60, totalSec % 60);
 
-        // --- 3. LAYOUT: Riquadro nero del cabinato a destra ---
-        // Coordinate del pannello HUD dentro il riquadro nero del cabinet
-        int panelX = 1072;   // Margine sinistro del riquadro nero
-        int panelW = 145;    // Larghezza utile del riquadro
-        int currentY = 200;  // Y di inizio (sotto la cornice superiore del riquadro)
+        int panelX   = Config.HUD_PANEL_X;
+        int panelW   = Config.HUD_PANEL_W;
+        int currentY = Config.HUD_START_Y;
 
-        // --- 4. PUNTEGGIO (in alto, ben visibile) ---
         float pulse = 0.75f + 0.25f * (float) Math.abs(Math.sin(System.currentTimeMillis() / 600.0));
         g2d.setColor(new Color(1.0f, 0.85f * pulse, 0.0f));
         g2d.setFont(new Font("Monospaced", Font.BOLD, 15));
@@ -219,7 +194,6 @@ public class ConcreteDrawer extends AbstractDrawer {
         g2d.drawString(scoreVal, panelX + (panelW - fmScore.stringWidth(scoreVal)) / 2, currentY);
         currentY += 24;
 
-        // --- 5. VITE E TEMPO ---
         g2d.setColor(Color.WHITE);
         g2d.setFont(new Font("Monospaced", Font.BOLD, 20));
         FontMetrics fmStats = g2d.getFontMetrics();
@@ -230,12 +204,10 @@ public class ConcreteDrawer extends AbstractDrawer {
         g2d.drawString(timeStr, panelX + (panelW - fmStats.stringWidth(timeStr)) / 2, currentY);
         currentY += 24;
 
-        // --- 6. SEZIONE CONSUMABILI (bombe e aura) ---
-        int iconSize = 36;
-        int iconGap  = 6;
-        // Centrati: due icone con contatore, affiancate
-        int totalConsW = iconSize + 28 + iconGap + iconSize + 28; // icona+testo + gap + icona+testo
-        int consX = panelX + (panelW - totalConsW) / 2 - 20; // spostato a sinistra per evitare overflow
+        int iconSize = Config.HUD_ICON_SIZE;
+        int iconGap  = Config.HUD_ICON_GAP;
+        int totalConsW = iconSize + 28 + iconGap + iconSize + 28;
+        int consX = panelX + (panelW - totalConsW) / 2 - 20;
 
         drawHudIcon(g2d, consX, currentY,
                 goblinhunters.utils.ItemType.AMMO_BOMB, "HUD_FIRE_SPELL", 0,
@@ -248,9 +220,8 @@ public class ConcreteDrawer extends AbstractDrawer {
                 auraAmmo > 0, "x" + auraAmmo);
         currentY += iconSize + 12;
 
-        // --- 7. SEZIONE POWER-UP (3 icone in riga) ---
-        int puSize = 36;
-        int puGap  = 8;
+        int puSize = Config.HUD_POWER_SIZE;
+        int puGap  = Config.HUD_POWER_GAP;
         int totalPuW = puSize * 3 + puGap * 2;
         int puX = panelX + (panelW - totalPuW) / 2;
 
@@ -272,29 +243,24 @@ public class ConcreteDrawer extends AbstractDrawer {
                 speed, null);
         currentY += puSize + 14;
 
-        // --- 8. ICONA BASTONE (visibile = usabile, trasparente = non usabile) ---
         boolean staffUsable = goblinhunters.controller.ControllerForView.getInstance().isStaffUsable();
         BufferedImage staffImg = spriteManager.getSprite("STAFF_ICON", 0);
         if (staffImg != null) {
-            final int STAFF_SIZE = 40;
+            final int STAFF_SIZE = Config.HUD_STAFF_SIZE;
             int staffX = panelX + (panelW - STAFF_SIZE) / 2;
 
             Composite originalComp = g2d.getComposite();
             if (staffUsable) {
-                // Usabile: piena opacità + bagliore dorato
                 g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
-                // Rettangolo di sfondo luminoso
                 float glowPulse = 0.5f + 0.5f * (float) Math.abs(Math.sin(System.currentTimeMillis() / 400.0));
                 g2d.setColor(new Color(1.0f, 0.85f, 0.0f, 0.25f * glowPulse));
                 g2d.fillRoundRect(staffX - 4, currentY - 4, STAFF_SIZE + 8, STAFF_SIZE + 8, 8, 8);
             } else {
-                // Non usabile: grigio + molto trasparente
                 g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.30f));
             }
             g2d.drawImage(staffImg, staffX, currentY, STAFF_SIZE, STAFF_SIZE, null);
             g2d.setComposite(originalComp);
 
-            // Etichetta "[Z] Bastone" solo quando usabile
             if (staffUsable) {
                 g2d.setFont(new Font("Monospaced", Font.BOLD, 11));
                 g2d.setColor(new Color(255, 215, 0));
@@ -306,17 +272,17 @@ public class ConcreteDrawer extends AbstractDrawer {
     }
 
     /**
-     * Disegna una singola icona HUD con stato inattivo/attivo e animazione juicy.
+     * Draws a single HUD icon with active/inactive visual state.
      *
-     * @param g2d         contesto grafico
-     * @param x           X angolo in alto a sinistra dell'icona nella sua dimensione base
-     * @param y           Y angolo in alto a sinistra
-     * @param itemType    tipo item (per HudItemAnimator)
-     * @param colorKey    chiave SpriteManager per la versione a colori
-     * @param colorFrame  frame index per la versione a colori
-     * @param grayKey     chiave grayscale cache
-     * @param active      true = colorato/opaco, false = grigio/semitrasparente
-     * @param counter     stringa contatore (es. "x3") o null se non serve
+     * @param g2d        graphics context
+     * @param x          top-left X of the icon area
+     * @param y          top-left Y of the icon area
+     * @param itemType   item type (used for HudItemAnimator)
+     * @param colorKey   SpriteManager key for the colour version
+     * @param colorFrame frame index for the colour version
+     * @param grayKey    grayscale cache key
+     * @param active     true = full colour and opacity, false = grayscale at 50%
+     * @param counter    counter string (e.g. "x3"), or null if not needed
      */
     private void drawHudIcon(Graphics2D g2d,
                               int x, int y,
@@ -326,57 +292,46 @@ public class ConcreteDrawer extends AbstractDrawer {
                               boolean active,
                               String counter) {
 
-        final int BASE_SIZE = 48; // dimensione base dell'icona in pixel
+        final int BASE_SIZE = Config.HUD_ICON_BASE_SIZE;
 
-        // A. Scegli l'immagine giusta
         BufferedImage img;
         Composite originalComposite = g2d.getComposite();
 
         if (active) {
             img = spriteManager.getSprite(colorKey, colorFrame);
-            // Opacità 100%
             g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
         } else {
             img = spriteManager.getGrayscale(grayKey);
             if (img == null) img = spriteManager.getSprite(colorKey, colorFrame); // fallback
-            // Opacità 50% per icone inattive
             g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.50f));
         }
 
         int drawSize = BASE_SIZE;
-        int drawX    = x;
-        int drawY    = y;
 
-        // --- CORREZIONE OFFSETS VISIVI ---
-        // Alcune sprites originali in items.png non sono perfettamente centrate.
-        // Applichiamo delle correzioni manuali per allinearle elegantemente al testo.
-        int imgOffsetX = 0;
-        int imgOffsetY = 0;
+        // sprites in items.png are not perfectly centred — manual offsets align them to their text counters
+        int imgOffsetX  = 0;
+        int imgOffsetY  = 0;
         int textOffsetX = 0;
 
         if ("HUD_FIRE_SPELL".equals(colorKey)) {
-            imgOffsetX = 6;   // Spostiamo la sfera un po' a destra
-            imgOffsetY = 8;   // Spostiamo la sfera in basso per centrarla verticalmente
+            imgOffsetX = 6;
+            imgOffsetY = 8;
             textOffsetX = 2;
         } else if ("HUD_AURA_SPELL".equals(colorKey)) {
-            imgOffsetX = 8;   // Spostiamo l'aura a destra perché il suo peso visivo è tutto a sinistra
-            imgOffsetY = 4;   // Lievemente in basso
-            textOffsetX = 6;  // Spostiamo il testo per non farlo sovrapporre alla coda
+            imgOffsetX = 8;
+            imgOffsetY = 4;
+            textOffsetX = 6;
         }
 
-        // C. Disegna immagine
         if (img != null) {
-            g2d.drawImage(img, drawX + imgOffsetX, drawY + imgOffsetY, drawSize, drawSize, null);
+            g2d.drawImage(img, x + imgOffsetX, y + imgOffsetY, drawSize, drawSize, null);
         }
 
-        // D. Ripristina composite originale
         g2d.setComposite(originalComposite);
 
-        // E. Contatore testo (solo per consumabili attivi)
         if (counter != null) {
             int textX = x + BASE_SIZE + 4 + textOffsetX;
-            int textY = y + BASE_SIZE / 2 + 6; // text baseline
-            
+
             if (active) {
                 g2d.setFont(new Font("Arial", Font.BOLD, 15));
                 g2d.setColor(Color.WHITE);
@@ -384,19 +339,19 @@ public class ConcreteDrawer extends AbstractDrawer {
                 g2d.setFont(new Font("Arial", Font.PLAIN, 14));
                 g2d.setColor(new Color(140, 140, 140));
             }
-            // Aggiungiamo un leggero aggiustamento verticale dinamico basato sul font
             FontMetrics fm = g2d.getFontMetrics();
             int correctedTextY = y + (BASE_SIZE / 2) + (fm.getAscent() / 2) - 2;
-            
             g2d.drawString(counter, textX, correctedTextY);
         }
     }
 
+    // ==========================================================
+    // map rendering
+    // ==========================================================
 
     /**
-     * Disegna la mappa a strati:
-     * Layer 0: Pavimento (disegnato ovunque)
-     * Layer 1: Oggetti (Muri distruttibili/indistruttibili)
+     * Draws the map in four ordered passes:
+     * 0 — floor tiles, 1 — theme frame, 2 — walls/pillars/crates, 3 — large building ornaments.
      */
     private void drawMap(Graphics2D g2d) {
         String theme = goblinhunters.controller.ControllerForView.getInstance().getCurrentTheme();
@@ -406,7 +361,7 @@ public class ConcreteDrawer extends AbstractDrawer {
         BufferedImage floorImg = tileManager.getTileImage(goblinhunters.utils.Config.CELL_EMPTY);
         BufferedImage frameImg = tileManager.getTileImage(goblinhunters.utils.Config.THEME_FRAME_INDEX);
 
-        // --- LAYER 0: PAVIMENTO DI BASE ---
+        // pass 0: floor
         for (int row = 0; row < goblinhunters.utils.Config.GRID_HEIGHT; row++) {
             for (int col = 0; col < goblinhunters.utils.Config.GRID_WIDTH; col++) {
                 int tileX = goblinhunters.utils.Config.GRID_OFFSET_X + col * goblinhunters.utils.Config.TILE_SIZE;
@@ -417,24 +372,20 @@ public class ConcreteDrawer extends AbstractDrawer {
             }
         }
 
-        // --- LAYER 1: CORNICE DEL TEMA ---
-        // La disegniamo PRIMA degli edifici così gli edifici ci finiscono SOPRA!
+        // pass 1: theme frame — drawn before buildings so buildings render on top
         if (frameImg != null) {
             g2d.drawImage(frameImg, goblinhunters.utils.Config.FRAME_OFFSET_X, goblinhunters.utils.Config.FRAME_OFFSET_Y, null);
         }
 
-        // --- LAYER 2: MURI, PILASTRI E CASSE ---
+        // pass 2: walls, pillars, crates
         for (int row = 0; row < goblinhunters.utils.Config.GRID_HEIGHT; row++) {
             for (int col = 0; col < goblinhunters.utils.Config.GRID_WIDTH; col++) {
                 int cellType = gameAreaArray[row][col];
                 int tileX = goblinhunters.utils.Config.GRID_OFFSET_X + col * goblinhunters.utils.Config.TILE_SIZE;
                 int tileY = goblinhunters.utils.Config.GRID_OFFSET_Y + row * goblinhunters.utils.Config.TILE_SIZE;
 
-                // Escludiamo gli edifici (che ora usano tutti l'ID 5) e i blocchi vuoti
                 if (cellType != goblinhunters.utils.Config.CELL_EMPTY && cellType != goblinhunters.utils.Config.CELL_ORNAMENT) {
-
-                    // NON disegniamo nulla nella cella (0,4) e (0,9) perché ci andrà sopra
-                    // l'edificio
+                    // cells (0,4) and (0,9) are covered by building ornaments drawn in pass 3
                     if (row == 0 && (col == 4 || col == 9)) {
                         continue;
                     }
@@ -447,24 +398,17 @@ public class ConcreteDrawer extends AbstractDrawer {
             }
         }
 
-        // --- LAYER 3: EDIFICI GIGANTI (Disegnati per ultimi, sopra a tutto!) ---
+        // pass 3: large 2×2 building ornaments (CELL_ORNAMENT = 5)
         for (int row = 0; row < goblinhunters.utils.Config.GRID_HEIGHT; row++) {
             for (int col = 0; col < goblinhunters.utils.Config.GRID_WIDTH; col++) {
                 int cellType = gameAreaArray[row][col];
 
-                // Nella mappa, tutti i grandi edifici sono segnati con il numero 5
-                // (CELL_ORNAMENT)
                 if (cellType == goblinhunters.utils.Config.CELL_ORNAMENT) {
                     int tileX = goblinhunters.utils.Config.GRID_OFFSET_X + col * goblinhunters.utils.Config.TILE_SIZE;
-
-                    // Spostiamo la Y in alto di 64 pixel (- goblinhunters.utils.Config.TILE_SIZE)
-                    // In questo modo la base poggia sulla Riga 0 e il tetto copre la cornice nera!
+                    // shift up one tile so the base sits on row 0 and the top covers the frame border
                     int tileY = goblinhunters.utils.Config.GRID_OFFSET_Y + row * goblinhunters.utils.Config.TILE_SIZE - goblinhunters.utils.Config.TILE_SIZE;
 
-                    // MAGIA: Scegliamo COSA disegnare basandoci sul tema caricato!
                     if ("CAVE".equals(theme)) {
-                        // Animazione Caverna: Calcola il frame index e sommalo a CELL_SKELETON_START
-                        // (5)
                         int frameIndex = (int) ((System.currentTimeMillis() / 100)
                                 % goblinhunters.utils.Config.SKELETON_FRAMES_COUNT);
                         BufferedImage skeletonFrame = tileManager
@@ -473,7 +417,6 @@ public class ConcreteDrawer extends AbstractDrawer {
                             g2d.drawImage(skeletonFrame, tileX, tileY, 128, 128, null);
                         }
                     } else {
-                        // Mappe 1 e 2: Disegna l'ornamento fisso (indice 5)
                         BufferedImage ornament = tileManager.getTileImage(goblinhunters.utils.Config.CELL_ORNAMENT);
                         if (ornament != null) {
                             g2d.drawImage(ornament, tileX, tileY, 128, 128, null);
@@ -484,34 +427,30 @@ public class ConcreteDrawer extends AbstractDrawer {
         }
     }
 
+    // ==========================================================
+    // entity gathering (Y-sorted layer)
+    // ==========================================================
+
     private void gatherPlayer(java.util.List<DrawableEntity> entities, Graphics2D g2d) {
-        // 1. RECUPERO STATO INVINCIBILITÀ
         boolean isInvincible = ControllerForView.getInstance().isPlayerInvincible();
 
-        // 2. LOGICA LAMPEGGIO (Flickering)
         if (isInvincible) {
-            // Alterna visibilità ogni Config.FLICKER_DELAY_MS millisecondi
             if ((System.currentTimeMillis() / Config.FLICKER_DELAY_MS) % 2 == 0) {
-                return; // Salta il disegno per questo frame (effetto "invisibile")
+                return;
             }
         }
 
-        // A. RECUPERO DATI LOGICI
         PlayerState state = ControllerForView.getInstance().getPlayerState();
         double logX = ControllerForView.getInstance().getXCoordinatePlayer();
         double logY = ControllerForView.getInstance().getYCoordinatePlayer();
         long startTime = ControllerForView.getInstance().getPlayerStateStartTime();
 
-        // B. CALCOLO FRAME ANIMAZIONE
         int totalFrames = getFramesForState(state);
 
-        // --- MODIFICA 4: FORZARE I 3 FRAME PER IL CAST ---
-        // Se lo stato è un lancio magico (CAST), ignoriamo i frame totali
-        // dell'intera animazione di attacco e forziamo il ciclo solo sui primi 3 frame!
+        // CAST states use only the first 3 frames, not the full attack frame count
         if (state.name().startsWith("CAST")) {
             totalFrames = 3;
         }
-        // --------------------------------------------------
 
         long timePassed = System.currentTimeMillis() - startTime;
         int currentFrame;
@@ -524,18 +463,14 @@ public class ConcreteDrawer extends AbstractDrawer {
             currentFrame = (int) (timePassed / Config.ANIMATION_DELAY) % totalFrames;
         }
 
-        // C. RECUPERO SPRITE
         BufferedImage sprite = spriteManager.getSprite(state, currentFrame);
 
-        // D. DISEGNO A SCHERMO
         if (sprite != null) {
             int screenX = (int) (logX * Config.TILE_SIZE) + Config.GRID_OFFSET_X;
             int screenY = (int) (logY * Config.TILE_SIZE) + Config.GRID_OFFSET_Y;
 
-            // Centramento orizzontale e allineamento piedi in basso
             int drawX = screenX + (Config.TILE_SIZE - Config.ENTITY_FRAME_SIZE) / 2;
             int drawY = screenY + (Config.TILE_SIZE - Config.ENTITY_FRAME_SIZE);
-            
             int feetY = drawY + Config.ENTITY_FRAME_SIZE;
 
             entities.add(new DrawableEntity(feetY, () -> {
@@ -543,68 +478,6 @@ public class ConcreteDrawer extends AbstractDrawer {
             }));
         }
     }
-    // In src/view/ConcreteDrawer.java
-
-    /*
-     * versione 1
-     * private void drawEnemies(Graphics2D g2d) {
-     * int count = ControllerForView.getInstance().getEnemyCount();
-     * 
-     * for (int i = 0; i < count; i++) {
-     * // 1. Recupero dati logici dal Controller
-     * double x = ControllerForView.getInstance().getEnemyX(i);
-     * double y = ControllerForView.getInstance().getEnemyY(i);
-     * goblinhunters.utils.Direction dir = ControllerForView.getInstance().getEnemyDirection(i);
-     * goblinhunters.utils.EnemyType type = ControllerForView.getInstance().getEnemyType(i);
-     * 
-     * // 2. Definizione del prefisso per lo SpriteManager
-     * String prefix = switch (type) {
-     * case COMMON -> "COMMON";
-     * case HUNTER -> "HUNTER";
-     * case SHOOTER -> "SHOOTER";
-     * default -> "COMMON";
-     * };
-     * 
-     * // 3. Gestione degli stati e delle animazioni
-     * String state = "RUN";
-     * int frames = Config.GOBLIN_RUN_FRAMES;
-     * 
-     * // Se lo Shooter sta mirando (telegraph != null), usiamo l'animazione di
-     * attacco
-     * if (type == goblinhunters.utils.EnemyType.SHOOTER &&
-     * ControllerForView.getInstance().getEnemyTelegraph(i) != null) {
-     * state = "ATTACK";
-     * frames = Config.SHOOTER_ATTACK_FRAMES;
-     * }
-     * 
-     * // Calcolo del frame corrente (velocità 80ms)
-     * int currentFrame = (int) (System.currentTimeMillis() / 80) % frames;
-     * String spriteKey = prefix + "_" + state + "_" + dir.name();
-     * 
-     * // 4. Recupero dello sprite caricato
-     * BufferedImage sprite = SpriteManager.getInstance().getSprite(spriteKey,
-     * currentFrame);
-     * 
-     * if (sprite != null) {
-     * // 5. CALCOLO COORDINATE SCHERMO (Stessa logica del Player)
-     * // Convertiamo la posizione logica in pixel aggiungendo l'offset della
-     * griglia
-     * int screenX = (int) (x * Config.TILE_SIZE) + Config.GRID_OFFSET_X;
-     * int screenY = (int) (y * Config.TILE_SIZE) + Config.GRID_OFFSET_Y;
-     * 
-     * // 6. CENTRAMENTO E ALLINEAMENTO (Sprite 128x128 su Tile 64x64)
-     * // Centriamo orizzontalmente rispetto alla tile
-     * int drawX = screenX + (Config.TILE_SIZE - 128) / 2;
-     * 
-     * // Allineiamo i piedi alla base della tile (screenY + 64 - 128)
-     * int drawY = screenY + (Config.TILE_SIZE - 128);
-     * 
-     * // Disegno finale dello sprite
-     * g2d.drawImage(sprite, drawX, drawY, 128, 128, null);
-     * }
-     * }
-     * }
-     */
 
     private void gatherEnemies(java.util.List<DrawableEntity> entities, Graphics2D g2d) {
         int count = goblinhunters.controller.ControllerForView.getInstance().getEnemyCount();
@@ -615,10 +488,9 @@ public class ConcreteDrawer extends AbstractDrawer {
             goblinhunters.utils.Direction dir = goblinhunters.controller.ControllerForView.getInstance().getEnemyDirection(i);
             goblinhunters.utils.EnemyType type = goblinhunters.controller.ControllerForView.getInstance().getEnemyType(i);
 
-            // --- FLICKERING (Lampeggio se in I-Frames) ---
             if (goblinhunters.controller.ControllerForView.getInstance().isEnemyInvincible(i)) {
                 if ((System.currentTimeMillis() / goblinhunters.utils.Config.FLICKER_DELAY_MS) % 2 == 0) {
-                    continue; // Salta il disegno = invisibile questo frame
+                    continue;
                 }
             }
 
@@ -630,11 +502,9 @@ public class ConcreteDrawer extends AbstractDrawer {
                 default -> "COMMON";
             };
 
-            // LEGGIAMO IL VERO STATO DAL MODEL!
             String state = goblinhunters.controller.ControllerForView.getInstance().getEnemyState(i);
             int frames = goblinhunters.utils.Config.GOBLIN_RUN_FRAMES;
 
-            // Mappatura stati Boss → chiave animazione
             if (type == goblinhunters.utils.EnemyType.BOSS) {
                 switch (state) {
                     case "FURY", "EXHAUSTED" -> {
@@ -657,41 +527,37 @@ public class ConcreteDrawer extends AbstractDrawer {
                 }
             }
 
-            // Mappatura stati Shooter → frame corretti
             if (type == goblinhunters.utils.EnemyType.SHOOTER) {
                 switch (state) {
                     case "IDLE"   -> frames = goblinhunters.utils.Config.GOBLIN_IDLE_FRAMES;
                     case "ATTACK" -> frames = goblinhunters.utils.Config.SHOOTER_ATTACK_FRAMES;
-                    // "RUN" usa il default GOBLIN_RUN_FRAMES gia' impostato
                 }
             }
 
-            // Calcolo del frame corrente
             int currentFrame = 0;
             if (state.equals("DYING")) {
                 long timePassed = System.currentTimeMillis()
                         - ControllerForView.getInstance().getEnemyStateStartTime(i);
 
-                // TASK 4 – Dissolvenza: lampeggio nell'ultimo secondo (1000-2000 ms)
+                // flicker in the last second (1000–2000 ms) as a fade-out effect
                 if (timePassed > 1000) {
                     if ((System.currentTimeMillis() / goblinhunters.utils.Config.FLICKER_DELAY_MS) % 2 == 0) {
-                        continue; // salta il frame: effetto svanimento
+                        continue;
                     }
                 }
 
                 currentFrame = (int) (timePassed / 150);
                 if (currentFrame >= frames) {
-                    currentFrame = frames - 1; // blocca sull'ultimo frame
+                    currentFrame = frames - 1;
                 }
             } else {
                 currentFrame = (int) (System.currentTimeMillis() / 80) % frames;
             }
 
-            // Se è DYING, la sprite sheet non ha la direzione (BOSS_DYING)
+            // DYING animations have no directional variant in the sprite sheet
             String spriteKey = prefix + "_" + state + (state.equals("DYING") ? "" : "_" + dir.name());
             java.awt.image.BufferedImage sprite = goblinhunters.view.SpriteManager.getInstance().getSprite(spriteKey, currentFrame);
 
-            // Fallback
             if (sprite == null && state.equals("IDLE")) {
                 spriteKey = prefix + "_RUN_" + dir.name();
                 sprite = goblinhunters.view.SpriteManager.getInstance().getSprite(spriteKey, 0);
@@ -705,16 +571,13 @@ public class ConcreteDrawer extends AbstractDrawer {
                 int screenY = (int) (y * goblinhunters.utils.Config.TILE_SIZE) + goblinhunters.utils.Config.GRID_OFFSET_Y;
 
                 if (type == goblinhunters.utils.EnemyType.BOSS) {
-                    // --- CALCOLO PIVOT BOSS ---
                     int drawX = (screenX + 32) - 96;
                     int drawY = (screenY + 64) - 149;
-                    
                     int feetY = drawY + goblinhunters.utils.Config.BOSS_FRAME_SIZE;
 
                     entities.add(new DrawableEntity(feetY, () -> {
                         g2d.drawImage(finalSprite, drawX, drawY, goblinhunters.utils.Config.BOSS_FRAME_SIZE, goblinhunters.utils.Config.BOSS_FRAME_SIZE, null);
 
-                        // TASK 2: Barra HP fluttuante sopra le corna (nascosta se DYING)
                         if (!finalState.equals("DYING")) {
                             int hp    = goblinhunters.controller.ControllerForView.getInstance().getBossHP();
                             int maxHp = goblinhunters.controller.ControllerForView.getInstance().getBossMaxHP();
@@ -743,9 +606,8 @@ public class ConcreteDrawer extends AbstractDrawer {
                 } else {
                     int drawX = screenX + (goblinhunters.utils.Config.TILE_SIZE - 128) / 2;
                     int drawY = screenY + (goblinhunters.utils.Config.TILE_SIZE - 128);
-                    
-                    int feetY = drawY + 128; // base del goblin
-                    
+                    int feetY = drawY + 128;
+
                     entities.add(new DrawableEntity(feetY, () -> {
                         g2d.drawImage(finalSprite, drawX, drawY, 128, 128, null);
                     }));
@@ -755,19 +617,17 @@ public class ConcreteDrawer extends AbstractDrawer {
     }
 
     /**
-     * Disegna le crepe del Boss come overlay sopra il pavimento normale.
-     * Usa la tile CAVE_CRACKED_FLOOR (indice 3) con un'alfa oscillante
-     * per evidenziare il pericolo senza oscurare i nemici/player disegnati dopo.
+     * Draws boss crack-floor tiles as an overlay above the normal floor.
+     * Uses a pulsing alpha so the hazard stays visible without obscuring
+     * entities drawn afterwards.
      */
     private void drawCracks(Graphics2D g2d) {
         int count = goblinhunters.controller.ControllerForView.getInstance().getCrackCount();
-        if (count == 0)
-            return;
+        if (count == 0) return;
 
-        // Recupera la tile crepata (indice Config.CELL_CRACKED_FLOOR = 3)
         BufferedImage crackTile = tileManager.getTileImage(goblinhunters.utils.Config.CELL_CRACKED_FLOOR);
 
-        // Alpha pulsante (tra 0.55 e 0.85) per dare un effetto "vivo" al pericolo
+        // pulsing alpha (0.55 – 0.85) to give the hazard a "live" appearance
         float pulse = 0.55f + 0.30f * (float) Math.abs(Math.sin(System.currentTimeMillis() / 400.0));
         Composite originalComposite = g2d.getComposite();
         g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, pulse));
@@ -782,7 +642,6 @@ public class ConcreteDrawer extends AbstractDrawer {
             if (crackTile != null) {
                 g2d.drawImage(crackTile, screenX, screenY, goblinhunters.utils.Config.TILE_SIZE, goblinhunters.utils.Config.TILE_SIZE, null);
             } else {
-                // Fallback grafico: rettangolo arancione semi-trasparente
                 g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.6f));
                 g2d.setColor(new Color(220, 80, 0));
                 g2d.fillRect(screenX + 4, screenY + 4,
@@ -790,25 +649,7 @@ public class ConcreteDrawer extends AbstractDrawer {
             }
         }
 
-        // Ripristina il composite originale per non influenzare il disegno successivo
         g2d.setComposite(originalComposite);
-    }
-
-    // Metodo di debug puro: disegna solo le linee della griglia
-    private void drawDebugGrid(Graphics2D g2d) {
-        g2d.setColor(new Color(255, 255, 255, 40)); // Bianco trasparente
-
-        // Linee Verticali
-        for (int col = 0; col <= Config.GRID_WIDTH; col++) {
-            int x = Config.GRID_OFFSET_X + (col * Config.TILE_SIZE);
-            g2d.drawLine(x, Config.GRID_OFFSET_Y, x, Config.GRID_OFFSET_Y + (Config.GRID_HEIGHT * Config.TILE_SIZE));
-        }
-
-        // Linee Orizzontali
-        for (int row = 0; row <= Config.GRID_HEIGHT; row++) {
-            int y = Config.GRID_OFFSET_Y + (row * Config.TILE_SIZE);
-            g2d.drawLine(Config.GRID_OFFSET_X, y, Config.GRID_OFFSET_X + (Config.GRID_WIDTH * Config.TILE_SIZE), y);
-        }
     }
 
     private void gatherBombs(java.util.List<DrawableEntity> entities, Graphics2D g2d) {
@@ -825,7 +666,6 @@ public class ConcreteDrawer extends AbstractDrawer {
 
             BufferedImage sprite = SpriteManager.getInstance().getSprite("BOMB_ANIM", currentFrame);
             if (sprite != null) {
-                // I piedi della bomba sono alla base della tile
                 int feetY = screenY + Config.TILE_SIZE;
                 entities.add(new DrawableEntity(feetY, () -> {
                     g2d.drawImage(sprite, screenX, screenY, null);
@@ -854,7 +694,6 @@ public class ConcreteDrawer extends AbstractDrawer {
 
             BufferedImage sprite = SpriteManager.getInstance().getSprite(animKey, currentFrame);
             if (sprite != null) {
-                // I piedi della distruzione sono alla base della tile
                 int feetY = screenY + Config.TILE_SIZE;
                 entities.add(new DrawableEntity(feetY, () -> {
                     g2d.drawImage(sprite, screenX, screenY, Config.TILE_SIZE, Config.TILE_SIZE, null);
@@ -867,7 +706,7 @@ public class ConcreteDrawer extends AbstractDrawer {
         int count = ControllerForView.getInstance().getFireCount();
 
         for (int i = 0; i < count; i++) {
-            int r = ControllerForView.getInstance().getFireRow(i);
+            int r   = ControllerForView.getInstance().getFireRow(i);
             int col = ControllerForView.getInstance().getFireCol(i);
             int type = ControllerForView.getInstance().getFireType(i);
 
@@ -916,12 +755,8 @@ public class ConcreteDrawer extends AbstractDrawer {
                 BufferedImage sprite = SpriteManager.getInstance().getSprite(key, 0);
 
                 if (sprite != null) {
-                    // Poiché l'immagine PNG è già 64x64 con il proiettile centrato,
-                    // calcoliamo solo l'angolo in alto a sinistra della cella.
                     int screenX = (int) (x * Config.TILE_SIZE) + Config.GRID_OFFSET_X;
                     int screenY = (int) (y * Config.TILE_SIZE) + Config.GRID_OFFSET_Y;
-
-                    // Il proiettile galleggia, ma per lo y-sorting usiamo la sua altezza centrale o base
                     int feetY = screenY + Config.TILE_SIZE;
 
                     entities.add(new DrawableEntity(feetY, () -> {
@@ -949,14 +784,11 @@ public class ConcreteDrawer extends AbstractDrawer {
 
         BufferedImage sprite = spriteManager.getSprite(state, currentFrame);
         if (sprite != null) {
-            // --- FIX COORDINATE: Usa la stessa logica di drawPlayer ---
             int screenX = (int) (logX * Config.TILE_SIZE) + Config.GRID_OFFSET_X;
             int screenY = (int) (logY * Config.TILE_SIZE) + Config.GRID_OFFSET_Y;
 
             int drawX = screenX + (Config.TILE_SIZE - Config.ENTITY_FRAME_SIZE) / 2;
             int drawY = screenY + (Config.TILE_SIZE - Config.ENTITY_FRAME_SIZE);
-            
-            // Usiamo la stessa logica di base del player
             int feetY = drawY + Config.ENTITY_FRAME_SIZE;
 
             entities.add(new DrawableEntity(feetY, () -> {
@@ -965,9 +797,11 @@ public class ConcreteDrawer extends AbstractDrawer {
         }
     }
 
-    public void drawTransition(Graphics2D g2d) {
+    // ==========================================================
+    // transition overlay
+    // ==========================================================
 
-        // --- 1. AGGIORNAMENTO TRASPARENZA ---
+    public void drawTransition(Graphics2D g2d) {
         if (ControllerForView.getInstance().isTransitioning()) {
             if (transitionAlpha < Config.MAX_ALPHA) {
                 transitionAlpha += Config.FADE_SPEED;
@@ -982,24 +816,15 @@ public class ConcreteDrawer extends AbstractDrawer {
             }
         }
 
-        // --- 2. DISEGNO DEL RETTANGOLO ---
         if (transitionAlpha > Config.MIN_ALPHA) {
             g2d.setColor(new Color(0.0f, 0.0f, 0.0f, transitionAlpha));
-
-            // Prendi larghezza e altezza direttamente dal Config!
             g2d.fillRect(0, 0, Config.WINDOW_PREFERRED_WIDTH, Config.WINDOW_PREFERRED_HEIGHT);
         }
     }
 
-    /**
-     * Disegna l'effetto di transizione.
-     * Da chiamare come ULTIMA istruzione nel tuo metodo di rendering principale.
-     */
-
-    // @Override public int getDrawingWidth() { return Config.GRID_OFFSET_X + 960
-    // }//Config.GAME_PANEL_WIDTH; }
-    // @Override public int getDrawingHeight() { return Config.GRID_OFFSET_Y +932;}
-    // //Config.GAME_PANEL_HEIGHT; }
+    // ==========================================================
+    // AbstractDrawer overrides
+    // ==========================================================
 
     @Override
     public int getDrawingWidth() {
@@ -1010,6 +835,10 @@ public class ConcreteDrawer extends AbstractDrawer {
     public int getDrawingHeight() {
         return Config.WINDOW_PREFERRED_HEIGHT;
     }
+
+    // ==========================================================
+    // private helpers
+    // ==========================================================
 
     private int getFramesForState(PlayerState state) {
         String s = state.name();
@@ -1051,52 +880,5 @@ public class ConcreteDrawer extends AbstractDrawer {
                 }));
             }
         }
-    }
-
-    /**
-     * TASK 4 – Disegna la barra HP del Boss centrata in basso.
-     * Visibile solo in Zona 2 (arena boss) e solo se il Boss è ancora vivo.
-     */
-    private void drawBossHUD(Graphics2D g2d) {
-        // Visibile solo in zona 2
-        if (goblinhunters.controller.ControllerForView.getInstance().getCurrentTheme() == null) return;
-
-        int bossHP    = goblinhunters.controller.ControllerForView.getInstance().getBossHP();
-        int bossMaxHP = goblinhunters.controller.ControllerForView.getInstance().getBossMaxHP();
-        if (bossMaxHP <= 0 || bossHP <= 0) return; // Nessun boss attivo o già sconfitto
-
-        // --- Dimensioni e posizione della barra ---
-        int barW    = 500;   // larghezza totale
-        int barH    = 22;    // altezza barra
-        int barX    = (goblinhunters.utils.Config.WINDOW_PREFERRED_WIDTH - barW) / 2;
-        int barY    = goblinhunters.utils.Config.WINDOW_PREFERRED_HEIGHT - 55; // 55 px dal basso
-
-        float ratio = Math.max(0f, Math.min(1f, (float) bossHP / bossMaxHP));
-
-        // 1. Sfondo scuro (bordo)
-        g2d.setColor(new Color(10, 10, 10, 210));
-        g2d.fillRoundRect(barX - 4, barY - 26, barW + 8, barH + 34, 12, 12);
-
-        // 2. Etichetta "GOBLIN BOSS"
-        g2d.setColor(Color.WHITE);
-        g2d.setFont(new Font("Arial", Font.BOLD, 14));
-        java.awt.FontMetrics fm = g2d.getFontMetrics();
-        String label = "GOBLIN BOSS  " + bossHP + " / " + bossMaxHP;
-        int labelX = barX + (barW - fm.stringWidth(label)) / 2;
-        g2d.drawString(label, labelX, barY - 6);
-
-        // 3. Sfondo grigio della barra
-        g2d.setColor(new Color(60, 60, 60));
-        g2d.fillRect(barX, barY, barW, barH);
-
-        // 4. Barra rossa proporzionale agli HP rimanenti
-        //    Diventa arancione sotto il 50% (enrage) come segnale visivo
-        Color barColor = (ratio > 0.5f) ? new Color(200, 30, 30) : new Color(220, 100, 0);
-        g2d.setColor(barColor);
-        g2d.fillRect(barX, barY, (int)(barW * ratio), barH);
-
-        // 5. Bordo esterno della barra
-        g2d.setColor(new Color(180, 20, 20));
-        g2d.drawRect(barX, barY, barW, barH);
     }
 }

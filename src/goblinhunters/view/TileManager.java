@@ -4,23 +4,16 @@ import java.awt.image.BufferedImage;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Gestisce le immagini per le celle statiche della mappa (Muri, Pavimenti, ecc.).
- * Ora supporta i "Temi" (es. VILLAGE, FOREST).
- */
+/** Manages tile images for static map cells and supports theme switching (VILLAGE, FOREST, CAVE). */
 public class TileManager {
 
     private static TileManager instance = null;
 
-    // Mappa: Chiave = Nome Tema ("VILLAGE"), Valore = Array di immagini
     private final Map<String, BufferedImage[]> themeMap;
-
-    // Tema attualmente in uso per il livello (default a VILLAGE)
     private String currentTheme = "VILLAGE";
 
     private TileManager() {
         this.themeMap = new HashMap<>();
-        // NIENTE CARICAMENTO QUI! Ora ci pensa il ResourceLoader.
     }
 
     public static TileManager getInstance() {
@@ -30,32 +23,26 @@ public class TileManager {
         return instance;
     }
 
-    /**
-     * Registra un nuovo tema nel TileManager.
-     */
+    /** Registers a theme's tile array under the given name. */
     public void loadTheme(String themeName, BufferedImage[] tiles) {
         themeMap.put(themeName, tiles);
     }
 
-    /**
-     * Cambia il tema grafico in tempo reale.
-     */
+    /** Switches the active rendering theme. */
     public void setCurrentTheme(String themeName) {
         if (themeMap.containsKey(themeName)) {
             this.currentTheme = themeName;
         } else {
-            System.err.println("TileManager: Tema '" + themeName + "' non trovato!");
+            System.err.println("TileManager: Theme '" + themeName + "' not found.");
         }
     }
 
     /**
-     * Restituisce l'immagine corretta in base al tipo di cella e al tema corrente.
-     * Ricorda: 0 = Vuoto, 1 = Indistruttibile, 2 = Distruttibile
+     * Returns the tile image for the given cell type under the current theme.
+     * Cell types: 0 = empty, 1 = indestructible, 2 = destructible.
      */
     public BufferedImage getTileImage(int cellType) {
         BufferedImage[] tiles = themeMap.get(currentTheme);
-
-        // Se il tema esiste e il cellType rientra nei limiti dell'array (0, 1, 2)
         if (tiles != null && cellType >= 0 && cellType < tiles.length) {
             return tiles[cellType];
         }

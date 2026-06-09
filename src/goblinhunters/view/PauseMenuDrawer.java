@@ -7,17 +7,14 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 
 /**
- * Disegna l'overlay del menu di pausa sul contesto {@code Graphics2D} del gioco.
+ * Draws the pause-menu overlay on the game's {@code Graphics2D} context.
  *
- * <h3>Responsabilità (View pura)</h3>
- * <ul>
- *   <li>Rendering Java2D dell'intero pannello: nessun componente Swing dinamico.</li>
- *   <li>Nessuna logica di business: identificazione dei click → {@link PauseController}.</li>
- * </ul>
+ * <p>Pure View: no business logic. Click identification is delegated to
+ * {@link PauseController}; lifecycle actions are handled by GamePanel via
+ * the returned {@link ClickResult}.</p>
  *
- * <h3>Layout</h3>
  * <pre>
- *   [CONTROLS — 7 righe]
+ *   [CONTROLS — 7 rows]
  *   ↑ Move Up      [UP]
  *   ↓ Move Down    [DOWN]
  *   ← Move Left    [LEFT]
@@ -36,31 +33,34 @@ import java.awt.image.BufferedImage;
  */
 public class PauseMenuDrawer {
 
-    // =========================================================================
-    // Singleton
-    // =========================================================================
+    // ==========================================================
+    // singleton
+    // ==========================================================
+
     private static PauseMenuDrawer instance;
+
     public static PauseMenuDrawer getInstance() {
         if (instance == null) instance = new PauseMenuDrawer();
         return instance;
     }
 
-    // =========================================================================
-    // Dimensioni pannello
-    // =========================================================================
+    // ==========================================================
+    // layout constants
+    // ==========================================================
+
     private static final int PANEL_W  = 440;
     private static final int PANEL_H  = 700;
     private static final int CORNER_R = 16;
 
-    // =========================================================================
-    // Palette colori
-    // =========================================================================
+    // ==========================================================
+    // colour palette
+    // ==========================================================
+
     private static final Color BG_DARK         = new Color(28, 18, 10, 240);
     private static final Color BORDER_GOLD     = new Color(200, 165, 70);
     private static final Color BORDER_INNER    = new Color(120, 90, 30);
     private static final Color SECTION_YELLOW  = new Color(255, 210, 60);
     private static final Color TEXT_WHITE      = new Color(240, 235, 220);
-    private static final Color TEXT_GRAY       = new Color(130, 120, 100);
     private static final Color KEYBIND_BG      = new Color(50, 38, 20, 220);
     private static final Color KEYBIND_BORDER  = new Color(160, 130, 50);
     private static final Color KEYBIND_ACTIVE  = new Color(90, 70, 30, 240);
@@ -75,10 +75,11 @@ public class PauseMenuDrawer {
     private static final Color AUDIO_ON_COLOR  = new Color(220, 200, 100);
     private static final Color AUDIO_OFF_COLOR = new Color(110, 100, 80);
 
-    // =========================================================================
-    // Rettangoli cliccabili (calcolati in draw())
-    // =========================================================================
-    private final Rectangle[] keybindRects = new Rectangle[PauseController.ACTION_COUNT]; // 7
+    // ==========================================================
+    // clickable hit areas (computed in draw())
+    // ==========================================================
+
+    private final Rectangle[] keybindRects = new Rectangle[PauseController.ACTION_COUNT];
     private Rectangle resetRect;
     private Rectangle audioOnRect;
     private Rectangle audioOffRect;
@@ -86,9 +87,10 @@ public class PauseMenuDrawer {
     private Rectangle quitRect;
     private Rectangle resumeRect;
 
-    // =========================================================================
-    // Font cache
-    // =========================================================================
+    // ==========================================================
+    // font cache
+    // ==========================================================
+
     private final Font fontTitle;
     private final Font fontSection;
     private final Font fontLabel;
@@ -105,18 +107,17 @@ public class PauseMenuDrawer {
         fontSmall   = new Font("Monospaced", Font.BOLD, 10);
     }
 
-    // =========================================================================
-    // PUBLIC API ——— entry points chiamati da ConcreteDrawer e GamePanel
-    // =========================================================================
+    // ==========================================================
+    // public API
+    // ==========================================================
 
-    /** Disegna l'intero overlay del menu di pausa. Chiamato ad ogni repaint durante la pausa. */
+    /** Draws the entire pause menu overlay. Called on every repaint while paused. */
     public void draw(Graphics2D g2d, PauseController ctrl) {
         int screenW = Config.WINDOW_PREFERRED_WIDTH;
         int screenH = Config.WINDOW_PREFERRED_HEIGHT;
         int px = (screenW - PANEL_W) / 2;
         int py = (screenH - PANEL_H) / 2;
 
-        // Oscuramento sfondo
         Composite orig = g2d.getComposite();
         g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.65f));
         g2d.setColor(Color.BLACK);
@@ -131,7 +132,7 @@ public class PauseMenuDrawer {
         cy = drawTitle(g2d, px, cy);
         cy = drawDivider(g2d, cx, cy, PANEL_W - 44);
         cy += 6;
-        cy = drawControlsSection(g2d, cx, cy, ctrl);   // unico pannello 7 righe
+        cy = drawControlsSection(g2d, cx, cy, ctrl);
         cy += 4;
         cy = drawDivider(g2d, cx, cy, PANEL_W - 44);
         cy += 6;
@@ -140,30 +141,24 @@ public class PauseMenuDrawer {
     }
 
     /**
-     * Identifica l'elemento cliccato e lo restituisce come {@link ClickResult}.
-     *
-     * <p>Le azioni di lifecycle (RESUME / QUIT / MAIN_MENU) NON sono eseguite qui —
-     * le esegue {@code GamePanel} che riceve il ClickResult.</p>
-     *
-     * <p>Le azioni interne al menu (rebind, reset, audio) sono delegate al {@code ctrl}.</p>
+     * Returns the {@link ClickResult} for the element at the given coordinates.
+     * Lifecycle actions (RESUME / QUIT / MAIN_MENU) are NOT executed here —
+     * GamePanel handles them after inspecting the result.
+     * Internal actions (rebind, reset, audio) are delegated directly to {@code ctrl}.
      */
     public ClickResult handleClick(int mx, int my, PauseController ctrl) {
-        // Pulsanti di navigazione — solo identificazione
         if (resumeRect   != null && resumeRect.contains(mx, my))   return ClickResult.RESUME;
         if (quitRect     != null && quitRect.contains(mx, my))     return ClickResult.QUIT;
         if (mainMenuRect != null && mainMenuRect.contains(mx, my)) return ClickResult.RETURN_TO_MAIN_MENU;
 
-        // Reset defaults — azione interna
         if (resetRect != null && resetRect.contains(mx, my)) {
             ctrl.onResetDefaultsClicked();
             return ClickResult.RESET_DEFAULTS;
         }
 
-        // Toggle audio — azione interna
         if (audioOnRect  != null && audioOnRect.contains(mx, my))  { ctrl.setAudioEnabled(true);  return ClickResult.TOGGLE_AUDIO; }
         if (audioOffRect != null && audioOffRect.contains(mx, my)) { ctrl.setAudioEnabled(false); return ClickResult.TOGGLE_AUDIO; }
 
-        // Keybind — 7 azioni unificate
         for (int i = 0; i < keybindRects.length; i++) {
             if (keybindRects[i] != null && keybindRects[i].contains(mx, my)) {
                 ctrl.startRebind(i);
@@ -175,46 +170,46 @@ public class PauseMenuDrawer {
     }
 
     /**
-     * Gestisce un tasto premuto durante la modalità rebind.
-     * La View cattura il keyName grezzo e lo passa al Controller — non sa cosa farne.
+     * Forwards a raw key name to the controller during rebind mode.
+     * The View captures the key and delegates — it does not interpret the name.
      */
     public void handleKeyForRebind(String keyName, PauseController ctrl) {
         ctrl.commitRebind(keyName);
     }
 
-    // =========================================================================
-    // DRAWING — Panel frame
-    // =========================================================================
+    // ==========================================================
+    // DRAWING — panel frame
+    // ==========================================================
 
     private void drawPanel(Graphics2D g2d, int px, int py) {
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        // Ombra
+
         g2d.setColor(new Color(0, 0, 0, 120));
         g2d.fillRoundRect(px + 6, py + 6, PANEL_W, PANEL_H, CORNER_R + 4, CORNER_R + 4);
-        // Sfondo
+
         g2d.setColor(BG_DARK);
         g2d.fillRoundRect(px, py, PANEL_W, PANEL_H, CORNER_R, CORNER_R);
-        // Bordo gold esterno
+
         g2d.setColor(BORDER_GOLD);
         g2d.setStroke(new BasicStroke(3f));
         g2d.drawRoundRect(px, py, PANEL_W, PANEL_H, CORNER_R, CORNER_R);
-        // Bordo interno
+
         g2d.setColor(BORDER_INNER);
         g2d.setStroke(new BasicStroke(1f));
         g2d.drawRoundRect(px + 5, py + 5, PANEL_W - 10, PANEL_H - 10, CORNER_R - 4, CORNER_R - 4);
-        // Angoli ornamentali
+
         int cr = 7;
         g2d.setColor(BORDER_GOLD);
-        g2d.fillOval(px - cr,          py - cr,          cr * 2, cr * 2);
-        g2d.fillOval(px + PANEL_W - cr, py - cr,          cr * 2, cr * 2);
-        g2d.fillOval(px - cr,          py + PANEL_H - cr, cr * 2, cr * 2);
+        g2d.fillOval(px - cr,           py - cr,           cr * 2, cr * 2);
+        g2d.fillOval(px + PANEL_W - cr, py - cr,           cr * 2, cr * 2);
+        g2d.fillOval(px - cr,           py + PANEL_H - cr, cr * 2, cr * 2);
         g2d.fillOval(px + PANEL_W - cr, py + PANEL_H - cr, cr * 2, cr * 2);
         g2d.setStroke(new BasicStroke(1f));
     }
 
-    // =========================================================================
-    // DRAWING — Title
-    // =========================================================================
+    // ==========================================================
+    // DRAWING — title
+    // ==========================================================
 
     private int drawTitle(Graphics2D g2d, int panelX, int cy) {
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -237,14 +232,13 @@ public class PauseMenuDrawer {
         return cy + 4;
     }
 
-    // =========================================================================
-    // DRAWING — CONTROLS section — pannello unico, 7 azioni
-    // =========================================================================
+    // ==========================================================
+    // DRAWING — controls section
+    // ==========================================================
 
     private int drawControlsSection(Graphics2D g2d, int cx, int cy, PauseController ctrl) {
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        // Header
         g2d.setFont(fontSection);
         g2d.setColor(SECTION_YELLOW);
         g2d.drawString("CONTROLS", cx, cy + 13);
@@ -262,7 +256,7 @@ public class PauseMenuDrawer {
             int rowY = cy + i * rowH;
             int midY = rowY + rowH / 2;
 
-            // Separator leggero tra i gruppi (dopo il 4° → tra movimento e azioni)
+            // dashed separator between movement (0-3) and attack (4-6) groups
             if (i == 4) {
                 g2d.setColor(new Color(120, 90, 30, 80));
                 g2d.setStroke(new BasicStroke(1f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND,
@@ -271,16 +265,13 @@ public class PauseMenuDrawer {
                 g2d.setStroke(new BasicStroke(1f));
             }
 
-            // Icona a sinistra
             drawActionIcon(g2d, i, iconX, rowY + (rowH - iconSize) / 2, iconSize);
 
-            // Etichetta azione
             g2d.setFont(fontLabel);
             g2d.setColor(TEXT_WHITE);
             FontMetrics fm = g2d.getFontMetrics();
             g2d.drawString(PauseController.ACTION_LABELS[i], labelX, midY + fm.getAscent() / 2 - 1);
 
-            // Box keybind
             int bx = keybindX;
             int by = midY - keybindH / 2;
             keybindRects[i] = new Rectangle(bx, by, keybindW, keybindH);
@@ -293,7 +284,6 @@ public class PauseMenuDrawer {
 
         cy += PauseController.ACTION_COUNT * rowH + 4;
 
-        // Bottone RESET DEFAULTS
         int rdW = 170;
         int rdH = 26;
         int rdX = cx + (PANEL_W - 44 - rdW) / 2;
@@ -318,9 +308,9 @@ public class PauseMenuDrawer {
         return cy;
     }
 
-    // =========================================================================
-    // DRAWING — AUDIO section
-    // =========================================================================
+    // ==========================================================
+    // DRAWING — audio section
+    // ==========================================================
 
     private int drawAudioSection(Graphics2D g2d, int cx, int cy, PauseController ctrl) {
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -340,18 +330,15 @@ public class PauseMenuDrawer {
         int iconOffX = cx + 52;
         int iconOffY = cy + (42 - sizeOff) / 2;
 
-        // Sfondo selezione
         g2d.setColor(new Color(100, 80, 20, audioOn ? 130 : 0));
         g2d.fillRoundRect(iconOnX - 3, cy - 2, sizeOn + 6, 44, 6, 6);
         g2d.setColor(new Color(100, 80, 20, audioOn ? 0 : 130));
         g2d.fillRoundRect(iconOffX - 3, cy - 2, sizeOff + 6, 44, 6, 6);
 
-        // Icona ON
         Composite origComp = g2d.getComposite();
         g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, audioOn ? 1.0f : 0.45f));
         drawSpeakerIcon(g2d, iconOnX, iconOnY, sizeOn, false);
 
-        // Icona OFF
         g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, audioOn ? 0.45f : 1.0f));
         drawSpeakerIcon(g2d, iconOffX, iconOffY, sizeOff, true);
         g2d.setComposite(origComp);
@@ -359,7 +346,6 @@ public class PauseMenuDrawer {
         audioOnRect  = new Rectangle(iconOnX  - 3, cy - 2, sizeOn  + 6, 46);
         audioOffRect = new Rectangle(iconOffX - 3, cy - 2, sizeOff + 6, 46);
 
-        // Stato testuale
         g2d.setFont(new Font("Monospaced", Font.BOLD, 11));
         g2d.setColor(audioOn ? AUDIO_ON_COLOR : AUDIO_OFF_COLOR);
         g2d.drawString(audioOn ? "ON" : "OFF", cx + 104, cy + 26);
@@ -368,9 +354,9 @@ public class PauseMenuDrawer {
         return cy;
     }
 
-    // =========================================================================
-    // DRAWING — Bottom buttons
-    // =========================================================================
+    // ==========================================================
+    // DRAWING — bottom buttons
+    // ==========================================================
 
     private void drawBottomButtons(Graphics2D g2d, int px, int py) {
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -413,9 +399,9 @@ public class PauseMenuDrawer {
         g2d.drawString(label, tx, ty);
     }
 
-    // =========================================================================
-    // DRAWING — Keybind box riutilizzabile
-    // =========================================================================
+    // ==========================================================
+    // DRAWING — reusable keybind box
+    // ==========================================================
 
     private void drawKeybindBox(Graphics2D g2d, int bx, int by, int bw, int bh,
                                 String text, boolean active) {
@@ -437,9 +423,9 @@ public class PauseMenuDrawer {
                 by + (bh - kfm.getHeight()) / 2 + kfm.getAscent());
     }
 
-    // =========================================================================
-    // DRAWING — Action icons (7 azioni)
-    // =========================================================================
+    // ==========================================================
+    // DRAWING — action icons
+    // ==========================================================
 
     private void drawActionIcon(Graphics2D g2d, int row, int x, int y, int size) {
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -465,16 +451,15 @@ public class PauseMenuDrawer {
     }
 
     /**
-     * Disegna un'icona a freccia direzionale procedurale.
+     * Draws a directional arrow icon.
      *
-     * @param dir 0=Su, 1=Giù, 2=Sinistra, 3=Destra
+     * @param dir 0=Up, 1=Down, 2=Left, 3=Right
      */
     private void drawArrowIcon(Graphics2D g2d, int x, int y, int size, int dir) {
         int cx = x + size / 2;
         int cy = y + size / 2;
         int r  = size / 2 - 3;
 
-        // Background circle
         g2d.setColor(KEYBIND_BG);
         g2d.fillOval(x, y, size, size);
         g2d.setColor(KEYBIND_BORDER);
@@ -482,7 +467,6 @@ public class PauseMenuDrawer {
         g2d.drawOval(x, y, size, size);
         g2d.setStroke(new BasicStroke(1f));
 
-        // Freccia (triangolo pieno)
         int[] xs, ys;
         switch (dir) {
             case 0 -> { xs = new int[]{cx, cx - r, cx + r}; ys = new int[]{cy - r, cy + r, cy + r}; }
@@ -524,9 +508,9 @@ public class PauseMenuDrawer {
         g2d.fillOval(orbX + orbR / 5, orbY + orbR / 6, orbR / 3, orbR / 3);
     }
 
-    // =========================================================================
-    // DRAWING — Speaker icon
-    // =========================================================================
+    // ==========================================================
+    // DRAWING — speaker icon
+    // ==========================================================
 
     private void drawSpeakerIcon(Graphics2D g2d, int x, int y, int size, boolean muted) {
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -553,13 +537,13 @@ public class PauseMenuDrawer {
         }
     }
 
-    // =========================================================================
-    // Enum risultati click
-    // =========================================================================
+    // ==========================================================
+    // click result enum
+    // ==========================================================
 
     /**
-     * Descrive l'elemento cliccato nel menu di pausa.
-     * {@code GamePanel} usa questo enum per orchestrare le azioni di lifecycle.
+     * Identifies which element was clicked in the pause menu.
+     * GamePanel uses this to orchestrate lifecycle actions.
      */
     public enum ClickResult {
         NONE,

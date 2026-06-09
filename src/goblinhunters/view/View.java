@@ -2,43 +2,31 @@ package goblinhunters.view;
 
 import javax.swing.*;
 
-public class View implements IView{
+public class View implements IView {
 
-    //---------------------------------------------------------------
-    // STATIC FIELDS
-    //---------------------------------------------------------------
     private static View instance = null;
 
-    //---------------------------------------------------------------
-    // INSTANCE ATTRIBUTES
-    //---------------------------------------------------------------
     protected GameGUI gameGUI = null;
 
-    private View() {
-    //TO-DO
-    }
+    private View() {}
+
+    @Override
     public void openGameGUI() {
-
         final AbstractDrawer drawer = new ConcreteDrawer();
-
-        javax.swing.SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-                if (gameGUI == null)
-                    gameGUI = new GameGUI(drawer);
-                gameGUI.setVisible(true);
-            }
+        SwingUtilities.invokeLater(() -> {
+            if (gameGUI == null)
+                gameGUI = new GameGUI(drawer);
+            gameGUI.setVisible(true);
         });
     }
 
+    @Override
     public void closeGameGUI() {
-        javax.swing.SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-                if (gameGUI != null)
-                    gameGUI.setVisible(false);
-            }
+        SwingUtilities.invokeLater(() -> {
+            if (gameGUI != null)
+                gameGUI.setVisible(false);
         });
     }
-
 
     @Override
     public void requestRepaint() {
@@ -55,9 +43,7 @@ public class View implements IView{
 
     @Override
     public void setupResources() {
-        // Deleghiamo il caricamento alla classe specializzata
         ResourceLoader loader = new ResourceLoader();
         loader.loadAllResources();
     }
-
-} // end class
+}

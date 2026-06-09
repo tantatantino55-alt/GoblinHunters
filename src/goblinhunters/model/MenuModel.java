@@ -3,28 +3,22 @@ package goblinhunters.model;
 import goblinhunters.utils.CharacterType;
 
 /**
- * Model del menu di selezione personaggio (MVC).
+ * Character selection menu model (MVC).
  *
- * Stato unico:
- * - {@code selectedIndex}: indice del personaggio selezionato con click (-1 = nessuno).
- *   La freccia selettore nella View punta al personaggio con questo indice.
+ * <p>Single source of truth for selection state:
+ * - {@code selectedIndex}: index of the character selected by click (-1 = none).
+ *   The selector arrow in the View points to the character at this index.</p>
  *
- * La conferma ({@link #confirmSelection()}) usa {@code selectedIndex}
- * per determinare con quale personaggio iniziare il gioco.
- *
- * NON conosce la View né il Controller.
+ * <p>{@link #confirmSelection()} uses {@code selectedIndex} to determine
+ * which character starts the game.</p>
  */
 public class MenuModel {
 
     private static MenuModel instance = null;
 
-    // --- STATO SELEZIONE (persistente, impostato dal click) ---
-    private int selectedIndex  = -1;
-
-    // --- CONFERMA ---
+    private int selectedIndex  = -1; // persistent selection, set by click
     private int confirmedIndex = -1;
 
-    // --- NOME GIOCATORE ---
     private String  playerName = "";
     private boolean typingName = false;
 
@@ -35,40 +29,38 @@ public class MenuModel {
         return instance;
     }
 
-    // =========================================================================
-    // QUERY
-    // =========================================================================
+    // ==========================================================
+    // queries
+    // ==========================================================
 
     /**
-     * Indice del personaggio selezionato con click (-1 se nessuno).
-     * Usato dalla View per posizionare la freccia selettore.
+     * Index of the character selected by click (-1 if none).
+     * Used by the View to position the selector arrow.
      */
     public int getSelectedIndex()  { return selectedIndex; }
 
-    /** Alias di compatibilità — restituisce lo stesso valore di getSelectedIndex(). */
+    /** Compatibility alias — returns the same value as getSelectedIndex(). */
     public int getClickedIndex()   { return selectedIndex; }
 
-    /** Indice del personaggio confermato (-1 se non confermato). */
+    /** Index of the confirmed character (-1 if not yet confirmed). */
     public int getConfirmedIndex() { return confirmedIndex; }
 
     public boolean isCharacterConfirmed() { return confirmedIndex >= 0; }
 
-    /**
-     * Ritorna il CharacterType confermato, o null se nessuno è stato confermato.
-     */
+    /** Returns the confirmed CharacterType, or null if none has been confirmed. */
     public CharacterType getConfirmedCharacterType() {
         return confirmedIndex >= 0 ? CharacterType.fromIndex(confirmedIndex) : null;
     }
 
-    // =========================================================================
-    // COMANDI (chiamati dal Controller)
-    // =========================================================================
+    // ==========================================================
+    // commands (called by Controller)
+    // ==========================================================
 
     /**
-     * Seleziona un personaggio tramite click.
-     * Aggiorna {@code selectedIndex}: la View sposterà la freccia.
+     * Selects a character by click.
+     * Updates {@code selectedIndex} — the View will move the selector arrow.
      *
-     * @param index indice del personaggio (0-3), oppure -1 per deselezionare.
+     * @param index character index (0-3), or -1 to deselect.
      */
     public void selectCharacter(int index) {
         if (index >= 0 && index < CharacterType.values().length) {
@@ -76,14 +68,14 @@ public class MenuModel {
         }
     }
 
-    /** Alias di compatibilità — delega a {@link #selectCharacter(int)}. */
+    /** Compatibility alias — delegates to {@link #selectCharacter(int)}. */
     public void selectByClick(int frameIndex) {
         selectCharacter(frameIndex);
     }
 
     /**
-     * Conferma la selezione e prepara la transizione.
-     * Usa {@code selectedIndex} per determinare il personaggio confermato.
+     * Confirms the selection and prepares the transition.
+     * Uses {@code selectedIndex} to determine the confirmed character.
      */
     public void confirmSelection() {
         if (selectedIndex >= 0) {
@@ -91,7 +83,7 @@ public class MenuModel {
         }
     }
 
-    /** Resetta lo stato del menu (per un eventuale ritorno al menu). */
+    /** Resets the menu state (for returning to the menu). */
     public void reset() {
         selectedIndex  = -1;
         confirmedIndex = -1;
@@ -99,9 +91,9 @@ public class MenuModel {
         typingName     = false;
     }
 
-    // =========================================================================
-    // NOME GIOCATORE
-    // =========================================================================
+    // ==========================================================
+    // player name
+    // ==========================================================
 
     public String  getPlayerName()          { return playerName; }
     public boolean isTypingName()           { return typingName; }

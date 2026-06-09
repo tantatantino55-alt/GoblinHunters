@@ -42,7 +42,7 @@ public class LogicConfig {
     public static final int SAFE_DISTANCE_FROM_BOMB  = 2;
 
     // shooter goblin
-    public static final int    SHOOTER_TELEGRAPH_TIME = 60;
+    public static final int    SHOOTER_TELEGRAPH_TIME = 30;
     public static final double SHOOTER_SPEED_AIMING   = 0.0;
     public static final double SHOOTER_SPEED_CHASE    = 0.03;
     public static final int    SHOOTER_MAX_AMMO       = 2;

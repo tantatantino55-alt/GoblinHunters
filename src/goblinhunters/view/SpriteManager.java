@@ -8,9 +8,9 @@ public class SpriteManager {
 
     private static SpriteManager instance = null;
 
-    private final Map<Object, BufferedImage[]> animations  = new HashMap<>();
-    private final Map<String, BufferedImage>   sheetsCache = new HashMap<>();
-    /** Cache delle versioni in scala di grigi (generate UNA SOLA VOLTA). */
+    private final Map<Object, BufferedImage[]> animations   = new HashMap<>();
+    private final Map<String, BufferedImage>   sheetsCache  = new HashMap<>();
+    // grayscale versions generated once at load time, never rebuilt per-frame
     private final Map<String, BufferedImage>   grayscaleCache = new HashMap<>();
 
     private SpriteManager() {}
@@ -20,37 +20,27 @@ public class SpriteManager {
         return instance;
     }
 
-    // ========================================================================
-    // 1. CARICAMENTO ANIMAZIONI (Versione "Bulletproof" / A prova di bomba)
-    // ========================================================================
+    // ==========================================================
+    // animation loading
+    // ==========================================================
+
     public void loadAnimation(Object key, String path, int startLinearIndex, int count, int size) {
         BufferedImage sheet = loadSheet(path);
         if (sheet == null) return;
 
-        // Calcoliamo quante colonne ha il foglio (es. larghezza 1024 / size 128 = 8 colonne)
         int colsPerRow = sheet.getWidth() / size;
-        if (colsPerRow == 0) colsPerRow = 1; // Sicurezza
+        if (colsPerRow == 0) colsPerRow = 1;
 
         BufferedImage[] frames = new BufferedImage[count];
 
         for (int i = 0; i < count; i++) {
-            // Calcoliamo l'indice assoluto del frame corrente (es. 36, 37, 38...)
             int currentIndex = startLinearIndex + i;
-
-            // MATEMATICA CRUCIALE:
-            // Calcoliamo riga e colonna PER OGNI FRAME.
-            // Se finisce la riga, questo calcolo lo fa andare automaticamente a capo.
             int col = currentIndex % colsPerRow;
             int row = currentIndex / colsPerRow;
-
-            // Coordinate pixel
             int x = col * size;
             int y = row * size;
 
-            // Controllo Bordi (Se l'indice chiede un pezzo fuori dall'immagine)
             if (x + size > sheet.getWidth() || y + size > sheet.getHeight()) {
-                // Crea un frame vuoto trasparente invece di crashare
-                // System.err.println("SpriteManager: Frame fuori bordo per " + key + " indice " + i);
                 frames[i] = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
             } else {
                 frames[i] = sheet.getSubimage(x, y, size, size);
@@ -60,9 +50,10 @@ public class SpriteManager {
         animations.put(key, frames);
     }
 
-    // ========================================================================
-    // 1.5 CARICAMENTO IMMAGINE INTERA COME FRAME SINGOLO
-    // ========================================================================
+    // ==========================================================
+    // single-image loading
+    // ==========================================================
+
     public void loadSingleImage(Object key, String path) {
         BufferedImage image = loadSheet(path);
         if (image != null) {
@@ -70,9 +61,10 @@ public class SpriteManager {
         }
     }
 
-    // ========================================================================
-    // 2. ESTRAZIONE TILE STATICHE (Per i muri)
-    // ========================================================================
+    // ==========================================================
+    // tile extraction
+    // ==========================================================
+
     public BufferedImage extractTile(String path, int col, int row, int width, int height) {
         BufferedImage sheet = loadSheet(path);
         if (sheet == null) return null;
@@ -86,49 +78,34 @@ public class SpriteManager {
         return sheet.getSubimage(x, y, width, height);
     }
 
-    // ========================================================================
-    // 3. RECUPERO SPRITE
-    // ========================================================================
+    // ==========================================================
+    // sprite retrieval
+    // ==========================================================
+
     public BufferedImage getSprite(Object key, int frameIdx) {
         BufferedImage[] anim = animations.get(key);
         if (anim != null && anim.length > 0) {
             return anim[Math.abs(frameIdx) % anim.length];
         }
-        return null; // O ritorna un placeholder rosa per debug
+        return null;
     }
 
-    // ========================================================================
-    // 4. METODI PRIVATI (Loading & Cache)
-    // ========================================================================
-    private BufferedImage loadSheet(String path) {
-        if (!sheetsCache.containsKey(path)) {
-            BufferedImage sheet = ResourceManager.loadImage(path);
-            if (sheet == null) {
-                System.err.println("SpriteManager: ERRORE! Immagine non trovata: " + path);
-                return null;
-            }
-            sheetsCache.put(path, sheet);
-        }
-        return sheetsCache.get(path);
-    }
-
-    // ========================================================================
-    // 5. GRAYSCALE CACHE (generata UNA SOLA VOLTA dal ResourceLoader)
-    // ========================================================================
+    // ==========================================================
+    // grayscale cache (built once by ResourceLoader at startup)
+    // ==========================================================
 
     /**
-     * Genera e memorizza la versione in scala di grigi di un frame già caricato.
-     * Deve essere chiamato SOLO durante il caricamento risorse (non ogni frame).
+     * Converts a loaded frame to grayscale and stores it under {@code cacheKey}.
+     * Must be called only during resource loading — never per frame.
      *
-     * @param key      chiave animazione (es. "POWER_UPS", "CONSUMABLES")
-     * @param frameIdx indice del frame da convertire
-     * @param cacheKey chiave univoca per recuperarla dopo (es. "POWER_UPS_0_gray")
+     * @param key      animation key (e.g. "POWER_UPS")
+     * @param frameIdx frame index to convert
+     * @param cacheKey retrieval key (e.g. "POWER_UPS_0_gray")
      */
     public void buildGrayscale(Object key, int frameIdx, String cacheKey) {
         BufferedImage src = getSprite(key, frameIdx);
         if (src == null) return;
 
-        // Creiamo l'immagine destinazione ARGB per mantenere il canale alpha
         BufferedImage gray = new BufferedImage(
                 src.getWidth(), src.getHeight(), BufferedImage.TYPE_INT_ARGB);
 
@@ -138,11 +115,24 @@ public class SpriteManager {
         grayscaleCache.put(cacheKey, gray);
     }
 
-    /**
-     * Recupera l'immagine in scala di grigi precedentemente cachata.
-     * Ritorna null se buildGrayscale non è stato chiamato con questa chiave.
-     */
+    /** Returns a pre-built grayscale image, or null if buildGrayscale was not called for this key. */
     public BufferedImage getGrayscale(String cacheKey) {
         return grayscaleCache.get(cacheKey);
+    }
+
+    // ==========================================================
+    // private helpers
+    // ==========================================================
+
+    private BufferedImage loadSheet(String path) {
+        if (!sheetsCache.containsKey(path)) {
+            BufferedImage sheet = ResourceManager.loadImage(path);
+            if (sheet == null) {
+                System.err.println("SpriteManager: Image not found: " + path);
+                return null;
+            }
+            sheetsCache.put(path, sheet);
+        }
+        return sheetsCache.get(path);
     }
 }

@@ -252,4 +252,17 @@ public class Config {
     public static final int    CHAR_FRAME_Y                = ViewConfig.CHAR_FRAME_Y;
     public static final int    CHAR_FRAME_W                = ViewConfig.CHAR_FRAME_W;
     public static final int    CHAR_FRAME_H                = ViewConfig.CHAR_FRAME_H;
+
+    // =====================================================================
+    // HUD layout → ViewConfig
+    // =====================================================================
+    public static final int    HUD_PANEL_X                 = ViewConfig.HUD_PANEL_X;
+    public static final int    HUD_PANEL_W                 = ViewConfig.HUD_PANEL_W;
+    public static final int    HUD_START_Y                 = ViewConfig.HUD_START_Y;
+    public static final int    HUD_ICON_SIZE               = ViewConfig.HUD_ICON_SIZE;
+    public static final int    HUD_ICON_GAP                = ViewConfig.HUD_ICON_GAP;
+    public static final int    HUD_POWER_SIZE              = ViewConfig.HUD_POWER_SIZE;
+    public static final int    HUD_POWER_GAP               = ViewConfig.HUD_POWER_GAP;
+    public static final int    HUD_STAFF_SIZE              = ViewConfig.HUD_STAFF_SIZE;
+    public static final int    HUD_ICON_BASE_SIZE          = ViewConfig.HUD_ICON_BASE_SIZE;
 }

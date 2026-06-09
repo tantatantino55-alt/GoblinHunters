@@ -8,23 +8,10 @@ import goblinhunters.utils.ViewConfig;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 
-/**
- * Componente View del menu di selezione personaggio (MVC).
- *
- * Responsabilità ESCLUSIVE della View:
- * - Rendering dello sfondo (StartGame.png)
- * - Rendering della freccia selettore arcade sopra il personaggio selezionato
- * - Rendering del nome del personaggio e delle istruzioni
- * - Hit-testing: dato un punto (x,y) in coordinate schermo, determina su
- *   quale personaggio o pulsante si trova (restituisce un indice al Controller)
- *
- * NON modifica il Model direttamente: tutto passa attraverso il Controller.
- */
 public class MenuDrawer {
 
     private static MenuDrawer instance = null;
 
-    // --- Palette (identica a PauseMenuDrawer) ---
     private static final Color BG_DARK      = new Color(28, 18, 10, 220);
     private static final Color BORDER_GOLD  = new Color(200, 165, 70);
     private static final Color BORDER_INNER = new Color(120, 90, 30);
@@ -33,12 +20,11 @@ public class MenuDrawer {
     private static final Color TEXT_CREAM   = new Color(240, 235, 220);
     private static final Color ERROR_RED    = new Color(220, 60, 60);
 
-    // --- Campo nome ---
     private static final int NAME_FIELD_W = 360;
     private static final int NAME_FIELD_H = 38;
 
-    private Rectangle nameFieldRect  = null;
-    private boolean   showNameError  = false;
+    private Rectangle nameFieldRect = null;
+    private boolean   showNameError = false;
 
     private final Font fontNameLabel;
     private final Font fontNameText;
@@ -58,21 +44,17 @@ public class MenuDrawer {
         return instance;
     }
 
-    // =========================================================================
-    // RENDERING PRINCIPALE
-    // =========================================================================
+    // ==========================================================
+    // main rendering
+    // ==========================================================
 
-    /**
-     * Disegna l'intera schermata del menu di selezione.
-     * Legge lo stato dal Model (sola lettura) per decidere cosa mostrare.
-     */
+    /** Draws the full character-selection screen. Reads state from Model (read-only). */
     public void draw(Graphics2D g2d) {
         IControllerForView ctrl = ControllerForView.getInstance();
         SpriteManager sm = SpriteManager.getInstance();
 
         int selected = ctrl.getMenuSelectedIndex();
 
-        // 1. SFONDO: StartGame.png scalato nell'area del Cabinet
         BufferedImage bg = sm.getSprite("MENU_BG", 0);
         if (bg != null) {
             g2d.drawImage(bg,
@@ -80,55 +62,43 @@ public class MenuDrawer {
                     ViewConfig.MENU_DRAW_W, ViewConfig.MENU_DRAW_H, null);
         }
 
-        // 2. FRECCIA SELETTORE: punta al personaggio selezionato (click)
         if (selected >= 0 && selected < CharacterType.values().length) {
             drawSelectionArrow(g2d, selected);
         }
 
-        // 3. NOME PERSONAGGIO: mostra il nome sotto il personaggio selezionato
         if (selected >= 0) {
             drawSelectedName(g2d, selected);
         }
 
-        // 4. CAMPO NOME GIOCATORE
         drawNameInput(g2d);
     }
 
-    // =========================================================================
-    // FRECCIA SELETTORE STILE ARCADE 2D
-    // =========================================================================
+    // ==========================================================
+    // selection arrow
+    // ==========================================================
 
     /**
-     * Disegna una freccia/puntatore verso il basso in stile pixel-art arcade,
-     * posizionata sopra il personaggio selezionato. La freccia ha un'animazione
-     * di "bobbing" verticale per dare un feedback dinamico tipico dei giochi 2D.
+     * Draws a pixel-art arcade-style down-arrow above the selected character.
+     * Uses time-based bobbing and a pulsing colour for visual feedback.
      *
-     * Le coordinate X sono calcolate a partire dal game area array (la cornice
-     * delle mappe) usando le posizioni: 43, 237, 427, 616.
-     *
-     * @param index indice del personaggio selezionato (0-3)
+     * @param index selected character index (0-3)
      */
     private void drawSelectionArrow(Graphics2D g2d, int index) {
-        // Centro orizzontale del personaggio in coordinate schermo assolute.
-        // CHAR_SELECTOR_X[i] è relativo a FRAME_OFFSET_X.
-        int cx = ViewConfig.FRAME_OFFSET_X + ViewConfig.CHAR_SELECTOR_X[index];
-
-        // Y base: appena sopra i riquadri personaggio
+        int cx    = ViewConfig.FRAME_OFFSET_X + ViewConfig.CHAR_SELECTOR_X[index];
         int baseY = ViewConfig.MENU_DRAW_Y + ViewConfig.CHAR_FRAME_Y - 10;
 
-        // --- ANIMAZIONE BOBBING (oscillazione verticale) ---
+        // vertical bobbing — ±6 px on a 250 ms sine cycle
         double bobOffset = 6.0 * Math.sin(System.currentTimeMillis() / 250.0);
         int arrowY = baseY + (int) bobOffset;
 
-        // --- DIMENSIONI FRECCIA ---
-        int arrowW = 24;  // larghezza base del triangolo
-        int arrowH = 18;  // altezza del triangolo
-        int stemW  = 8;   // larghezza dello stelo
-        int stemH  = 12;  // altezza dello stelo
+        int arrowW = 24;
+        int arrowH = 18;
+        int stemW  = 8;
+        int stemH  = 12;
 
         Composite originalComposite = g2d.getComposite();
 
-        // --- OMBRA (offset di 2px, scura) ---
+        // drop shadow
         int shadowOff = 2;
         g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.4f));
         g2d.setColor(Color.BLACK);
@@ -138,7 +108,6 @@ public class MenuDrawer {
         g2d.fillPolygon(sxShadow, syShadow, 3);
         g2d.setComposite(originalComposite);
 
-        // --- CORPO FRECCIA (colore principale: giallo/oro arcade pulsante) ---
         float pulse = 0.85f + 0.15f * (float) Math.abs(Math.sin(System.currentTimeMillis() / 300.0));
         Color arrowColor = new Color(
                 Math.min(255, (int)(255 * pulse)),
@@ -147,26 +116,21 @@ public class MenuDrawer {
         );
         g2d.setColor(arrowColor);
 
-        // Stelo
         g2d.fillRect(cx - stemW / 2, arrowY - stemH, stemW, stemH);
 
-        // Punta (triangolo verso il basso)
         int[] triX = { cx - arrowW / 2, cx + arrowW / 2, cx };
         int[] triY = { arrowY, arrowY, arrowY + arrowH };
         g2d.fillPolygon(triX, triY, 3);
 
-        // --- BORDO PIXEL-ART (contorno scuro) ---
         g2d.setColor(new Color(120, 80, 0));
         g2d.setStroke(new BasicStroke(1.5f));
         g2d.drawRect(cx - stemW / 2, arrowY - stemH, stemW, stemH);
         g2d.drawPolygon(triX, triY, 3);
         g2d.setStroke(new BasicStroke(1));
 
-        // --- HIGHLIGHT INTERNO (profondità pixel-art) ---
         g2d.setColor(new Color(255, 255, 180, 160));
         g2d.fillRect(cx - stemW / 2 + 2, arrowY - stemH + 2, stemW - 4, 3);
 
-        // --- PARTICELLE SCINTILLANTI ai lati ---
         float sparkAlpha = 0.3f + 0.7f * (float) Math.abs(Math.sin(System.currentTimeMillis() / 200.0));
         g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, sparkAlpha));
         g2d.setColor(new Color(255, 255, 100));
@@ -176,32 +140,27 @@ public class MenuDrawer {
         g2d.setComposite(originalComposite);
     }
 
-    // =========================================================================
-    // TESTO
-    // =========================================================================
+    // ==========================================================
+    // character name label
+    // ==========================================================
 
-    /**
-     * Mostra il nome del personaggio selezionato sotto il suo riquadro.
-     */
     private void drawSelectedName(Graphics2D g2d, int index) {
         CharacterType type = CharacterType.fromIndex(index);
         String name = type.getDisplayName();
 
         g2d.setFont(new Font("Arial", Font.BOLD, 14));
-        g2d.setColor(new Color(255, 215, 0)); // Oro
+        g2d.setColor(new Color(255, 215, 0));
         FontMetrics fm = g2d.getFontMetrics();
 
-        int sx = ViewConfig.MENU_DRAW_X + ViewConfig.CHAR_FRAME_X[index];
-        int nameY = ViewConfig.MENU_DRAW_Y + ViewConfig.CHAR_FRAME_Y
-                + ViewConfig.CHAR_FRAME_H + 20;
+        int sx    = ViewConfig.MENU_DRAW_X + ViewConfig.CHAR_FRAME_X[index];
+        int nameY = ViewConfig.MENU_DRAW_Y + ViewConfig.CHAR_FRAME_Y + ViewConfig.CHAR_FRAME_H + 20;
         int textX = sx + (ViewConfig.CHAR_FRAME_W - fm.stringWidth(name)) / 2;
         g2d.drawString(name, textX, nameY);
     }
 
-
-    // =========================================================================
-    // CAMPO NOME GIOCATORE
-    // =========================================================================
+    // ==========================================================
+    // player name input field
+    // ==========================================================
 
     private void drawNameInput(Graphics2D g2d) {
         IControllerForView ctrl = ControllerForView.getInstance();
@@ -213,16 +172,13 @@ public class MenuDrawer {
 
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        // --- Label "NOME:" ---
         g2d.setFont(fontNameLabel);
         g2d.setColor(LABEL_YELLOW);
         g2d.drawString("INSERT YOUR NICKNAME:", fieldX, fieldY - 6);
 
-        // --- Sfondo campo ---
         g2d.setColor(BG_DARK);
         g2d.fillRoundRect(fieldX, fieldY, NAME_FIELD_W, NAME_FIELD_H, 8, 8);
 
-        // --- Bordo (gold se attivo, rosso se errore, inner altrimenti) ---
         Color borderColor;
         float strokeW;
         if (showNameError) {
@@ -240,19 +196,17 @@ public class MenuDrawer {
         g2d.drawRoundRect(fieldX, fieldY, NAME_FIELD_W, NAME_FIELD_H, 8, 8);
         g2d.setStroke(new BasicStroke(1f));
 
-        // --- Testo digitato + cursore lampeggiante ---
         g2d.setFont(fontNameText);
         g2d.setColor(TEXT_CREAM);
         FontMetrics fm = g2d.getFontMetrics();
         int textY = fieldY + (NAME_FIELD_H - fm.getHeight()) / 2 + fm.getAscent();
         String name = ctrl.getMenuPlayerName();
-        String display = name;
-        if (ctrl.isMenuTypingName() && System.currentTimeMillis() % 800 < 400) {
-            display = name + "|";
-        }
+        // blinking cursor: visible for first 400 ms of each 800 ms cycle
+        String display = (ctrl.isMenuTypingName() && System.currentTimeMillis() % 800 < 400)
+                ? name + "|"
+                : name;
         g2d.drawString(display, fieldX + 10, textY);
 
-        // --- Messaggio errore ---
         if (showNameError) {
             g2d.setFont(fontNameError);
             g2d.setColor(ERROR_RED);
@@ -260,20 +214,13 @@ public class MenuDrawer {
         }
     }
 
-    // =========================================================================
-    // HIT-TESTING (usato dal Controller per determinare il target del click)
-    // =========================================================================
+    // ==========================================================
+    // hit-testing
+    // ==========================================================
 
     /**
-     * Determina quale personaggio si trova alle coordinate schermo date.
-     *
-     * <p>Questo metodo è esposto alla View/Controller per tradurre le coordinate
-     * pixel del mouse in un indice logico. Il Controller usa il risultato per
-     * aggiornare il Model.</p>
-     *
-     * @param mouseX coordinata X del click (schermo assoluto)
-     * @param mouseY coordinata Y del click (schermo assoluto)
-     * @return indice del personaggio (0-3), oppure -1 se fuori da tutti i riquadri.
+     * Returns the index (0-3) of the character frame that contains the given
+     * screen coordinates, or -1 if none.
      */
     public int getCharacterIndexAt(int mouseX, int mouseY) {
         for (int i = 0; i < CharacterType.values().length; i++) {
@@ -288,18 +235,12 @@ public class MenuDrawer {
         return -1;
     }
 
-    /** Alias di compatibilità per getCharacterIndexAt. */
+    /** Compatibility alias for {@link #getCharacterIndexAt}. */
     public int getFrameIndexAt(int mouseX, int mouseY) {
         return getCharacterIndexAt(mouseX, mouseY);
     }
 
-    /**
-     * Verifica se le coordinate cadono sul pulsante "Start Game" / "NEW GAME".
-     *
-     * @param mouseX coordinata X del click (schermo assoluto)
-     * @param mouseY coordinata Y del click (schermo assoluto)
-     * @return true se il click è sul pulsante.
-     */
+    /** Returns true if the coordinates land on the Start Game button. */
     public boolean isStartGameButtonAt(int mouseX, int mouseY) {
         int bx = ViewConfig.MENU_DRAW_X + ViewConfig.NEW_GAME_BTN_X;
         int by = ViewConfig.MENU_DRAW_Y + ViewConfig.NEW_GAME_BTN_Y;
@@ -307,7 +248,7 @@ public class MenuDrawer {
                 && mouseY >= by && mouseY <= by + ViewConfig.NEW_GAME_BTN_H;
     }
 
-    /** Alias di compatibilità per isStartGameButtonAt. */
+    /** Compatibility alias for {@link #isStartGameButtonAt}. */
     public boolean isNewGameButtonAt(int mouseX, int mouseY) {
         return isStartGameButtonAt(mouseX, mouseY);
     }

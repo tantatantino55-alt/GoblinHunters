@@ -4,41 +4,38 @@ import goblinhunters.utils.Config;
 
 import java.util.List;
 
-/**
- * Gestisce la progressione dei livelli: zone, gate di uscita, portale,
- * timer boss e transizioni tra mappe.
- */
+/** Manages level progression: zones, exit gate, portal, boss timer, and map transitions. */
 class LevelManager {
 
     private final Model model;
 
-    // Progressione
+    // progression
     private int currentZone = 0;
     private int difficultyCycle = 1;
     private String currentTheme = "VILLAGE";
 
-    // Flag transizione
+    // transition flags
     private boolean exitGateActive = false;
     private boolean levelCompletedFlag = false;
     private boolean isTransitioning = false;
     private long lastExitGateSpawnTime = 0;
 
-    // Portale
+    // portal
     private int portalRow = -1;
     private int portalCol = -1;
     private boolean portalRevealed = false;
     private long lastPortalRevealTime = 0;
 
-    // Exit gate fisso in (0,6)
+    // exit gate is always placed at (0,6)
     private final int exitGateRow = 0;
     private final int exitGateCol = 6;
 
-    // Timer boss
+    // boss timer
     private int bossPreparationTimer;
     private boolean isPreparationPhase = false;
     private static final int PREP_TIME_SECONDS = 20;
 
-    // Portale goblin nella mappa Boss (posizione fissa da Config)
+    // goblin portal on boss map (fixed position from Config)
     private boolean bossPortalActive = false;
     private long bossPortalActivationTime = 0;
 
@@ -47,44 +44,43 @@ class LevelManager {
     }
 
     // ==========================================================
-    // GETTERS
+    // getters
     // ==========================================================
 
-    int getCurrentZone()         { return currentZone; }
-    int getDifficultyCycle()     { return difficultyCycle; }
-    String getCurrentTheme()     { return currentTheme; }
-    boolean isExitGateActive()   { return exitGateActive; }
-    boolean isLevelCompletedFlag(){ return levelCompletedFlag; }
-    boolean isTransitioning()    { return isTransitioning; }
+    int getCurrentZone()             { return currentZone; }
+    int getDifficultyCycle()         { return difficultyCycle; }
+    String getCurrentTheme()         { return currentTheme; }
+    boolean isExitGateActive()       { return exitGateActive; }
+    boolean isLevelCompletedFlag()   { return levelCompletedFlag; }
+    boolean isTransitioning()        { return isTransitioning; }
     void setTransitioning(boolean t) { isTransitioning = t; }
-    int getPortalRow()           { return portalRow; }
-    int getPortalCol()           { return portalCol; }
-    boolean isPortalRevealed()   { return portalRevealed; }
-    long getPortalRevealTime()   { return lastPortalRevealTime; }
-    int getExitGateRow()         { return exitGateRow; }
-    int getExitGateCol()         { return exitGateCol; }
+    int getPortalRow()               { return portalRow; }
+    int getPortalCol()               { return portalCol; }
+    boolean isPortalRevealed()       { return portalRevealed; }
+    long getPortalRevealTime()       { return lastPortalRevealTime; }
+    int getExitGateRow()             { return exitGateRow; }
+    int getExitGateCol()             { return exitGateCol; }
     long getExitGateActivationTime() { return lastExitGateSpawnTime; }
-    boolean isPreparationPhase() { return isPreparationPhase; }
-    int getBossPreparationTimer(){ return bossPreparationTimer; }
+    boolean isPreparationPhase()     { return isPreparationPhase; }
 
-    // --- PORTALE BOSS ---
-    boolean isBossPortalActive()         { return bossPortalActive; }
-    int getBossPortalRow()               { return Config.BOSS_PORTAL_ROW; }
-    int getBossPortalCol()               { return Config.BOSS_PORTAL_COL; }
-    long getBossPortalActivationTime()   { return bossPortalActivationTime; }
+    // boss portal
+    boolean isBossPortalActive()          { return bossPortalActive; }
+    int getBossPortalRow()                { return Config.BOSS_PORTAL_ROW; }
+    int getBossPortalCol()                { return Config.BOSS_PORTAL_COL; }
+    long getBossPortalActivationTime()    { return bossPortalActivationTime; }
 
     // ==========================================================
-    // CONFIGURAZIONE LIVELLO (count, cap, distribuzione)
+    // level configuration (count, cap, distribution)
     // ==========================================================
 
     /**
-     * Numero di nemici da spawnare all'inizio del livello.
-     * Zona 0: ciclo 1=4, ciclo 2=5, ciclo 3+=6
-     * Zona 1: ciclo 1=5, ciclo 2+=6
-     * Zona 2: 0 (il boss viene generato dopo la fase di preparazione)
+     * Number of enemies to spawn at the start of the level.
+     * Zone 0: cycle 1=4, cycle 2=5, cycle 3+=6
+     * Zone 1: cycle 1=5, cycle 2+=6
+     * Zone 2: 0 (boss spawns after the preparation phase)
      */
     int getInitialEnemyCount() {
-        int cycle = Math.min(difficultyCycle, 3); // cap a 3
+        int cycle = Math.min(difficultyCycle, 3); // cap at 3
         return switch (currentZone) {
             case 0 -> switch (cycle) {
                 case 1  -> 4;
@@ -95,24 +91,24 @@ class LevelManager {
                 case 1  -> 5;
                 default -> 6;
             };
-            default -> 0; // zona 2 (boss)
+            default -> 0; // zone 2 (boss)
         };
     }
 
     /**
-     * Numero massimo di nemici che il portale puo' mantenere in mappa.
-     * Stesso valore di getInitialEnemyCount (il portale riempie fino al cap).
+     * Maximum number of enemies the portal can maintain on the map.
+     * Same value as getInitialEnemyCount (portal fills up to this cap).
      */
     int getPortalMaxEnemies() {
         return getInitialEnemyCount();
     }
 
     /**
-     * Genera un nemico secondo la distribuzione della zona corrente.
-     * Zona 0: 75% Common, 25% Chasing
-     * Zona 1: 40% Common, 30% Chasing, 30% Shooter
+     * Creates an enemy according to the current zone's distribution.
+     * Zone 0: 75% Common, 25% Chasing
+     * Zone 1: 40% Common, 30% Chasing, 30% Shooter
      *
-     * @param roll un valore casuale 0-99
+     * @param roll random value 0-99
      */
     Enemy createEnemyForZone(int roll, double x, double y) {
         return switch (currentZone) {
@@ -127,12 +123,12 @@ class LevelManager {
                 else if (roll < 70) yield new ChasingGoblin(x, y);
                 else                yield new ShooterGoblin(x, y);
             }
-            default -> new CommonGoblin(x, y); // fallback (non usato per zona 2)
+            default -> new CommonGoblin(x, y); // zone 2 fallback (boss is spawned separately)
         };
     }
 
     // ==========================================================
-    // PORTALE
+    // portal
     // ==========================================================
 
     void setPortal(int row, int col) {
@@ -141,29 +137,26 @@ class LevelManager {
         this.portalRevealed = false;
     }
 
-    /** Chiamato da MapManager quando un blocco viene distrutto. */
+    /** Called by MapManager when a block is destroyed. */
     void onBlockDestroyed(int row, int col) {
         if (row == portalRow && col == portalCol) {
             portalRevealed = true;
             lastPortalRevealTime = System.currentTimeMillis();
             model.getSpawnManager().resetPortalTimer();
-            System.out.println("ALARM! Portal discovered in [" + row + ", " + col + "]!");
         }
     }
 
     // ==========================================================
-    // EXIT GATE
+    // exit gate
     // ==========================================================
 
     void checkExitGateCollision(List<Enemy> enemies, Player player, int[][] map) {
-        // Durante la preparazione boss non aprire il gate
+        // boss preparation phase locks the gate
         if (currentZone == 2 && isPreparationPhase) return;
 
-        // Nella zona Boss: il portale deve essere disattivato prima che appaia l'exit gate
-        // (il portale si disattiva quando il Boss e' morto E tutti i goblin sono stati eliminati)
+        // gate is blocked until the boss portal deactivates (boss dead + all goblins cleared)
         if (currentZone == 2 && bossPortalActive) return;
 
-        // Conta nemici vivi
         long livingEnemies = enemies.stream().filter(e -> !e.isDead()).count();
 
         if (livingEnemies == 0) {
@@ -173,10 +166,8 @@ class LevelManager {
                 map[0][6] = Model.EXIT_GATE_ID;
                 if (map[0][0] == Model.EXIT_GATE_ID) map[0][0] = Config.CELL_EMPTY;
                 if (map[0][7] == Model.EXIT_GATE_ID) map[0][7] = Config.CELL_EMPTY;
-                System.out.println("All enemies defeated! Exit Gate appeared in [0, 6]!");
             }
 
-            // Controlla se il player ha calpestato il gate
             double centerX = player.getXCoordinate() + (Config.ENTITY_LOGICAL_HITBOX_WIDTH / 2.0);
             double centerY = player.getYCoordinate() + 0.35;
             int col = (int) Math.floor(centerX);
@@ -191,27 +182,23 @@ class LevelManager {
     }
 
     // ==========================================================
-    // BOSS TIMER
+    // boss timer
     // ==========================================================
 
-    /** Decrementa il timer di preparazione boss. Ritorna true se il timer è scaduto. */
+    /** Decrements the boss preparation timer. Returns true when the timer expires. */
     boolean tickBossPreparation() {
         if (!isPreparationPhase) return false;
         bossPreparationTimer--;
 
-        if (bossPreparationTimer % Config.FPS == 0 && bossPreparationTimer > 0) {
-            System.out.println("Boss arriving in: " + (bossPreparationTimer / Config.FPS) + "s");
-        }
-
         if (bossPreparationTimer <= 0) {
             isPreparationPhase = false;
-            return true; // segnala che l'esplosione deve avvenire
+            return true; // signal that the global explosion should trigger
         }
         return false;
     }
 
     // ==========================================================
-    // AVANZAMENTO LIVELLO
+    // level advancement
     // ==========================================================
 
     void prepareNextLevel() {
@@ -225,9 +212,6 @@ class LevelManager {
         if (currentZone > 2) {
             currentZone = 0;
             difficultyCycle++;
-            System.out.println("GLOBAL VICTORY! Starting difficulty cycle: " + difficultyCycle);
-        } else {
-            System.out.println("Advancing to level: " + currentZone);
         }
 
         switch (currentZone) {
@@ -239,8 +223,7 @@ class LevelManager {
         if (currentZone == 2) {
             bossPreparationTimer = PREP_TIME_SECONDS * Config.FPS;
             isPreparationPhase = true;
-            bossPortalActive = false; // il portale si attivera' a fine preparazione
-            System.out.println("Boss preparation phase started! You have " + PREP_TIME_SECONDS + " seconds!");
+            bossPortalActive = false;
         } else {
             isPreparationPhase = false;
             bossPortalActive = false;
@@ -248,23 +231,21 @@ class LevelManager {
     }
 
     // ==========================================================
-    // PORTALE BOSS – Attivazione/Disattivazione
+    // boss portal — activation / deactivation
     // ==========================================================
 
-    /** Attiva il portale goblin nella mappa boss (chiamato da triggerGlobalExplosion). */
+    /** Activates the goblin portal on the boss map (called by triggerGlobalExplosion). */
     void activateBossPortal() {
         bossPortalActive = true;
         bossPortalActivationTime = System.currentTimeMillis();
-        System.out.println("BOSS PORTAL activated in [" + Config.BOSS_PORTAL_ROW + ", " + Config.BOSS_PORTAL_COL + "]!");
     }
 
     /**
-     * Disattiva il portale goblin. Chiamato quando il Boss e' sconfitto
-     * e non ci sono piu' goblin vivi sulla mappa.
+     * Deactivates the goblin portal. Called when the boss is defeated
+     * and no goblins remain alive on the map.
      */
     void deactivateBossPortal() {
         if (!bossPortalActive) return;
         bossPortalActive = false;
-        System.out.println("BOSS PORTAL closed!");
     }
 }

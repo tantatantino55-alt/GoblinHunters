@@ -7,36 +7,29 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-/**
- * Gestisce il punteggio di gioco, i drop dei goblin e il calcolo
- * dei bonus (tempo boss, perfect level).
- */
+/** Manages the game score, goblin drops, and bonus calculations (boss time bonus, perfect level). */
 class ScoreManager {
 
     private final Model model;
     private int totalScore = 0;
     private int currentZoneScore = 0;
     private long bossFightStartTime = 0;
-    private int bossFightNumber = 0; // quante volte si è combattuto il boss (1-indexed al momento dello spawn)
+    private int bossFightNumber = 0; // 1-indexed at the moment the boss spawns
 
     ScoreManager(Model model) {
         this.model = model;
     }
 
     // ==========================================================
-    // PUNTEGGIO
+    // score
     // ==========================================================
 
     void addScore(int points, boolean isEnemyKill, int currentZone) {
-        if (isEnemyKill && currentZone != 2 && currentZoneScore >= Config.SCORE_ZONE_CAP) {
-            System.out.println("Cap reached in this zone! Hurry and find the portal!");
-            return;
-        }
+        if (isEnemyKill && currentZone != 2 && currentZoneScore >= Config.SCORE_ZONE_CAP) return;
         if (isEnemyKill && currentZone != 2) {
             currentZoneScore += points;
         }
         totalScore += points;
-        System.out.println("SCORE: +" + points + " | Total Score: " + totalScore);
     }
 
     int getScore() {
@@ -48,7 +41,7 @@ class ScoreManager {
     }
 
     // ==========================================================
-    // MORTE NEMICI
+    // enemy death
     // ==========================================================
 
     void handleEnemyDeath(Enemy e, int currentZone, List<Collectible> activeItems) {
@@ -62,21 +55,16 @@ class ScoreManager {
             int finalScore = Config.SCORE_BOSS_BASE + timeBonus;
             totalScore += finalScore;
 
-            System.out.println("BOSS DEFEATED IN " + secondsTaken + " SECONDS!");
-            System.out.println("Time Bonus: " + timeBonus + " | Total Boss Points: " + finalScore);
-
             if (model.getPlayer().getLives() == Config.INITIAL_LIVES) {
-                totalScore += 2000;
-                System.out.println("PERFECT BOSS! Bonus +2000 | Total: " + totalScore);
+                totalScore += 2000; // perfect boss clear bonus
             }
             model.getPlayer().restoreLives();
             ScoreRepository.getInstance().saveScore(
                 MenuModel.getInstance().getPlayerName(), totalScore);
         } else {
-            int points = 0;
-            if (e instanceof ShooterGoblin)       points = Config.SCORE_SHOOTER_GOBLIN;
-            else if (e instanceof ChasingGoblin)  points = Config.SCORE_CHASING_GOBLIN;
-            else                                   points = Config.SCORE_COMMON_GOBLIN;
+            int points = e instanceof ShooterGoblin      ? Config.SCORE_SHOOTER_GOBLIN
+                       : e instanceof ChasingGoblin  ? Config.SCORE_CHASING_GOBLIN
+                       :                               Config.SCORE_COMMON_GOBLIN;
             addScore(points, true, currentZone);
         }
 
@@ -86,45 +74,36 @@ class ScoreManager {
     void startBossFight() {
         bossFightNumber++;
         this.bossFightStartTime = System.currentTimeMillis();
-        System.out.println("[BOSS] Fight #" + bossFightNumber + " | HP: " + BossGoblin.computeHP(bossFightNumber));
     }
 
     int getBossFightNumber() { return bossFightNumber; }
 
     // ==========================================================
-    // DROP
+    // drops
     // ==========================================================
 
     void generateGoblinDrop(double x, double y, List<Collectible> activeItems, Player player) {
         Random rand = new Random();
 
-        // Probabilità del 30% di droppare un oggetto
-        if (rand.nextInt(100) >= 30) {
-            return;
-        }
+        if (rand.nextInt(100) >= 30) return; // 30% drop chance
 
         List<ItemType> available = new ArrayList<>();
 
-        // Aggiunge i power-up mancanti al pool (i goblin droppano SOLO power-up)
+        // goblins only drop power-ups the player doesn't already have
         if (!player.hasShield())     available.add(ItemType.POWER_SHIELD);
         if (!player.hasMaxRadius())  available.add(ItemType.POWER_RADIUS);
         if (!player.hasMaxSpeed())   available.add(ItemType.POWER_SPEED);
 
-        // Se il player ha già tutto maxato, non droppa nulla
-        if (available.isEmpty()) {
-            return;
-        }
+        if (available.isEmpty()) return; // player is already fully powered up
 
         ItemType dropped = available.get(rand.nextInt(available.size()));
 
-        // Arrotondiamo al centro logico del goblin per ottenere la cella corretta
         int col = (int) Math.round(x);
         int row = (int) Math.round(y);
 
-        // Verifica che la cella sia valida e calpestabile (non muro/cornice)
         int[][] map = model.getGameAreaArray();
         if (!isCellEmpty(map, row, col)) {
-            // Cerca la cella vuota più vicina tra le 4 adiacenti
+            // find nearest adjacent empty cell
             int[][] offsets = {{0, -1}, {0, 1}, {-1, 0}, {1, 0}};
             for (int[] off : offsets) {
                 int nr = row + off[0];
@@ -138,12 +117,9 @@ class ScoreManager {
         }
 
         activeItems.add(new Collectible(col, row, dropped));
-        System.out.println("Goblin drops: " + dropped.name() + " @ [" + row + "," + col + "]");
     }
 
-    /**
-     * Controlla se una cella della mappa è vuota e valida per il drop.
-     */
+    /** Returns true if the map cell is within bounds and empty — valid for a drop. */
     private boolean isCellEmpty(int[][] map, int row, int col) {
         if (row < 0 || row >= map.length || col < 0 || col >= map[0].length) return false;
         return map[row][col] == Config.CELL_EMPTY;

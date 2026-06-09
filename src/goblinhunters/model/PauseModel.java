@@ -1,12 +1,12 @@
 package goblinhunters.model;
 
 /**
- * Model del menu di pausa.
+ * Pause menu model.
  *
- * <p>Fonte di verità unica per tutti i keybindings di gioco e per lo stato audio.
- * Non contiene logica: solo dati e constanti.</p>
+ * <p>Single source of truth for all game keybindings and audio state.
+ * Contains no logic — only data and constants.</p>
  *
- * <h3>7 azioni (indici 0-6)</h3>
+ * <h3>7 actions (indices 0-6)</h3>
  * <pre>
  *   0 = Move Up       (default: UP)
  *   1 = Move Down     (default: DOWN)
@@ -19,18 +19,14 @@ package goblinhunters.model;
  */
 public class PauseModel {
 
-    // =========================================================================
-    // Singleton
-    // =========================================================================
+    // singleton
     private static PauseModel instance;
     public static PauseModel getInstance() {
         if (instance == null) instance = new PauseModel();
         return instance;
     }
 
-    // =========================================================================
-    // Indici azioni — costanti pubbliche per uso esterno senza magic numbers
-    // =========================================================================
+    // action indices — public constants so callers avoid magic numbers
     public static final int ACTION_MOVE_UP    = 0;
     public static final int ACTION_MOVE_DOWN  = 1;
     public static final int ACTION_MOVE_LEFT  = 2;
@@ -41,8 +37,8 @@ public class PauseModel {
     public static final int ACTION_COUNT      = 7;
 
     /**
-     * Etichette da mostrare nella UI per ciascuna azione.
-     * Indice coerente con ACTION_MOVE_UP … ACTION_STAFF.
+     * UI display labels for each action.
+     * Index matches ACTION_MOVE_UP … ACTION_STAFF.
      */
     public static final String[] ACTION_LABELS = {
             "Move Up",
@@ -55,9 +51,9 @@ public class PauseModel {
     };
 
     /**
-     * Keybindings di default (formato KeyStroke: uppercase, es. "UP", "SPACE", "X").
-     * Indice coerente con ACTION_MOVE_UP … ACTION_STAFF.
-     * <p>Usato anche da {@code GamePanel} come fonte di verità per l'InputMap iniziale.</p>
+     * Default keybindings (KeyStroke format: uppercase, e.g. "UP", "SPACE", "X").
+     * Index matches ACTION_MOVE_UP … ACTION_STAFF.
+     * <p>Also used by {@code GamePanel} as the authoritative source for the initial InputMap.</p>
      */
     public static final String[] ACTION_DEFAULTS = {
             "UP",
@@ -69,9 +65,7 @@ public class PauseModel {
             "Z"
     };
 
-    // =========================================================================
-    // Stato corrente
-    // =========================================================================
+    // current state
     private String[] actionBindings;
     private boolean  audioEnabled;
 
@@ -80,32 +74,26 @@ public class PauseModel {
         audioEnabled   = true;
     }
 
-    // =========================================================================
-    // API — Keybindings
-    // =========================================================================
+    // keybindings API
 
-    /** Keybind corrente per l'azione all'indice {@code i} (formato uppercase KeyStroke). */
+    /** Current keybind for the action at index {@code i} (uppercase KeyStroke format). */
     public String getActionBinding(int i) {
         return actionBindings[i];
     }
 
-    /** Aggiorna il keybind di un'azione (formato uppercase KeyStroke). */
+    /** Updates the keybind for an action (uppercase KeyStroke format). */
     public void setActionBinding(int i, String key) {
         if (i >= 0 && i < actionBindings.length) actionBindings[i] = key;
     }
 
-    // =========================================================================
-    // API — Audio
-    // =========================================================================
+    // audio API
 
-    public boolean isAudioEnabled()            { return audioEnabled; }
-    public void    setAudioEnabled(boolean v)  { audioEnabled = v; }
+    public boolean isAudioEnabled()           { return audioEnabled; }
+    public void    setAudioEnabled(boolean v) { audioEnabled = v; }
 
-    // =========================================================================
-    // Reset
-    // =========================================================================
+    // reset
 
-    /** Ripristina tutti i keybindings ai valori di fabbrica. L'audio non viene resettato. */
+    /** Restores all keybindings to factory defaults. Audio state is not reset. */
     public void resetDefaults() {
         actionBindings = ACTION_DEFAULTS.clone();
     }

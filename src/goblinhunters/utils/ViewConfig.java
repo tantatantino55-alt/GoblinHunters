@@ -228,4 +228,27 @@ public class ViewConfig {
     public static final int NEW_GAME_BTN_Y = 655;
     public static final int NEW_GAME_BTN_W = 260;
     public static final int NEW_GAME_BTN_H = 78;
+
+    // =====================================================================
+    // HUD layout
+    // =====================================================================
+
+    /** X position of the right-side HUD panel on screen. */
+    public static final int HUD_PANEL_X = 1072;
+    /** Width of the right-side HUD panel. */
+    public static final int HUD_PANEL_W = 145;
+    /** Y position where the HUD content starts rendering. */
+    public static final int HUD_START_Y = 200;
+    /** Size (W and H) of each consumable icon slot. */
+    public static final int HUD_ICON_SIZE = 36;
+    /** Horizontal gap between consumable icons. */
+    public static final int HUD_ICON_GAP = 6;
+    /** Size of each power-up icon slot. */
+    public static final int HUD_POWER_SIZE = 36;
+    /** Horizontal gap between power-up icons. */
+    public static final int HUD_POWER_GAP = 8;
+    /** Size of the staff icon. */
+    public static final int HUD_STAFF_SIZE = 40;
+    /** Base draw size for HUD icon images inside drawHudIcon(). */
+    public static final int HUD_ICON_BASE_SIZE = 48;
 }

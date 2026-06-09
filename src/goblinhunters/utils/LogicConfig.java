@@ -29,7 +29,6 @@ public class LogicConfig {
     public static final double GOBLIN_HITBOX_HEIGHT = 0.8;
 
     // spawn
-    public static final int MAX_ENEMIES_ON_MAP  = 1;
     public static final long SPAWN_INTERVAL_MS  = 3000;
     public static final int SPAWN_SAFE_DISTANCE = 2;
     public static final double MIN_SPAWN_DISTANCE = 5.0;

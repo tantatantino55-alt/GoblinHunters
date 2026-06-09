@@ -253,7 +253,7 @@ public class ResourceLoader {
 
         sm.loadAnimation("CAVE_BUILDING", Config.CAVE_SKELETON_SHEET, 0, Config.SKELETON_FRAMES_COUNT, bSize);
         for (int i = 0; i < Config.SKELETON_FRAMES_COUNT; i++) {
-            tiles[Config.CELL_SKELETON_START + i] = sm.getSprite("CAVE_BUILDING", i);
+            tiles[ViewConfig.CELL_SKELETON_START + i] = sm.getSprite("CAVE_BUILDING", i);
         }
 
         tiles[Config.THEME_FRAME_INDEX] = ResourceManager.loadImage(Config.CAVE_FRAME);

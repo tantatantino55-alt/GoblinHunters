@@ -38,7 +38,7 @@ class CollisionManager {
                 if (cell == Config.CELL_INDESTRUCTIBLE_BLOCK ||
                     cell == Config.CELL_DESTRUCTIBLE_BLOCK   ||
                     cell == Config.CELL_ORNAMENT             ||
-                    cell == Config.CELL_SKELETON_START) {
+                    cell == Config.CELL_ORNAMENT) {
                     return false;
                 }
                 Bomb bomb = getBombAt(r, c, activeBombs);
@@ -56,8 +56,7 @@ class CollisionManager {
         int cell = map[r][c];
         if (cell == Config.CELL_INDESTRUCTIBLE_BLOCK ||
             cell == Config.CELL_DESTRUCTIBLE_BLOCK   ||
-            cell == Config.CELL_ORNAMENT             ||
-            cell == Config.CELL_SKELETON_START) {
+            cell == Config.CELL_ORNAMENT) {
             return true;
         }
 
@@ -86,18 +85,18 @@ class CollisionManager {
         return false;
     }
 
-    boolean isAreaOccupiedByOtherEnemy(double nextX, double nextY, Enemy self, List<Enemy> enemies) {
+    boolean isAreaOccupiedByOtherEnemy(double nextX, double nextY, double selfX, double selfY, List<Enemy> enemies) {
         double size = 0.55;
 
         for (Enemy other : enemies) {
-            if (other == self) continue;
+            if (Math.abs(other.getX() - selfX) < 0.001 && Math.abs(other.getY() - selfY) < 0.001) continue;
 
             double nextDistX = Math.abs(nextX - other.getX());
             double nextDistY = Math.abs(nextY - other.getY());
 
             if (nextDistX < size && nextDistY < size) {
-                double currentDistX = Math.abs(self.getX() - other.getX());
-                double currentDistY = Math.abs(self.getY() - other.getY());
+                double currentDistX = Math.abs(selfX - other.getX());
+                double currentDistY = Math.abs(selfY - other.getY());
 
                 if (nextDistX < currentDistX || nextDistY < currentDistY) {
                     return true;

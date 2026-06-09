@@ -44,10 +44,9 @@ public class ControllerForModel implements IControllerForModel, Runnable {
         if (Model.getInstance().isTransitioning()) {
             this.transitionTimer--;
 
-            // at the midpoint (screen fully black) load the next map
+            // at the midpoint (screen fully black) load the next level
             if (this.transitionTimer == MAX_TRANSITION_TICKS / 2) {
-                int[][] nextMap = Model.getInstance().generateProceduralMap();
-                Model.getInstance().prepareNextLevel(nextMap);
+                Model.getInstance().prepareNextLevel();
             }
 
             if (this.transitionTimer <= 0) {
@@ -117,10 +116,10 @@ public class ControllerForModel implements IControllerForModel, Runnable {
                 ControllerForView.getInstance().requestRepaint();
             }
 
-            // busy-wait with Thread.yield() instead of sleep() for frame-perfect timing;
-            // avoids the ±1 ms jitter that sleep introduces on most JVMs
-            while (System.nanoTime() - lastTime < nsPerTick) {
-                Thread.yield();
+            long remaining = (long) (nsPerTick - (System.nanoTime() - lastTime));
+            if (remaining > 1_000_000L) {
+                try { Thread.sleep(remaining / 1_000_000); }
+                catch (InterruptedException e) { Thread.currentThread().interrupt(); }
             }
         }
     }

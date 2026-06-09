@@ -33,7 +33,6 @@ public class Config {
     public static final double GOBLIN_HITBOX_WIDTH       = LogicConfig.GOBLIN_HITBOX_WIDTH;
     public static final double GOBLIN_HITBOX_HEIGHT      = LogicConfig.GOBLIN_HITBOX_HEIGHT;
 
-    public static final int    MAX_ENEMIES_ON_MAP        = LogicConfig.MAX_ENEMIES_ON_MAP;
     public static final long   SPAWN_INTERVAL_MS         = LogicConfig.SPAWN_INTERVAL_MS;
     public static final int    SPAWN_SAFE_DISTANCE       = LogicConfig.SPAWN_SAFE_DISTANCE;
     public static final double MIN_SPAWN_DISTANCE        = LogicConfig.MIN_SPAWN_DISTANCE;
@@ -167,8 +166,6 @@ public class Config {
     public static final int    DESTRUCTION_START          = ViewConfig.DESTRUCTION_START;
     public static final int    DESTRUCTION_FRAMES         = ViewConfig.DESTRUCTION_FRAMES;
     public static final int    DESTRUCTION_FRAME_DURATION = ViewConfig.DESTRUCTION_FRAME_DURATION;
-
-    public static final int    CELL_SKELETON_START        = ViewConfig.CELL_SKELETON_START;
 
     public static final int    VILLAGE_ROW                = ViewConfig.VILLAGE_ROW;
     public static final int    VILLAGE_FLOOR_COL          = ViewConfig.VILLAGE_FLOOR_COL;

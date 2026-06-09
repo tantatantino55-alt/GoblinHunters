@@ -39,7 +39,7 @@ public interface IModel {
 
     // collision
     boolean isWalkable(double nextX, double nextY);
-    boolean isAreaOccupiedByOtherEnemy(double nextX, double nextY, Enemy enemy);
+    boolean isAreaOccupiedByOtherEnemy(double nextX, double nextY, double selfX, double selfY);
 
     // enemies
     int getEnemyCount();
@@ -61,7 +61,6 @@ public interface IModel {
     int getBombElapsedTime(int index);
 
     // projectiles
-    void addProjectile(Projectile projectile);
     int getProjectileCount();
     double getProjectileX(int index);
     double getProjectileY(int index);
@@ -95,9 +94,7 @@ public interface IModel {
     int getExitGateRow();
     int getExitGateCol();
     boolean isExitGateActive();
-    boolean isGateActive();
     long getExitGateActivationTime();
-    long getGateExitActivationTime();
 
     // levels and zones
     int getCurrentZone();
@@ -107,7 +104,7 @@ public interface IModel {
     boolean isLevelCompletedFlag();
     boolean isTransitioning();
     void setTransitioning(boolean transitioning);
-    void prepareNextLevel(int[][] newMap);
+    void prepareNextLevel();
 
     // boss floor cracks
     int getCrackCount();

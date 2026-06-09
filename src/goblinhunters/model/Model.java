@@ -2,10 +2,9 @@ package goblinhunters.model;
 
 import goblinhunters.utils.*;
 
-import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /** Model facade. Implements IModel by delegating to specialised managers. */
 public class Model implements IModel {
@@ -21,14 +20,15 @@ public class Model implements IModel {
 
     // entities
     private Player player;
-    private List<Enemy> enemies;
+    private final List<Enemy> enemies = new CopyOnWriteArrayList<>();
 
-    // active game objects
-    private final List<Bomb>             activeBombs        = new ArrayList<>();
-    private       List<Projectile>       projectiles        = new ArrayList<>();
-    private final List<int[]>            activeFire         = new ArrayList<>();
-    private final List<BlockDestruction> destructionEffects = new ArrayList<>();
-    private final List<Collectible>      activeItems        = new ArrayList<>();
+    // active game objects — CopyOnWriteArrayList ensures the EDT can read a snapshot
+    // during paintComponent without racing against game-thread mutations
+    private final List<Bomb>             activeBombs        = new CopyOnWriteArrayList<>();
+    private final List<Projectile>       projectiles        = new CopyOnWriteArrayList<>();
+    private final List<int[]>            activeFire         = new CopyOnWriteArrayList<>();
+    private final List<BlockDestruction> destructionEffects = new CopyOnWriteArrayList<>();
+    private final List<Collectible>      activeItems        = new CopyOnWriteArrayList<>();
 
     private int elapsedTicks = 0;
 
@@ -48,8 +48,7 @@ public class Model implements IModel {
         this.scoreManager     = new ScoreManager(this);
         this.levelManager     = new LevelManager(this);
 
-        this.player  = new Player(0.0, 0.0);
-        this.enemies = new ArrayList<>();
+        this.player = new Player(0.0, 0.0);
 
         int[][] initialMap = mapManager.generateProceduralMap(levelManager.getCurrentZone(), levelManager);
         mapManager.applyMap(initialMap);
@@ -181,8 +180,8 @@ public class Model implements IModel {
     }
 
     @Override
-    public boolean isAreaOccupiedByOtherEnemy(double nextX, double nextY, Enemy self) {
-        return collisionManager.isAreaOccupiedByOtherEnemy(nextX, nextY, self, enemies);
+    public boolean isAreaOccupiedByOtherEnemy(double nextX, double nextY, double selfX, double selfY) {
+        return collisionManager.isAreaOccupiedByOtherEnemy(nextX, nextY, selfX, selfY, enemies);
     }
 
     // ==========================================================
@@ -220,12 +219,12 @@ public class Model implements IModel {
     private boolean isValidBombIndex(int i) { return i >= 0 && i < activeBombs.size(); }
 
     private void updateBombs() {
-        Iterator<Bomb> it = activeBombs.iterator();
-        while (it.hasNext()) {
-            Bomb b = it.next();
+        List<Bomb> exploded = new ArrayList<>();
+        for (Bomb b : activeBombs) {
             b.updateDetonationTimer();
-            if (b.isExploded()) { handleExplosion(b); it.remove(); }
+            if (b.isExploded()) { handleExplosion(b); exploded.add(b); }
         }
+        activeBombs.removeAll(exploded);
     }
 
     private void handleExplosion(Bomb b) {
@@ -249,7 +248,7 @@ public class Model implements IModel {
             if (cr < 0 || cr >= Config.GRID_HEIGHT || cc < 0 || cc >= Config.GRID_WIDTH) break;
 
             int cell = map[cr][cc];
-            if (cell == Config.CELL_INDESTRUCTIBLE_BLOCK || cell == Config.CELL_ORNAMENT || cell == Config.CELL_SKELETON_START) break;
+            if (cell == Config.CELL_INDESTRUCTIBLE_BLOCK || cell == Config.CELL_ORNAMENT) break;
             if (cell == Config.CELL_DESTRUCTIBLE_BLOCK) { destroyBlock(cr, cc); break; }
 
             Bomb chainBomb = collisionManager.getBombAt(cr, cc, activeBombs);
@@ -268,7 +267,7 @@ public class Model implements IModel {
     // IModel – projectiles
     // ==========================================================
 
-    @Override public void addProjectile(Projectile p)    { projectiles.add(p); }
+    void addProjectile(Projectile p)                     { projectiles.add(p); }
     @Override public int getProjectileCount()            { return projectiles.size(); }
     @Override public double getProjectileX(int i)        { return isValidProjIndex(i) ? projectiles.get(i).getX() : 0; }
     @Override public double getProjectileY(int i)        { return isValidProjIndex(i) ? projectiles.get(i).getY() : 0; }
@@ -342,7 +341,6 @@ public class Model implements IModel {
     @Override public int getCurrentZone()             { return levelManager.getCurrentZone(); }
     @Override public int getDifficultyCycle()         { return levelManager.getDifficultyCycle(); }
     @Override public boolean isExitGateActive()       { return levelManager.isExitGateActive(); }
-    @Override public boolean isGateActive()           { return levelManager.isExitGateActive(); }
     @Override public boolean isPreparationPhase()     { return levelManager.isPreparationPhase(); }
     @Override public boolean isLevelCompletedFlag()   { return levelManager.isLevelCompletedFlag(); }
     @Override public boolean isGameOverPending()      { return gameOverPending; }
@@ -355,14 +353,13 @@ public class Model implements IModel {
     @Override public int getExitGateRow()             { return levelManager.getExitGateRow(); }
     @Override public int getExitGateCol()             { return levelManager.getExitGateCol(); }
     @Override public long getExitGateActivationTime() { return levelManager.getExitGateActivationTime(); }
-    @Override public long getGateExitActivationTime() { return levelManager.getExitGateActivationTime(); }
     @Override public boolean isTransitioning()        { return levelManager.isTransitioning(); }
     @Override public void setTransitioning(boolean t) { levelManager.setTransitioning(t); }
 
     @Override public int getScore() { return scoreManager.getScore(); }
 
     @Override
-    public void prepareNextLevel(int[][] ignoredMap) {
+    public void prepareNextLevel() {
         levelManager.prepareNextLevel();
         scoreManager.resetZoneScore();
 
@@ -426,7 +423,6 @@ public class Model implements IModel {
             case UP    -> tY -= OFFSET;
         }
 
-        Rectangle2D.Double hitbox = new Rectangle2D.Double(tX, tY, 0.8, 0.8);
         int[][] map = mapManager.getGameAreaArray();
         int gX = (int) Math.round(tX), gY = (int) Math.round(tY);
 
@@ -434,15 +430,18 @@ public class Model implements IModel {
             if (map[gY][gX] == Config.CELL_DESTRUCTIBLE_BLOCK) destroyBlock(gY, gX);
         }
 
-        Iterator<Enemy> eIt = enemies.iterator();
-        while (eIt.hasNext()) {
-            Enemy e = eIt.next();
-            if (e.getType() == EnemyType.BOSS) continue; // boss is immune to the staff
-            if (hitbox.intersects(new Rectangle2D.Double(e.getX(), e.getY(), 0.6, 0.6))) {
-                eIt.remove();
-                scoreManager.handleEnemyDeath(e, levelManager.getCurrentZone(), activeItems);
+        Enemy killed = null;
+        for (Enemy e : enemies) {
+            if (e.getType() == EnemyType.BOSS) continue;
+            if (tX < e.getX() + 0.6 && tX + 0.8 > e.getX() &&
+                tY < e.getY() + 0.6 && tY + 0.8 > e.getY()) {
+                killed = e;
                 break;
             }
+        }
+        if (killed != null) {
+            enemies.remove(killed);
+            scoreManager.handleEnemyDeath(killed, levelManager.getCurrentZone(), activeItems);
         }
 
         switch (dir) {
@@ -532,13 +531,11 @@ public class Model implements IModel {
             checkBossPortalDeactivation();
         }
 
-        Iterator<int[]> it = activeFire.iterator();
-        while (it.hasNext()) {
-            int[] f = it.next();
+        for (int[] f : activeFire) {
             f[3]--;
-            if (f[3] <= 0) it.remove();
-            else checkExplosionDamage(f[0], f[1]);
+            if (f[3] > 0) checkExplosionDamage(f[0], f[1]);
         }
+        activeFire.removeIf(f -> f[3] <= 0);
 
         long now = System.currentTimeMillis();
         destructionEffects.removeIf(bd -> (now - bd.getCreationTime()) > 500);
@@ -717,16 +714,8 @@ public class Model implements IModel {
     }
 
     private void updateEnemies() {
-        Iterator<Enemy> it = enemies.iterator();
-        while (it.hasNext()) {
-            Enemy e = it.next();
-
-            // boss corpse lingers for 2 s (death animation) then despawns
-            if (e instanceof BossGoblin boss && boss.isReadyToDespawn()) {
-                it.remove();
-                continue;
-            }
-
+        enemies.removeIf(e -> e instanceof BossGoblin && ((BossGoblin) e).isReadyToDespawn());
+        for (Enemy e : enemies) {
             e.updateBehavior();
         }
     }
@@ -734,9 +723,8 @@ public class Model implements IModel {
     private void checkExplosionDamage(int row, int col) {
         double expL = col, expR = col + 1.0, expT = row, expB = row + 1.0;
 
-        Iterator<Enemy> it = enemies.iterator();
-        while (it.hasNext()) {
-            Enemy e = it.next();
+        List<Enemy> killed = new ArrayList<>();
+        for (Enemy e : enemies) {
             if (e.isDead()) continue;
 
             double eW = Config.ENTITY_LOGICAL_HITBOX_WIDTH, eH = Config.ENTITY_LOGICAL_HITBOX_HEIGHT;
@@ -747,15 +735,12 @@ public class Model implements IModel {
             if ((eL + m) < expR && (eR - m) > expL && (eT + m) < expB && (eB - m) > expT) {
                 boolean fatal = e.takeDamage(1);
                 if (fatal) {
-                    if (e.getType() == EnemyType.BOSS) {
-                        scoreManager.handleEnemyDeath(e, levelManager.getCurrentZone(), activeItems);
-                    } else {
-                        it.remove();
-                        scoreManager.handleEnemyDeath(e, levelManager.getCurrentZone(), activeItems);
-                    }
+                    scoreManager.handleEnemyDeath(e, levelManager.getCurrentZone(), activeItems);
+                    if (e.getType() != EnemyType.BOSS) killed.add(e);
                 }
             }
         }
+        enemies.removeAll(killed);
 
         if (!player.isInvincible()) {
             double pX = player.getXCoordinate(), pY = player.getYCoordinate();
@@ -770,11 +755,9 @@ public class Model implements IModel {
     }
 
     private void updateProjectiles() {
-        Iterator<Projectile> it = projectiles.iterator();
-        while (it.hasNext()) {
-            Projectile p = it.next();
+        for (Projectile p : projectiles) {
             p.update();
-            if (!p.isActive()) { it.remove(); continue; }
+            if (!p.isActive()) continue;
 
             if (p.isEnemyProjectile()) {
                 if (Math.abs(p.getX() - player.getXCoordinate()) < 0.5 &&
@@ -783,27 +766,25 @@ public class Model implements IModel {
                     p.setActive(false);
                 }
             } else {
-                Iterator<Enemy> eIt = enemies.iterator();
-                boolean hit = false;
-                while (eIt.hasNext()) {
-                    Enemy e = eIt.next();
+                Enemy hit = null;
+                for (Enemy e : enemies) {
                     if (e.isDead()) continue;
                     if (Math.abs(p.getX() - e.getX()) < 0.6 && Math.abs(p.getY() - e.getY()) < 0.6) {
                         if (e.getType() == EnemyType.BOSS) {
-                            // boss is never removed from the list; takeDamage handles i-frames
                             boolean fatal = e.takeDamage(1);
                             if (fatal) scoreManager.handleEnemyDeath(e, levelManager.getCurrentZone(), activeItems);
                         } else {
-                            eIt.remove();
+                            hit = e;
                             scoreManager.handleEnemyDeath(e, levelManager.getCurrentZone(), activeItems);
                         }
-                        hit = true;
+                        p.setActive(false);
                         break;
                     }
                 }
-                if (hit) p.setActive(false);
+                if (hit != null) enemies.remove(hit);
             }
         }
+        projectiles.removeIf(p -> !p.isActive());
     }
 
     private void spawnAuraProjectile() {
@@ -816,19 +797,19 @@ public class Model implements IModel {
             case DOWN  -> pY += 0.7;
             case UP    -> pY -= 0.7;
         }
-        addProjectile(new AuraProjectile(pX, pY, dir));
+        projectiles.add(new AuraProjectile(pX, pY, dir));
     }
 
     private void checkItemPickup() {
-        Iterator<Collectible> it = activeItems.iterator();
         double pX = player.getXCoordinate(), pY = player.getYCoordinate();
-        while (it.hasNext()) {
-            Collectible item = it.next();
+        List<Collectible> picked = new ArrayList<>();
+        for (Collectible item : activeItems) {
             if (Math.abs(pX - item.getX()) < 0.6 && Math.abs(pY - item.getY()) < 0.6) {
                 applyItemEffect(item.getType());
-                it.remove();
+                picked.add(item);
             }
         }
+        activeItems.removeAll(picked);
     }
 
     private void applyItemEffect(ItemType type) {

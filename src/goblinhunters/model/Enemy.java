@@ -73,7 +73,7 @@ public abstract class Enemy extends Entity {
         if (deltaX != 0) {
             double nextX = x + deltaX;
             boolean hitWall  = !model.isWalkable(nextX, y);
-            boolean hitEnemy = model.isAreaOccupiedByOtherEnemy(nextX, y, this);
+            boolean hitEnemy = model.isAreaOccupiedByOtherEnemy(nextX, y, x, y);
 
             if (!hitWall && !hitEnemy) {
                 this.x = nextX;
@@ -91,7 +91,7 @@ public abstract class Enemy extends Entity {
         } else if (deltaY != 0) {
             double nextY = y + deltaY;
             boolean hitWall  = !model.isWalkable(x, nextY);
-            boolean hitEnemy = model.isAreaOccupiedByOtherEnemy(x, nextY, this);
+            boolean hitEnemy = model.isAreaOccupiedByOtherEnemy(x, nextY, x, y);
 
             if (!hitWall && !hitEnemy) {
                 this.y = nextY;
@@ -164,13 +164,13 @@ public abstract class Enemy extends Entity {
         double step = 0.5;
         IModel model = Model.getInstance();
 
-        if (model.isWalkable(x, y - step) && !model.isAreaOccupiedByOtherEnemy(x, y - step, this))
+        if (model.isWalkable(x, y - step) && !model.isAreaOccupiedByOtherEnemy(x, y - step, x, y))
             valid.add(Direction.UP);
-        if (model.isWalkable(x, y + step) && !model.isAreaOccupiedByOtherEnemy(x, y + step, this))
+        if (model.isWalkable(x, y + step) && !model.isAreaOccupiedByOtherEnemy(x, y + step, x, y))
             valid.add(Direction.DOWN);
-        if (model.isWalkable(x - step, y) && !model.isAreaOccupiedByOtherEnemy(x - step, y, this))
+        if (model.isWalkable(x - step, y) && !model.isAreaOccupiedByOtherEnemy(x - step, y, x, y))
             valid.add(Direction.LEFT);
-        if (model.isWalkable(x + step, y) && !model.isAreaOccupiedByOtherEnemy(x + step, y, this))
+        if (model.isWalkable(x + step, y) && !model.isAreaOccupiedByOtherEnemy(x + step, y, x, y))
             valid.add(Direction.RIGHT);
 
         return valid;

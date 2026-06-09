@@ -114,7 +114,7 @@ public class ShooterGoblin extends ChasingGoblin {
         }
 
         Projectile p = new BoneProjectile(projX, projY, telegraphDirection);
-        Model.getInstance().addProjectile(p);
+        ((Model) Model.getInstance()).addProjectile(p);
         activeProjectiles.add(p);
 
         telegraphDirection = null;

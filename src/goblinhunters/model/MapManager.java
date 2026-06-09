@@ -37,7 +37,7 @@ class MapManager {
 
         hiddenLoot.clear();
 
-        int buildingID = (currentZone == 2) ? Config.CELL_SKELETON_START : Config.CELL_ORNAMENT;
+        int buildingID = Config.CELL_ORNAMENT;
 
         if (currentZone < 2) {
             generateStandardMap(nextMap, emptyCells, cratePositions, buildingID);
@@ -242,7 +242,7 @@ class MapManager {
                     }
 
                     int cell = map[r][c];
-                    if (cell == Config.CELL_INDESTRUCTIBLE_BLOCK || cell == Config.CELL_SKELETON_START) {
+                    if (cell == Config.CELL_INDESTRUCTIBLE_BLOCK || cell == Config.CELL_ORNAMENT) {
                         laneStopped[i] = true;
                         continue;
                     }

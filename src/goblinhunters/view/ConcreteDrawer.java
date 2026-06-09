@@ -412,7 +412,7 @@ public class ConcreteDrawer extends AbstractDrawer {
                         int frameIndex = (int) ((System.currentTimeMillis() / 100)
                                 % goblinhunters.utils.Config.SKELETON_FRAMES_COUNT);
                         BufferedImage skeletonFrame = tileManager
-                                .getTileImage(goblinhunters.utils.Config.CELL_SKELETON_START + frameIndex);
+                                .getTileImage(goblinhunters.utils.ViewConfig.CELL_SKELETON_START + frameIndex);
                         if (skeletonFrame != null) {
                             g2d.drawImage(skeletonFrame, tileX, tileY, 128, 128, null);
                         }

@@ -37,7 +37,6 @@ class CollisionManager {
                 int cell = map[r][c];
                 if (cell == Config.CELL_INDESTRUCTIBLE_BLOCK ||
                     cell == Config.CELL_DESTRUCTIBLE_BLOCK   ||
-                    cell == Config.CELL_ORNAMENT             ||
                     cell == Config.CELL_ORNAMENT) {
                     return false;
                 }

@@ -47,11 +47,8 @@ public interface IModel {
     double getEnemyY(int index);
     Direction getEnemyDirection(int index);
     EnemyType getEnemyType(int index);
-    Direction getEnemyTelegraph(int index);
     String getEnemyState(int index);
     boolean isEnemyInvincible(int index);
-    boolean isEnemyAttacking(int index);
-    boolean isEnemyWaiting(int index);
     long getEnemyStateStartTime(int index);
 
     // bombs
@@ -84,13 +81,10 @@ public interface IModel {
     double getCollectibleX(int index);
     double getCollectibleY(int index);
     ItemType getCollectibleType(int index);
-    long getCollectibleSpawnTime(int index);
-
     // portal and exit gate
     int getPortalRow();
     int getPortalCol();
     boolean isPortalRevealed();
-    long getPortalRevealTime();
     int getExitGateRow();
     int getExitGateCol();
     boolean isExitGateActive();
@@ -119,8 +113,6 @@ public interface IModel {
     boolean isBossPortalActive();
     int getBossPortalRow();
     int getBossPortalCol();
-    long getBossPortalActivationTime();
-
     // score and game state
     int getScore();
     boolean isGameOverPending();

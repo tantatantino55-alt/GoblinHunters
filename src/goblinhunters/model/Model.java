@@ -17,6 +17,7 @@ public class Model implements IModel {
     private final SpawnManager     spawnManager;
     private final ScoreManager     scoreManager;
     private final LevelManager     levelManager;
+    private final BombManager      bombManager;
 
     // entities
     private Player player;
@@ -47,6 +48,7 @@ public class Model implements IModel {
         this.spawnManager     = new SpawnManager(this);
         this.scoreManager     = new ScoreManager(this);
         this.levelManager     = new LevelManager(this);
+        this.bombManager      = new BombManager(this, collisionManager, scoreManager);
 
         this.player = new Player(0.0, 0.0);
 
@@ -143,24 +145,11 @@ public class Model implements IModel {
     @Override public double    getEnemyY(int i)          { return isValidIndex(i) ? enemies.get(i).getY() : 0; }
     @Override public Direction getEnemyDirection(int i)  { return isValidIndex(i) ? enemies.get(i).getDirection() : Direction.DOWN; }
     @Override public EnemyType getEnemyType(int i)       { return isValidIndex(i) ? enemies.get(i).getType() : EnemyType.COMMON; }
-    @Override public Direction getEnemyTelegraph(int i)  { return isValidIndex(i) ? enemies.get(i).getTelegraphDirection() : null; }
     @Override public String getEnemyState(int i) {
         if (player.getState() == PlayerState.DYING) return "IDLE";
         return isValidIndex(i) ? enemies.get(i).getEnemyState() : "RUN";
     }
     @Override public boolean isEnemyInvincible(int i)    { return isValidIndex(i) && enemies.get(i).isInvincible(); }
-
-    @Override
-    public boolean isEnemyAttacking(int i) {
-        return isValidIndex(i) && enemies.get(i) instanceof ShooterGoblin
-                && ((ShooterGoblin) enemies.get(i)).isActuallyAttacking();
-    }
-
-    @Override
-    public boolean isEnemyWaiting(int i) {
-        return isValidIndex(i) && enemies.get(i) instanceof ShooterGoblin
-                && ((ShooterGoblin) enemies.get(i)).isWaiting();
-    }
 
     @Override
     public long getEnemyStateStartTime(int i) {
@@ -218,51 +207,6 @@ public class Model implements IModel {
     }
     private boolean isValidBombIndex(int i) { return i >= 0 && i < activeBombs.size(); }
 
-    private void updateBombs() {
-        List<Bomb> exploded = new ArrayList<>();
-        for (Bomb b : activeBombs) {
-            b.updateDetonationTimer();
-            if (b.isExploded()) { handleExplosion(b); exploded.add(b); }
-        }
-        activeBombs.removeAll(exploded);
-    }
-
-    private void handleExplosion(Bomb b) {
-        int r = b.getRow(), c = b.getCol(), rad = b.getRadius();
-        activeFire.add(new int[]{r, c, 0, Config.FIRE_DURATION_TICKS});
-        checkExplosionDamage(r, c);
-
-        Bomb chain = collisionManager.getBombAt(r, c, activeBombs);
-        if (chain != null && !chain.isExploded()) chain.detonate();
-
-        expandFire(r, c, -1,  0, rad, 4, 8);
-        expandFire(r, c,  1,  0, rad, 5, 1);
-        expandFire(r, c,  0, -1, rad, 2, 6);
-        expandFire(r, c,  0,  1, rad, 3, 7);
-    }
-
-    private void expandFire(int sr, int sc, int dr, int dc, int rad, int midType, int tipType) {
-        int[][] map = mapManager.getGameAreaArray();
-        for (int i = 1; i <= rad; i++) {
-            int cr = sr + dr * i, cc = sc + dc * i;
-            if (cr < 0 || cr >= Config.GRID_HEIGHT || cc < 0 || cc >= Config.GRID_WIDTH) break;
-
-            int cell = map[cr][cc];
-            if (cell == Config.CELL_INDESTRUCTIBLE_BLOCK || cell == Config.CELL_ORNAMENT) break;
-            if (cell == Config.CELL_DESTRUCTIBLE_BLOCK) { destroyBlock(cr, cc); break; }
-
-            Bomb chainBomb = collisionManager.getBombAt(cr, cc, activeBombs);
-            if (chainBomb != null && !chainBomb.isExploded()) {
-                chainBomb.detonate();
-                break; // fire hits this bomb and chain-triggers it; does not continue past it
-            }
-
-            boolean tip = (i == rad);
-            activeFire.add(new int[]{cr, cc, tip ? tipType : midType, Config.FIRE_DURATION_TICKS});
-            checkExplosionDamage(cr, cc);
-        }
-    }
-
     // ==========================================================
     // IModel – projectiles
     // ==========================================================
@@ -305,7 +249,6 @@ public class Model implements IModel {
     @Override public double getCollectibleX(int i)       { return isValidItemIndex(i) ? activeItems.get(i).getX() : 0; }
     @Override public double getCollectibleY(int i)       { return isValidItemIndex(i) ? activeItems.get(i).getY() : 0; }
     @Override public ItemType getCollectibleType(int i)  { return isValidItemIndex(i) ? activeItems.get(i).getType() : ItemType.AMMO_BOMB; }
-    @Override public long getCollectibleSpawnTime(int i) { return isValidItemIndex(i) ? activeItems.get(i).getSpawnTime() : 0; }
     private boolean isValidItemIndex(int i)              { return i >= 0 && i < activeItems.size(); }
 
     // boss floor cracks
@@ -329,10 +272,9 @@ public class Model implements IModel {
     }
 
     // boss portal (zone 2)
-    @Override public boolean isBossPortalActive()      { return levelManager.isBossPortalActive(); }
-    @Override public int getBossPortalRow()            { return levelManager.getBossPortalRow(); }
-    @Override public int getBossPortalCol()            { return levelManager.getBossPortalCol(); }
-    @Override public long getBossPortalActivationTime(){ return levelManager.getBossPortalActivationTime(); }
+    @Override public boolean isBossPortalActive() { return levelManager.isBossPortalActive(); }
+    @Override public int getBossPortalRow()       { return levelManager.getBossPortalRow(); }
+    @Override public int getBossPortalCol()       { return levelManager.getBossPortalCol(); }
 
     // ==========================================================
     // IModel – levels / gate / portal
@@ -349,7 +291,6 @@ public class Model implements IModel {
     @Override public int getPortalRow()               { return levelManager.getPortalRow(); }
     @Override public int getPortalCol()               { return levelManager.getPortalCol(); }
     @Override public boolean isPortalRevealed()       { return levelManager.isPortalRevealed(); }
-    @Override public long getPortalRevealTime()       { return levelManager.getPortalRevealTime(); }
     @Override public int getExitGateRow()             { return levelManager.getExitGateRow(); }
     @Override public int getExitGateCol()             { return levelManager.getExitGateCol(); }
     @Override public long getExitGateActivationTime() { return levelManager.getExitGateActivationTime(); }
@@ -480,7 +421,7 @@ public class Model implements IModel {
                     this.gameOverPending = true;
                 }
             }
-            updateBombs();
+            bombManager.updateBombs();
             updateProjectiles();
             mapManager.updateCracks();
             return;
@@ -517,7 +458,7 @@ public class Model implements IModel {
         }
 
         updateEnemies();
-        updateBombs();
+        bombManager.updateBombs();
         updateProjectiles();
 
         mapManager.updateCracks();
@@ -531,11 +472,7 @@ public class Model implements IModel {
             checkBossPortalDeactivation();
         }
 
-        for (int[] f : activeFire) {
-            f[3]--;
-            if (f[3] > 0) checkExplosionDamage(f[0], f[1]);
-        }
-        activeFire.removeIf(f -> f[3] <= 0);
+        bombManager.tickFire();
 
         long now = System.currentTimeMillis();
         destructionEffects.removeIf(bd -> (now - bd.getCreationTime()) > 500);
@@ -688,7 +625,7 @@ public class Model implements IModel {
         }
     }
 
-    private void handlePlayerHit() {
+    void handlePlayerHit() {
         if (player.isInvincible() || player.getState() == PlayerState.DYING) return;
         boolean lifeLost = player.takeDamage();
         if (lifeLost) {
@@ -717,40 +654,6 @@ public class Model implements IModel {
         enemies.removeIf(e -> e instanceof BossGoblin && ((BossGoblin) e).isReadyToDespawn());
         for (Enemy e : enemies) {
             e.updateBehavior();
-        }
-    }
-
-    private void checkExplosionDamage(int row, int col) {
-        double expL = col, expR = col + 1.0, expT = row, expB = row + 1.0;
-
-        List<Enemy> killed = new ArrayList<>();
-        for (Enemy e : enemies) {
-            if (e.isDead()) continue;
-
-            double eW = Config.ENTITY_LOGICAL_HITBOX_WIDTH, eH = Config.ENTITY_LOGICAL_HITBOX_HEIGHT;
-            double eL = e.getX() + (1.0 - eW) / 2.0, eR = eL + eW;
-            double eB = e.getY() + 1.0 - 0.4,         eT = eB - eH;
-            double m = 0.1;
-
-            if ((eL + m) < expR && (eR - m) > expL && (eT + m) < expB && (eB - m) > expT) {
-                boolean fatal = e.takeDamage(1);
-                if (fatal) {
-                    scoreManager.handleEnemyDeath(e, levelManager.getCurrentZone(), activeItems);
-                    if (e.getType() != EnemyType.BOSS) killed.add(e);
-                }
-            }
-        }
-        enemies.removeAll(killed);
-
-        if (!player.isInvincible()) {
-            double pX = player.getXCoordinate(), pY = player.getYCoordinate();
-            double pW = Config.ENTITY_LOGICAL_HITBOX_WIDTH, pH = Config.ENTITY_LOGICAL_HITBOX_HEIGHT;
-            double pL = pX + (1.0 - pW) / 2.0, pR = pL + pW;
-            double pB = pY + 1.0 - 0.4,         pT = pB - pH;
-            double m = 0.1;
-            if ((pL + m) < expR && (pR - m) > expL && (pT + m) < expB && (pB - m) > expT) {
-                handlePlayerHit();
-            }
         }
     }
 

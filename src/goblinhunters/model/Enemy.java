@@ -11,7 +11,6 @@ public abstract class Enemy extends Entity {
     protected EnemyType type;
     protected Random random;
 
-    protected boolean isChasing = false;
     protected Direction telegraphDirection = null;
     protected boolean recentlyBounced = false;
 
@@ -176,20 +175,6 @@ public abstract class Enemy extends Entity {
         return valid;
     }
 
-    protected void changeDirection() {
-        java.util.List<Direction> valid = getValidDirections();
-        Direction opposite = switch (currentDirection) {
-            case UP    -> Direction.DOWN;
-            case DOWN  -> Direction.UP;
-            case LEFT  -> Direction.RIGHT;
-            case RIGHT -> Direction.LEFT;
-        };
-
-        if (valid.size() > 1) valid.remove(opposite);
-        if (!valid.isEmpty()) currentDirection = valid.get(random.nextInt(valid.size()));
-    }
-
-    public Direction getTelegraphDirection() { return null; }
     public Direction getDirection()          { return currentDirection; }
     public EnemyType getType()               { return type; }
 }

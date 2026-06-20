@@ -8,7 +8,6 @@ public abstract class Projectile extends Entity {
     protected Direction direction;
     protected boolean active;
     protected boolean isEnemyProjectile;
-    protected long creationTime;
 
     public Projectile(double startX, double startY, Direction dir, double speedMult, boolean isEnemy) {
         super(startX, startY);

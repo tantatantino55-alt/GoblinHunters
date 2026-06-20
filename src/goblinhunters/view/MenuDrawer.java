@@ -235,11 +235,6 @@ public class MenuDrawer {
         return -1;
     }
 
-    /** Compatibility alias for {@link #getCharacterIndexAt}. */
-    public int getFrameIndexAt(int mouseX, int mouseY) {
-        return getCharacterIndexAt(mouseX, mouseY);
-    }
-
     /** Returns true if the coordinates land on the Start Game button. */
     public boolean isStartGameButtonAt(int mouseX, int mouseY) {
         int bx = ViewConfig.MENU_DRAW_X + ViewConfig.NEW_GAME_BTN_X;
@@ -248,8 +243,4 @@ public class MenuDrawer {
                 && mouseY >= by && mouseY <= by + ViewConfig.NEW_GAME_BTN_H;
     }
 
-    /** Compatibility alias for {@link #isStartGameButtonAt}. */
-    public boolean isNewGameButtonAt(int mouseX, int mouseY) {
-        return isStartGameButtonAt(mouseX, mouseY);
-    }
 }

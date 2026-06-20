@@ -84,10 +84,6 @@ public class ControllerForView implements IControllerForView {
                 .map(r -> new ScoreEntry(r.name, r.score))
                 .collect(Collectors.toList());
     }
-    @Override public boolean isPlayerInTopFive() {
-        return ScoreRepository.getInstance().isTopFive(Model.getInstance().getScore());
-    }
-
     @Override public int getNumColumns() { return Model.getInstance().getNumColumns(); }
     @Override public int getNumRows() { return Model.getInstance().getNumRows(); }
     @Override public double getXCoordinatePlayer() { return Model.getInstance().xCoordinatePlayer(); }
@@ -104,7 +100,6 @@ public class ControllerForView implements IControllerForView {
     @Override public double getEnemyY(int index) { return Model.getInstance().getEnemyY(index); }
     @Override public Direction getEnemyDirection(int index) { return Model.getInstance().getEnemyDirection(index); }
     @Override public EnemyType getEnemyType(int index) { return Model.getInstance().getEnemyType(index); }
-    @Override public Direction getEnemyTelegraph(int index) { return Model.getInstance().getEnemyTelegraph(index); }
 
     @Override public PlayerState getPlayerState() { return Model.getInstance().getPlayerState(); }
     @Override public long getPlayerStateStartTime() { return Model.getInstance().getPlayerStateStartTime(); }
@@ -133,16 +128,6 @@ public class ControllerForView implements IControllerForView {
     @Override public int getFireRow(int index) { return Model.getInstance().getFireRow(index); }
     @Override public int getFireCol(int index) { return Model.getInstance().getFireCol(index); }
     @Override public int getFireType(int index) { return Model.getInstance().getFireType(index); }
-
-    @Override
-    public boolean isEnemyAttacking(int index) {
-        return Model.getInstance().isEnemyAttacking(index);
-    }
-
-    @Override
-    public boolean isEnemyWaiting(int index) {
-        return Model.getInstance().isEnemyWaiting(index);
-    }
 
     @Override
     public void playerShoot() {
@@ -201,12 +186,6 @@ public class ControllerForView implements IControllerForView {
     @Override public double getCollectibleX(int index) { return Model.getInstance().getCollectibleX(index); }
     @Override public double getCollectibleY(int index) { return Model.getInstance().getCollectibleY(index); }
     @Override public ItemType getCollectibleType(int index) { return Model.getInstance().getCollectibleType(index); }
-    @Override public long getCollectibleSpawnTime(int index) { return Model.getInstance().getCollectibleSpawnTime(index); }
-
-    @Override
-    public long getPortalRevealTime() {
-        return Model.getInstance().getPortalRevealTime();
-    }
 
     @Override
     public boolean isGateActive() {
@@ -239,10 +218,9 @@ public class ControllerForView implements IControllerForView {
     @Override public int getBossHP()    { return Model.getInstance().getBossHP(); }
     @Override public int getBossMaxHP() { return Model.getInstance().getBossMaxHP(); }
 
-    @Override public boolean isBossPortalActive()      { return Model.getInstance().isBossPortalActive(); }
-    @Override public int getBossPortalRow()             { return Model.getInstance().getBossPortalRow(); }
-    @Override public int getBossPortalCol()             { return Model.getInstance().getBossPortalCol(); }
-    @Override public long getBossPortalActivationTime() { return Model.getInstance().getBossPortalActivationTime(); }
+    @Override public boolean isBossPortalActive() { return Model.getInstance().isBossPortalActive(); }
+    @Override public int getBossPortalRow()       { return Model.getInstance().getBossPortalRow(); }
+    @Override public int getBossPortalCol()       { return Model.getInstance().getBossPortalCol(); }
 
     @Override
     public boolean isPaused() {

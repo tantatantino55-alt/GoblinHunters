@@ -16,10 +16,6 @@ public class AuraProjectile extends Projectile {
         this.maxRange = 3.0;
     }
 
-    public void setMaxRange(double newRange) {
-        this.maxRange = newRange;
-    }
-
     @Override
     protected void handleCollision(double nextX, double nextY) {
         if (nextX < 0 || nextX >= Config.GRID_WIDTH || nextY < 0 || nextY >= Config.GRID_HEIGHT) {

@@ -39,9 +39,6 @@ public class MenuModel {
      */
     public int getSelectedIndex()  { return selectedIndex; }
 
-    /** Compatibility alias — returns the same value as getSelectedIndex(). */
-    public int getClickedIndex()   { return selectedIndex; }
-
     /** Index of the confirmed character (-1 if not yet confirmed). */
     public int getConfirmedIndex() { return confirmedIndex; }
 
@@ -66,11 +63,6 @@ public class MenuModel {
         if (index >= 0 && index < CharacterType.values().length) {
             this.selectedIndex = index;
         }
-    }
-
-    /** Compatibility alias — delegates to {@link #selectCharacter(int)}. */
-    public void selectByClick(int frameIndex) {
-        selectCharacter(frameIndex);
     }
 
     /**

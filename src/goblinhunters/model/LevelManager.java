@@ -24,8 +24,6 @@ class LevelManager {
     private int portalRow = -1;
     private int portalCol = -1;
     private boolean portalRevealed = false;
-    private long lastPortalRevealTime = 0;
-
     // exit gate is always placed at (0,6)
     private final int exitGateRow = 0;
     private final int exitGateCol = 6;
@@ -37,8 +35,6 @@ class LevelManager {
 
     // goblin portal on boss map (fixed position from Config)
     private boolean bossPortalActive = false;
-    private long bossPortalActivationTime = 0;
-
     LevelManager(Model model) {
         this.model = model;
     }
@@ -57,7 +53,6 @@ class LevelManager {
     int getPortalRow()               { return portalRow; }
     int getPortalCol()               { return portalCol; }
     boolean isPortalRevealed()       { return portalRevealed; }
-    long getPortalRevealTime()       { return lastPortalRevealTime; }
     int getExitGateRow()             { return exitGateRow; }
     int getExitGateCol()             { return exitGateCol; }
     long getExitGateActivationTime() { return lastExitGateSpawnTime; }
@@ -67,8 +62,6 @@ class LevelManager {
     boolean isBossPortalActive()          { return bossPortalActive; }
     int getBossPortalRow()                { return Config.BOSS_PORTAL_ROW; }
     int getBossPortalCol()                { return Config.BOSS_PORTAL_COL; }
-    long getBossPortalActivationTime()    { return bossPortalActivationTime; }
-
     // ==========================================================
     // level configuration (count, cap, distribution)
     // ==========================================================
@@ -141,7 +134,6 @@ class LevelManager {
     void onBlockDestroyed(int row, int col) {
         if (row == portalRow && col == portalCol) {
             portalRevealed = true;
-            lastPortalRevealTime = System.currentTimeMillis();
             model.getSpawnManager().resetPortalTimer();
         }
     }
@@ -237,7 +229,6 @@ class LevelManager {
     /** Activates the goblin portal on the boss map (called by triggerGlobalExplosion). */
     void activateBossPortal() {
         bossPortalActive = true;
-        bossPortalActivationTime = System.currentTimeMillis();
     }
 
     /**

@@ -38,10 +38,6 @@ public class Config {
     public static final double MIN_SPAWN_DISTANCE        = LogicConfig.MIN_SPAWN_DISTANCE;
     public static final int    MIN_SPAWN_OPEN_AREA       = LogicConfig.MIN_SPAWN_OPEN_AREA;
 
-    public static final int    SMELL_THRESHOLD_DISTANCE  = LogicConfig.SMELL_THRESHOLD_DISTANCE;
-    public static final int    SMELL_BLOCK_PENALTY       = LogicConfig.SMELL_BLOCK_PENALTY;
-    public static final int    SAFE_DISTANCE_FROM_BOMB   = LogicConfig.SAFE_DISTANCE_FROM_BOMB;
-
     public static final int    SHOOTER_TELEGRAPH_TIME    = LogicConfig.SHOOTER_TELEGRAPH_TIME;
     public static final double SHOOTER_SPEED_AIMING      = LogicConfig.SHOOTER_SPEED_AIMING;
     public static final double SHOOTER_SPEED_CHASE       = LogicConfig.SHOOTER_SPEED_CHASE;
@@ -75,7 +71,6 @@ public class Config {
     public static final int    SCORE_CHASING_GOBLIN      = LogicConfig.SCORE_CHASING_GOBLIN;
     public static final int    SCORE_SHOOTER_GOBLIN      = LogicConfig.SCORE_SHOOTER_GOBLIN;
     public static final int    SCORE_ZONE_CAP            = LogicConfig.SCORE_ZONE_CAP;
-    public static final int    PERFECT_LEVEL_BONUS       = LogicConfig.PERFECT_LEVEL_BONUS;
     public static final int    SCORE_BOSS_BASE           = LogicConfig.SCORE_BOSS_BASE;
     public static final int    MAX_BOSS_TIME_BONUS       = LogicConfig.MAX_BOSS_TIME_BONUS;
     public static final int    BOSS_BONUS_DECAY_PER_SEC  = LogicConfig.BOSS_BONUS_DECAY_PER_SEC;

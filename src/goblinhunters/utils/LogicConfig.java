@@ -35,11 +35,6 @@ public class LogicConfig {
     /** Minimum connected open cells required around a spawn point — prevents goblins from spawning inside tiny enclosed pockets. */
     public static final int MIN_SPAWN_OPEN_AREA = 6;
 
-    // enemy AI
-    public static final int SMELL_THRESHOLD_DISTANCE = 5;
-    public static final int SMELL_BLOCK_PENALTY      = 3;
-    public static final int SAFE_DISTANCE_FROM_BOMB  = 2;
-
     // shooter goblin
     public static final int    SHOOTER_TELEGRAPH_TIME = 30;
     public static final double SHOOTER_SPEED_AIMING   = 0.0;
@@ -84,7 +79,6 @@ public class LogicConfig {
     public static final int SCORE_CHASING_GOBLIN  = 200;
     public static final int SCORE_SHOOTER_GOBLIN  = 300;
     public static final int SCORE_ZONE_CAP        = 1500;
-    public static final int PERFECT_LEVEL_BONUS   = 2000;
     public static final int SCORE_BOSS_BASE       = 5000;
     public static final int MAX_BOSS_TIME_BONUS   = 5000;
     public static final int BOSS_BONUS_DECAY_PER_SEC = 50;

@@ -30,16 +30,12 @@ public interface IControllerForView {
     double getEnemyY(int index);
     Direction getEnemyDirection(int index);
     EnemyType getEnemyType(int index);
-    Direction getEnemyTelegraph(int index);
-
     PlayerState getPlayerState();
     long getPlayerStateStartTime();
     boolean isPlayerInvincible();
     int getPlayerLives();
     int getElapsedTimeInSeconds();
     int getScore();
-    boolean isEnemyAttacking(int index);
-
     int getBombCount();
     int getBombRow(int index);
     int getBombCol(int index);
@@ -60,8 +56,6 @@ public interface IControllerForView {
     int getFireRow(int index);
     int getFireCol(int index);
     int getFireType(int index);
-
-    boolean isEnemyWaiting(int index);
 
     void playerShoot();
     void resetPlayerStateAfterAction();
@@ -84,10 +78,6 @@ public interface IControllerForView {
     double getCollectibleX(int index);
     double getCollectibleY(int index);
     ItemType getCollectibleType(int index);
-    long getCollectibleSpawnTime(int index);
-
-    long getPortalRevealTime();
-
     boolean isGateActive();
     long getGateActivationTime();
     int getExitGateCol();
@@ -107,8 +97,6 @@ public interface IControllerForView {
     boolean isBossPortalActive();
     int getBossPortalRow();
     int getBossPortalCol();
-    long getBossPortalActivationTime();
-
     boolean isStaffUsable();
 
     void   menuAppendNameChar(char c);
@@ -119,7 +107,6 @@ public interface IControllerForView {
     boolean isMenuTypingName();
 
     List<ScoreEntry> getTopScores();
-    boolean isPlayerInTopFive();
 
     boolean isPaused();
     void setPaused(boolean paused);

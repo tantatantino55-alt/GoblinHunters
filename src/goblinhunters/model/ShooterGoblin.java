@@ -139,14 +139,6 @@ public class ShooterGoblin extends ChasingGoblin {
         }
     }
 
-    public boolean isWaiting() {
-        return state == State.RELOADING && !activeProjectiles.isEmpty();
-    }
-
-    public boolean isActuallyAttacking() {
-        return state == State.ATTACKING;
-    }
-
     private boolean hasLineOfSight(double px, double py) {
         int cx = (int) (this.x + 0.5);
         int cy = (int) (this.y + 0.5);
@@ -169,11 +161,6 @@ public class ShooterGoblin extends ChasingGoblin {
             }
         }
         return true;
-    }
-
-    @Override
-    public Direction getTelegraphDirection() {
-        return this.telegraphDirection;
     }
 
     /**

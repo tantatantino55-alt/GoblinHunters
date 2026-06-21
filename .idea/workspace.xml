@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="6e8922ac-1fa3-479a-a44b-47bf5020bdcb" name="Changes" comment="LASTT">
+      <change beforePath="$PROJECT_DIR$/src/goblinhunters/controller/ControllerForModel.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/goblinhunters/controller/ControllerForView.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/goblinhunters/controller/IControllerForModel.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/goblinhunters/controller/IControllerForView.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/goblinhunters/controller/Main.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/goblinhunters/controller/PauseController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/goblinhunters/model/AuraProjectile.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/goblinhunters/model/BlockDestruction.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/goblinhunters/model/Bomb.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/goblinhunters/model/BombManager.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/goblinhunters/model/BoneProjectile.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/goblinhunters/model/BossGoblin.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/goblinhunters/model/ChasingGoblin.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/goblinhunters/model/Collectible.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/goblinhunters/model/CollisionManager.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/goblinhunters/model/CommonGoblin.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/goblinhunters/model/Enemy.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/goblinhunters/model/Entity.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/goblinhunters/model/FloorCrack.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/goblinhunters/model/IModel.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/goblinhunters/model/LevelManager.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/goblinhunters/model/MapManager.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/goblinhunters/model/MenuModel.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/goblinhunters/model/Model.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/goblinhunters/model/PauseModel.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/goblinhunters/model/Player.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/goblinhunters/model/Projectile.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/goblinhunters/model/ScoreManager.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/goblinhunters/model/ScoreRepository.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/goblinhunters/model/ShooterGoblin.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/goblinhunters/model/SpawnManager.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/goblinhunters/utils/CharacterType.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/goblinhunters/utils/Config.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/goblinhunters/utils/Direction.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/goblinhunters/utils/EnemyType.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/goblinhunters/utils/GameState.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/goblinhunters/utils/ItemType.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/goblinhunters/utils/LogicConfig.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/goblinhunters/utils/PlayerState.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/goblinhunters/utils/ScoreEntry.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/goblinhunters/utils/ViewConfig.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/goblinhunters/view/AbstractDrawer.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/goblinhunters/view/AudioManager.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/goblinhunters/view/ConcreteDrawer.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/goblinhunters/view/DrawableEntity.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/goblinhunters/view/EnemyDrawer.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/goblinhunters/view/GameGUI.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/goblinhunters/view/GameOverDrawer.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/goblinhunters/view/GamePanel.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/goblinhunters/view/HudDrawer.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/goblinhunters/view/IView.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/goblinhunters/view/MenuDrawer.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/goblinhunters/view/PauseMenuDrawer.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/goblinhunters/view/PlayerDrawer.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/goblinhunters/view/ResourceLoader.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/goblinhunters/view/ResourceManager.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/goblinhunters/view/SpriteManager.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/goblinhunters/view/TileManager.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/goblinhunters/view/View.java" beforeDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
+  "lastFilter": {
+    "state": "OPEN",
+    "assignee": "tantatantino55-alt"
+  }
+}]]></component>
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/tantatantino55-alt/GoblinHunters.git",
+    "accountId": "28450a0b-0bb8-4152-8e89-141e7a498cda"
+  }
+}]]></component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "customColor": "",
+  "associatedIndex": 7
+}]]></component>
+  <component name="ProjectId" id="3FS4iKhNeB1HBLNdHy3YRPnscaH" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Application.Main.executor": "Run",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "main",
+    "kotlin-language-version-configured": "true"
+  }
+}]]></component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="6e8922ac-1fa3-479a-a44b-47bf5020bdcb" name="Changes" comment="" />
+      <created>1782055264970</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1782055264970</updated>
+    </task>
+    <task id="LOCAL-00001" summary="LASTT">
+      <option name="closed" value="true" />
+      <created>1782057046589</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1782057046589</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
+    <servers />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="LASTT" />
+    <option name="LAST_COMMIT_MESSAGE" value="LASTT" />
+  </component>
+</project>

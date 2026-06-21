@@ -38,10 +38,6 @@ public class Model implements IModel {
     private int     playerDyingTimer = 0;
     private boolean gameOverPending  = false;
 
-    // ==========================================================
-    // constructor / singleton
-    // ==========================================================
-
     private Model() {
         this.mapManager       = new MapManager();
         this.collisionManager = new CollisionManager(this);
@@ -70,10 +66,6 @@ public class Model implements IModel {
         instance = new Model();
     }
 
-    // ==========================================================
-    // package-private access for managers (mediator pattern)
-    // ==========================================================
-
     Player getPlayer()                               { return player; }
     List<Enemy> getEnemies()                         { return enemies; }
     List<Bomb> getActiveBombs()                      { return activeBombs; }
@@ -85,17 +77,11 @@ public class Model implements IModel {
     LevelManager getLevelManager()                   { return levelManager; }
     MapManager   getMapManager()                     { return mapManager; }
 
-    // ==========================================================
-    // IModel – map
-    // ==========================================================
-
     @Override
     public int[][] generateProceduralMap() {
         return mapManager.generateProceduralMap(levelManager.getCurrentZone(), levelManager);
     }
 
-    @Override public int getNumRows()            { return mapManager.getGameAreaArray().length; }
-    @Override public int getNumColumns()         { return mapManager.getGameAreaArray()[0].length; }
     @Override public int[][] getGameAreaArray()  { return mapManager.getGameAreaArray(); }
 
     @Override
@@ -103,10 +89,6 @@ public class Model implements IModel {
         mapManager.destroyBlock(row, col, levelManager.getCurrentZone(),
                 activeItems, destructionEffects, levelManager, scoreManager);
     }
-
-    // ==========================================================
-    // IModel – player
-    // ==========================================================
 
     @Override public double xCoordinatePlayer()      { return player.getXCoordinate(); }
     @Override public double yCoordinatePlayer()      { return player.getYCoordinate(); }
@@ -135,10 +117,6 @@ public class Model implements IModel {
         return elapsedTicks / Config.FPS;
     }
 
-    // ==========================================================
-    // IModel – enemies
-    // ==========================================================
-
     @Override public int getEnemyCount() { return enemies.size(); }
 
     @Override public double    getEnemyX(int i)          { return isValidIndex(i) ? enemies.get(i).getX() : 0; }
@@ -158,10 +136,6 @@ public class Model implements IModel {
 
     private boolean isValidIndex(int i) { return i >= 0 && i < enemies.size(); }
 
-    // ==========================================================
-    // IModel – collision
-    // ==========================================================
-
     @Override
     public boolean isWalkable(double nextX, double nextY) {
         return collisionManager.isWalkable(nextX, nextY,
@@ -172,10 +146,6 @@ public class Model implements IModel {
     public boolean isAreaOccupiedByOtherEnemy(double nextX, double nextY, double selfX, double selfY) {
         return collisionManager.isAreaOccupiedByOtherEnemy(nextX, nextY, selfX, selfY, enemies);
     }
-
-    // ==========================================================
-    // IModel – bombs
-    // ==========================================================
 
     @Override
     public void placeBomb() {
@@ -207,10 +177,6 @@ public class Model implements IModel {
     }
     private boolean isValidBombIndex(int i) { return i >= 0 && i < activeBombs.size(); }
 
-    // ==========================================================
-    // IModel – projectiles
-    // ==========================================================
-
     void addProjectile(Projectile p)                     { projectiles.add(p); }
     @Override public int getProjectileCount()            { return projectiles.size(); }
     @Override public double getProjectileX(int i)        { return isValidProjIndex(i) ? projectiles.get(i).getX() : 0; }
@@ -219,19 +185,11 @@ public class Model implements IModel {
     @Override public int getProjectileDirection(int i)   { return isValidProjIndex(i) ? projectiles.get(i).getDirection().ordinal() : 0; }
     private boolean isValidProjIndex(int i)              { return i >= 0 && i < projectiles.size(); }
 
-    // ==========================================================
-    // IModel – fire
-    // ==========================================================
-
     @Override public int getFireCount()     { return activeFire.size(); }
     @Override public int getFireRow(int i)  { return isValidFireIndex(i) ? activeFire.get(i)[0] : 0; }
     @Override public int getFireCol(int i)  { return isValidFireIndex(i) ? activeFire.get(i)[1] : 0; }
     @Override public int getFireType(int i) { return isValidFireIndex(i) ? activeFire.get(i)[2] : 0; }
     private boolean isValidFireIndex(int i) { return i >= 0 && i < activeFire.size(); }
-
-    // ==========================================================
-    // IModel – destruction effects
-    // ==========================================================
 
     @Override public int getDestructionCount()           { return destructionEffects.size(); }
     @Override public int getDestructionRow(int i)        { return isValidDestIndex(i) ? destructionEffects.get(i).getRow() : 0; }
@@ -240,10 +198,6 @@ public class Model implements IModel {
         return isValidDestIndex(i) ? (int)(System.currentTimeMillis() - destructionEffects.get(i).getCreationTime()) : 0;
     }
     private boolean isValidDestIndex(int i) { return i >= 0 && i < destructionEffects.size(); }
-
-    // ==========================================================
-    // IModel – collectibles
-    // ==========================================================
 
     @Override public int getCollectibleCount()           { return activeItems.size(); }
     @Override public double getCollectibleX(int i)       { return isValidItemIndex(i) ? activeItems.get(i).getX() : 0; }
@@ -275,10 +229,6 @@ public class Model implements IModel {
     @Override public boolean isBossPortalActive() { return levelManager.isBossPortalActive(); }
     @Override public int getBossPortalRow()       { return levelManager.getBossPortalRow(); }
     @Override public int getBossPortalCol()       { return levelManager.getBossPortalCol(); }
-
-    // ==========================================================
-    // IModel – levels / gate / portal
-    // ==========================================================
 
     @Override public int getCurrentZone()             { return levelManager.getCurrentZone(); }
     @Override public int getDifficultyCycle()         { return levelManager.getDifficultyCycle(); }
@@ -330,10 +280,6 @@ public class Model implements IModel {
             }
         }
     }
-
-    // ==========================================================
-    // IModel – player actions
-    // ==========================================================
 
     @Override
     public void playerShoot() {
@@ -403,10 +349,6 @@ public class Model implements IModel {
         };
         player.setState(idle);
     }
-
-    // ==========================================================
-    // IModel – game loop
-    // ==========================================================
 
     @Override
     public void updateGameLogic() {
@@ -481,10 +423,6 @@ public class Model implements IModel {
             levelManager.checkExitGateCollision(enemies, player, mapManager.getGameAreaArray());
         }
     }
-
-    // ==========================================================
-    // private logic
-    // ==========================================================
 
     private void triggerGlobalExplosion() {
         mapManager.destroyAllCrates(activeItems, destructionEffects);

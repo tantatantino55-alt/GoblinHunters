@@ -18,10 +18,6 @@ public class HudDrawer {
         return instance;
     }
 
-    // ==========================================================
-    // public API
-    // ==========================================================
-
     public void draw(Graphics2D g2d) {
         IControllerForView ctrl = ControllerForView.getInstance();
         int lives      = ctrl.getPlayerLives();
@@ -128,10 +124,6 @@ public class HudDrawer {
             }
         }
     }
-
-    // ==========================================================
-    // private helpers
-    // ==========================================================
 
     private void drawHudIcon(Graphics2D g2d,
                               int x, int y,

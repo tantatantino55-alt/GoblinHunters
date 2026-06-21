@@ -29,10 +29,6 @@ public class MenuModel {
         return instance;
     }
 
-    // ==========================================================
-    // queries
-    // ==========================================================
-
     /**
      * Index of the character selected by click (-1 if none).
      * Used by the View to position the selector arrow.
@@ -48,10 +44,6 @@ public class MenuModel {
     public CharacterType getConfirmedCharacterType() {
         return confirmedIndex >= 0 ? CharacterType.fromIndex(confirmedIndex) : null;
     }
-
-    // ==========================================================
-    // commands (called by Controller)
-    // ==========================================================
 
     /**
      * Selects a character by click.
@@ -82,10 +74,6 @@ public class MenuModel {
         playerName     = "";
         typingName     = false;
     }
-
-    // ==========================================================
-    // player name
-    // ==========================================================
 
     public String  getPlayerName()          { return playerName; }
     public boolean isTypingName()           { return typingName; }

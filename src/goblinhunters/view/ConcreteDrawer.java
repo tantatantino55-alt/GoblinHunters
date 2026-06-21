@@ -1,12 +1,14 @@
 package goblinhunters.view;
 
 import goblinhunters.controller.ControllerForView;
-import goblinhunters.utils.Config;
-import goblinhunters.utils.GameState;
-import goblinhunters.utils.PlayerState;
+import goblinhunters.utils.*;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 public class ConcreteDrawer extends AbstractDrawer {
 
@@ -19,10 +21,6 @@ public class ConcreteDrawer extends AbstractDrawer {
         this.tileManager = TileManager.getInstance();
         this.spriteManager = SpriteManager.getInstance();
     }
-
-    // ==========================================================
-    // main draw dispatch
-    // ==========================================================
 
     @Override
     public void draw(Graphics g) {
@@ -39,7 +37,7 @@ public class ConcreteDrawer extends AbstractDrawer {
         drawPortal(g2d);
         drawLevelExitGate(g2d);
 
-        java.util.List<DrawableEntity> sortedEntities = new java.util.ArrayList<>();
+        List<DrawableEntity> sortedEntities = new ArrayList<>();
 
         gatherBombs(sortedEntities, g2d);
         gatherCollectibles(sortedEntities, g2d);
@@ -55,7 +53,7 @@ public class ConcreteDrawer extends AbstractDrawer {
         }
 
         // ascending Y sort: lower Y (closer to top) drawn first
-        java.util.Collections.sort(sortedEntities, java.util.Comparator.comparingInt(e -> e.y));
+        Collections.sort(sortedEntities, Comparator.comparingInt(e -> e.y));
 
         for (DrawableEntity e : sortedEntities) {
             e.drawAction.run();
@@ -71,10 +69,6 @@ public class ConcreteDrawer extends AbstractDrawer {
                     ControllerForView.getInstance().getPauseController());
         }
     }
-
-    // ==========================================================
-    // portal rendering
-    // ==========================================================
 
     private void drawPortal(Graphics2D g2d) {
         // classic portal (zones 0-1): appears when the containing block is destroyed
@@ -139,46 +133,42 @@ public class ConcreteDrawer extends AbstractDrawer {
         }
     }
 
-    // ==========================================================
-    // map rendering
-    // ==========================================================
-
     /**
      * Draws the map in four ordered passes:
      * 0 — floor tiles, 1 — theme frame, 2 — walls/pillars/crates, 3 — large building ornaments.
      */
     private void drawMap(Graphics2D g2d) {
-        String theme = goblinhunters.controller.ControllerForView.getInstance().getCurrentTheme();
-        goblinhunters.view.TileManager.getInstance().setCurrentTheme(theme);
-        int[][] gameAreaArray = goblinhunters.controller.ControllerForView.getInstance().getGameAreaArray();
+        String theme = ControllerForView.getInstance().getCurrentTheme();
+        tileManager.setCurrentTheme(theme);
+        int[][] gameAreaArray = ControllerForView.getInstance().getGameAreaArray();
 
-        BufferedImage floorImg = tileManager.getTileImage(goblinhunters.utils.Config.CELL_EMPTY);
-        BufferedImage frameImg = tileManager.getTileImage(goblinhunters.utils.Config.THEME_FRAME_INDEX);
+        BufferedImage floorImg = tileManager.getTileImage(Config.CELL_EMPTY);
+        BufferedImage frameImg = tileManager.getTileImage(Config.THEME_FRAME_INDEX);
 
         // pass 0: floor
-        for (int row = 0; row < goblinhunters.utils.Config.GRID_HEIGHT; row++) {
-            for (int col = 0; col < goblinhunters.utils.Config.GRID_WIDTH; col++) {
-                int tileX = goblinhunters.utils.Config.GRID_OFFSET_X + col * goblinhunters.utils.Config.TILE_SIZE;
-                int tileY = goblinhunters.utils.Config.GRID_OFFSET_Y + row * goblinhunters.utils.Config.TILE_SIZE;
+        for (int row = 0; row < Config.GRID_HEIGHT; row++) {
+            for (int col = 0; col < Config.GRID_WIDTH; col++) {
+                int tileX = Config.GRID_OFFSET_X + col * Config.TILE_SIZE;
+                int tileY = Config.GRID_OFFSET_Y + row * Config.TILE_SIZE;
                 if (floorImg != null) {
-                    g2d.drawImage(floorImg, tileX, tileY, goblinhunters.utils.Config.TILE_SIZE, goblinhunters.utils.Config.TILE_SIZE, null);
+                    g2d.drawImage(floorImg, tileX, tileY, Config.TILE_SIZE, Config.TILE_SIZE, null);
                 }
             }
         }
 
         // pass 1: theme frame — drawn before buildings so buildings render on top
         if (frameImg != null) {
-            g2d.drawImage(frameImg, goblinhunters.utils.Config.FRAME_OFFSET_X, goblinhunters.utils.Config.FRAME_OFFSET_Y, null);
+            g2d.drawImage(frameImg, Config.FRAME_OFFSET_X, Config.FRAME_OFFSET_Y, null);
         }
 
         // pass 2: walls, pillars, crates
-        for (int row = 0; row < goblinhunters.utils.Config.GRID_HEIGHT; row++) {
-            for (int col = 0; col < goblinhunters.utils.Config.GRID_WIDTH; col++) {
+        for (int row = 0; row < Config.GRID_HEIGHT; row++) {
+            for (int col = 0; col < Config.GRID_WIDTH; col++) {
                 int cellType = gameAreaArray[row][col];
-                int tileX = goblinhunters.utils.Config.GRID_OFFSET_X + col * goblinhunters.utils.Config.TILE_SIZE;
-                int tileY = goblinhunters.utils.Config.GRID_OFFSET_Y + row * goblinhunters.utils.Config.TILE_SIZE;
+                int tileX = Config.GRID_OFFSET_X + col * Config.TILE_SIZE;
+                int tileY = Config.GRID_OFFSET_Y + row * Config.TILE_SIZE;
 
-                if (cellType != goblinhunters.utils.Config.CELL_EMPTY && cellType != goblinhunters.utils.Config.CELL_ORNAMENT) {
+                if (cellType != Config.CELL_EMPTY && cellType != Config.CELL_ORNAMENT) {
                     // cells (0,4) and (0,9) are covered by building ornaments drawn in pass 3
                     if (row == 0 && (col == 4 || col == 9)) {
                         continue;
@@ -186,32 +176,32 @@ public class ConcreteDrawer extends AbstractDrawer {
 
                     BufferedImage wallImg = tileManager.getTileImage(cellType);
                     if (wallImg != null) {
-                        g2d.drawImage(wallImg, tileX, tileY, goblinhunters.utils.Config.TILE_SIZE, goblinhunters.utils.Config.TILE_SIZE, null);
+                        g2d.drawImage(wallImg, tileX, tileY, Config.TILE_SIZE, Config.TILE_SIZE, null);
                     }
                 }
             }
         }
 
         // pass 3: large 2×2 building ornaments (CELL_ORNAMENT = 5)
-        for (int row = 0; row < goblinhunters.utils.Config.GRID_HEIGHT; row++) {
-            for (int col = 0; col < goblinhunters.utils.Config.GRID_WIDTH; col++) {
+        for (int row = 0; row < Config.GRID_HEIGHT; row++) {
+            for (int col = 0; col < Config.GRID_WIDTH; col++) {
                 int cellType = gameAreaArray[row][col];
 
-                if (cellType == goblinhunters.utils.Config.CELL_ORNAMENT) {
-                    int tileX = goblinhunters.utils.Config.GRID_OFFSET_X + col * goblinhunters.utils.Config.TILE_SIZE;
+                if (cellType == Config.CELL_ORNAMENT) {
+                    int tileX = Config.GRID_OFFSET_X + col * Config.TILE_SIZE;
                     // shift up one tile so the base sits on row 0 and the top covers the frame border
-                    int tileY = goblinhunters.utils.Config.GRID_OFFSET_Y + row * goblinhunters.utils.Config.TILE_SIZE - goblinhunters.utils.Config.TILE_SIZE;
+                    int tileY = Config.GRID_OFFSET_Y + row * Config.TILE_SIZE - Config.TILE_SIZE;
 
                     if ("CAVE".equals(theme)) {
                         int frameIndex = (int) ((System.currentTimeMillis() / 100)
-                                % goblinhunters.utils.Config.SKELETON_FRAMES_COUNT);
+                                % Config.SKELETON_FRAMES_COUNT);
                         BufferedImage skeletonFrame = tileManager
-                                .getTileImage(goblinhunters.utils.ViewConfig.CELL_SKELETON_START + frameIndex);
+                                .getTileImage(ViewConfig.CELL_SKELETON_START + frameIndex);
                         if (skeletonFrame != null) {
                             g2d.drawImage(skeletonFrame, tileX, tileY, 128, 128, null);
                         }
                     } else {
-                        BufferedImage ornament = tileManager.getTileImage(goblinhunters.utils.Config.CELL_ORNAMENT);
+                        BufferedImage ornament = tileManager.getTileImage(Config.CELL_ORNAMENT);
                         if (ornament != null) {
                             g2d.drawImage(ornament, tileX, tileY, 128, 128, null);
                         }
@@ -221,11 +211,7 @@ public class ConcreteDrawer extends AbstractDrawer {
         }
     }
 
-    // ==========================================================
-    // entity gathering (Y-sorted layer)
-    // ==========================================================
-
-    private void gatherBombs(java.util.List<DrawableEntity> entities, Graphics2D g2d) {
+    private void gatherBombs(List<DrawableEntity> entities, Graphics2D g2d) {
         int count = ControllerForView.getInstance().getBombCount();
 
         for (int i = 0; i < count; i++) {
@@ -247,7 +233,7 @@ public class ConcreteDrawer extends AbstractDrawer {
         }
     }
 
-    private void gatherDestructions(java.util.List<DrawableEntity> entities, Graphics2D g2d) {
+    private void gatherDestructions(List<DrawableEntity> entities, Graphics2D g2d) {
         int count = ControllerForView.getInstance().getDestructionCount();
         String theme = ControllerForView.getInstance().getCurrentTheme();
         String animKey = "FOREST".equals(theme) ? "BUSH_BREAK" : "CRATE_BREAK";
@@ -297,7 +283,7 @@ public class ConcreteDrawer extends AbstractDrawer {
         }
     }
 
-    private void gatherProjectiles(java.util.List<DrawableEntity> entities, Graphics2D g2d) {
+    private void gatherProjectiles(List<DrawableEntity> entities, Graphics2D g2d) {
         int count = ControllerForView.getInstance().getProjectileCount();
 
         for (int i = 0; i < count; i++) {
@@ -340,18 +326,18 @@ public class ConcreteDrawer extends AbstractDrawer {
         }
     }
 
-    private void gatherCollectibles(java.util.List<DrawableEntity> entities, Graphics2D g2d) {
-        int count = goblinhunters.controller.ControllerForView.getInstance().getCollectibleCount();
-        goblinhunters.view.SpriteManager sm = goblinhunters.view.SpriteManager.getInstance();
+    private void gatherCollectibles(List<DrawableEntity> entities, Graphics2D g2d) {
+        int count = ControllerForView.getInstance().getCollectibleCount();
+        SpriteManager sm = SpriteManager.getInstance();
 
         for (int i = 0; i < count; i++) {
-            int screenX = (int) (goblinhunters.controller.ControllerForView.getInstance().getCollectibleX(i)
-                    * goblinhunters.utils.Config.TILE_SIZE) + goblinhunters.utils.Config.GRID_OFFSET_X;
-            int screenY = (int) (goblinhunters.controller.ControllerForView.getInstance().getCollectibleY(i)
-                    * goblinhunters.utils.Config.TILE_SIZE) + goblinhunters.utils.Config.GRID_OFFSET_Y;
+            int screenX = (int) (ControllerForView.getInstance().getCollectibleX(i)
+                    * Config.TILE_SIZE) + Config.GRID_OFFSET_X;
+            int screenY = (int) (ControllerForView.getInstance().getCollectibleY(i)
+                    * Config.TILE_SIZE) + Config.GRID_OFFSET_Y;
 
-            goblinhunters.utils.ItemType type = goblinhunters.controller.ControllerForView.getInstance().getCollectibleType(i);
-            java.awt.image.BufferedImage sprite = null;
+            ItemType type = ControllerForView.getInstance().getCollectibleType(i);
+            BufferedImage sprite = null;
 
             switch (type) {
                 case AMMO_BOMB -> sprite = sm.getSprite("CONSUMABLES", 1);
@@ -361,20 +347,16 @@ public class ConcreteDrawer extends AbstractDrawer {
                 case POWER_SPEED -> sprite = sm.getSprite("POWER_UPS", 2);
             }
 
-            final java.awt.image.BufferedImage finalSprite = sprite;
+            final BufferedImage finalSprite = sprite;
 
             if (finalSprite != null) {
-                int feetY = screenY + goblinhunters.utils.Config.TILE_SIZE;
+                int feetY = screenY + Config.TILE_SIZE;
                 entities.add(new DrawableEntity(feetY, () -> {
-                    g2d.drawImage(finalSprite, screenX, screenY, goblinhunters.utils.Config.TILE_SIZE, goblinhunters.utils.Config.TILE_SIZE, null);
+                    g2d.drawImage(finalSprite, screenX, screenY, Config.TILE_SIZE, Config.TILE_SIZE, null);
                 }));
             }
         }
     }
-
-    // ==========================================================
-    // boss crack-floor overlay
-    // ==========================================================
 
     /**
      * Draws boss crack-floor tiles as an overlay above the normal floor.
@@ -382,10 +364,10 @@ public class ConcreteDrawer extends AbstractDrawer {
      * entities drawn afterwards.
      */
     private void drawCracks(Graphics2D g2d) {
-        int count = goblinhunters.controller.ControllerForView.getInstance().getCrackCount();
+        int count = ControllerForView.getInstance().getCrackCount();
         if (count == 0) return;
 
-        BufferedImage crackTile = tileManager.getTileImage(goblinhunters.utils.Config.CELL_CRACKED_FLOOR);
+        BufferedImage crackTile = tileManager.getTileImage(Config.CELL_CRACKED_FLOOR);
 
         // pulsing alpha (0.55 – 0.85) to give the hazard a "live" appearance
         float pulse = 0.55f + 0.30f * (float) Math.abs(Math.sin(System.currentTimeMillis() / 400.0));
@@ -393,30 +375,26 @@ public class ConcreteDrawer extends AbstractDrawer {
         g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, pulse));
 
         for (int i = 0; i < count; i++) {
-            int row = goblinhunters.controller.ControllerForView.getInstance().getCrackRow(i);
-            int col = goblinhunters.controller.ControllerForView.getInstance().getCrackCol(i);
+            int row = ControllerForView.getInstance().getCrackRow(i);
+            int col = ControllerForView.getInstance().getCrackCol(i);
 
-            int screenX = goblinhunters.utils.Config.GRID_OFFSET_X + col * goblinhunters.utils.Config.TILE_SIZE;
-            int screenY = goblinhunters.utils.Config.GRID_OFFSET_Y + row * goblinhunters.utils.Config.TILE_SIZE;
+            int screenX = Config.GRID_OFFSET_X + col * Config.TILE_SIZE;
+            int screenY = Config.GRID_OFFSET_Y + row * Config.TILE_SIZE;
 
             if (crackTile != null) {
-                g2d.drawImage(crackTile, screenX, screenY, goblinhunters.utils.Config.TILE_SIZE, goblinhunters.utils.Config.TILE_SIZE, null);
+                g2d.drawImage(crackTile, screenX, screenY, Config.TILE_SIZE, Config.TILE_SIZE, null);
             } else {
                 g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.6f));
                 g2d.setColor(new Color(220, 80, 0));
                 g2d.fillRect(screenX + 4, screenY + 4,
-                        goblinhunters.utils.Config.TILE_SIZE - 8, goblinhunters.utils.Config.TILE_SIZE - 8);
+                        Config.TILE_SIZE - 8, Config.TILE_SIZE - 8);
             }
         }
 
         g2d.setComposite(originalComposite);
     }
 
-    // ==========================================================
-    // transition overlay
-    // ==========================================================
-
-    public void drawTransition(Graphics2D g2d) {
+    private void drawTransition(Graphics2D g2d) {
         if (ControllerForView.getInstance().isTransitioning()) {
             if (transitionAlpha < Config.MAX_ALPHA) {
                 transitionAlpha += Config.FADE_SPEED;
@@ -436,10 +414,6 @@ public class ConcreteDrawer extends AbstractDrawer {
             g2d.fillRect(0, 0, Config.WINDOW_PREFERRED_WIDTH, Config.WINDOW_PREFERRED_HEIGHT);
         }
     }
-
-    // ==========================================================
-    // AbstractDrawer overrides
-    // ==========================================================
 
     @Override
     public int getDrawingWidth() {

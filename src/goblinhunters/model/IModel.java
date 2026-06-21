@@ -9,8 +9,6 @@ public interface IModel {
 
     // map
     int[][] generateProceduralMap();
-    int getNumColumns();
-    int getNumRows();
     int[][] getGameAreaArray();
     void destroyBlock(int row, int col);
 

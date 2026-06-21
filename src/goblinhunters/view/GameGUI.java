@@ -21,7 +21,7 @@ public class GameGUI extends JFrame{
     }
 
     private void createGUI(AbstractDrawer drawer){
-        this.setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setResizable(false);
         this.gamePanel = new GamePanel(drawer);
         Container contPane = this.getContentPane();

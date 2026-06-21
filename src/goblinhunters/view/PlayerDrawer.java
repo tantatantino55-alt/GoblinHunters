@@ -19,10 +19,6 @@ public class PlayerDrawer {
         return instance;
     }
 
-    // ==========================================================
-    // public API
-    // ==========================================================
-
     public void gather(List<DrawableEntity> entities, Graphics2D g2d) {
         boolean isInvincible = ControllerForView.getInstance().isPlayerInvincible();
 
@@ -100,10 +96,6 @@ public class PlayerDrawer {
             }));
         }
     }
-
-    // ==========================================================
-    // private helpers
-    // ==========================================================
 
     private int getFramesForState(PlayerState state) {
         String s = state.name();

@@ -20,10 +20,6 @@ public class SpriteManager {
         return instance;
     }
 
-    // ==========================================================
-    // animation loading
-    // ==========================================================
-
     public void loadAnimation(Object key, String path, int startLinearIndex, int count, int size) {
         BufferedImage sheet = loadSheet(path);
         if (sheet == null) return;
@@ -50,20 +46,12 @@ public class SpriteManager {
         animations.put(key, frames);
     }
 
-    // ==========================================================
-    // single-image loading
-    // ==========================================================
-
     public void loadSingleImage(Object key, String path) {
         BufferedImage image = loadSheet(path);
         if (image != null) {
             animations.put(key, new BufferedImage[]{ image });
         }
     }
-
-    // ==========================================================
-    // tile extraction
-    // ==========================================================
 
     public BufferedImage extractTile(String path, int col, int row, int width, int height) {
         BufferedImage sheet = loadSheet(path);
@@ -78,10 +66,6 @@ public class SpriteManager {
         return sheet.getSubimage(x, y, width, height);
     }
 
-    // ==========================================================
-    // sprite retrieval
-    // ==========================================================
-
     public BufferedImage getSprite(Object key, int frameIdx) {
         BufferedImage[] anim = animations.get(key);
         if (anim != null && anim.length > 0) {
@@ -89,10 +73,6 @@ public class SpriteManager {
         }
         return null;
     }
-
-    // ==========================================================
-    // grayscale cache (built once by ResourceLoader at startup)
-    // ==========================================================
 
     /**
      * Converts a loaded frame to grayscale and stores it under {@code cacheKey}.
@@ -119,10 +99,6 @@ public class SpriteManager {
     public BufferedImage getGrayscale(String cacheKey) {
         return grayscaleCache.get(cacheKey);
     }
-
-    // ==========================================================
-    // private helpers
-    // ==========================================================
 
     private BufferedImage loadSheet(String path) {
         if (!sheetsCache.containsKey(path)) {

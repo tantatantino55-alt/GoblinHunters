@@ -10,9 +10,7 @@ package goblinhunters.utils;
  */
 public class Config {
 
-    // =====================================================================
     // game logic → LogicConfig
-    // =====================================================================
     public static final int GRID_WIDTH                  = LogicConfig.GRID_WIDTH;
     public static final int GRID_HEIGHT                 = LogicConfig.GRID_HEIGHT;
 
@@ -56,6 +54,7 @@ public class Config {
     public static final int    INITIAL_MAX_BOMBS         = LogicConfig.INITIAL_MAX_BOMBS;
     public static final int    DEFAULT_BOMB_RADIUS       = LogicConfig.DEFAULT_BOMB_RADIUS;
     public static final int    MAX_AURA_AMMO             = LogicConfig.MAX_AURA_AMMO;
+    public static final double AURA_PROJECTILE_MAX_RANGE = LogicConfig.AURA_PROJECTILE_MAX_RANGE;
 
     public static final int    FIRE_DURATION_TICKS       = LogicConfig.FIRE_DURATION_TICKS;
 
@@ -80,9 +79,7 @@ public class Config {
     public static final long   BOSS_PORTAL_SPAWN_INTERVAL_MS  = LogicConfig.BOSS_PORTAL_SPAWN_INTERVAL_MS;
     public static final int    BOSS_PORTAL_MAX_GOBLINS        = LogicConfig.BOSS_PORTAL_MAX_GOBLINS;
 
-    // =====================================================================
     // view / rendering → ViewConfig
-    // =====================================================================
     public static final int    TILE_SIZE                 = ViewConfig.TILE_SIZE;
     public static final int    GAME_PANEL_WIDTH          = ViewConfig.GAME_PANEL_WIDTH;
     public static final int    GAME_PANEL_HEIGHT         = ViewConfig.GAME_PANEL_HEIGHT;
@@ -232,9 +229,7 @@ public class Config {
     public static final int    BOSS_IDLE_RIGHT_START      = ViewConfig.BOSS_IDLE_RIGHT_START;
     public static final int    BOSS_RUN_RIGHT_START       = ViewConfig.BOSS_RUN_RIGHT_START;
 
-    // =====================================================================
     // character selection menu → ViewConfig
-    // =====================================================================
     public static final String START_GAME_BG               = ViewConfig.START_GAME_BG;
     public static final int    MENU_DRAW_X                 = ViewConfig.MENU_DRAW_X;
     public static final int    MENU_DRAW_Y                 = ViewConfig.MENU_DRAW_Y;
@@ -245,9 +240,7 @@ public class Config {
     public static final int    CHAR_FRAME_W                = ViewConfig.CHAR_FRAME_W;
     public static final int    CHAR_FRAME_H                = ViewConfig.CHAR_FRAME_H;
 
-    // =====================================================================
     // HUD layout → ViewConfig
-    // =====================================================================
     public static final int    HUD_PANEL_X                 = ViewConfig.HUD_PANEL_X;
     public static final int    HUD_PANEL_W                 = ViewConfig.HUD_PANEL_W;
     public static final int    HUD_START_Y                 = ViewConfig.HUD_START_Y;

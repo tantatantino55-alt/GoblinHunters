@@ -33,10 +33,6 @@ import java.awt.image.BufferedImage;
  */
 public class PauseMenuDrawer {
 
-    // ==========================================================
-    // singleton
-    // ==========================================================
-
     private static PauseMenuDrawer instance;
 
     public static PauseMenuDrawer getInstance() {
@@ -44,17 +40,9 @@ public class PauseMenuDrawer {
         return instance;
     }
 
-    // ==========================================================
-    // layout constants
-    // ==========================================================
-
     private static final int PANEL_W  = 440;
     private static final int PANEL_H  = 700;
     private static final int CORNER_R = 16;
-
-    // ==========================================================
-    // colour palette
-    // ==========================================================
 
     private static final Color BG_DARK         = new Color(28, 18, 10, 240);
     private static final Color BORDER_GOLD     = new Color(200, 165, 70);
@@ -75,10 +63,6 @@ public class PauseMenuDrawer {
     private static final Color AUDIO_ON_COLOR  = new Color(220, 200, 100);
     private static final Color AUDIO_OFF_COLOR = new Color(110, 100, 80);
 
-    // ==========================================================
-    // clickable hit areas (computed in draw())
-    // ==========================================================
-
     private final Rectangle[] keybindRects = new Rectangle[PauseController.ACTION_COUNT];
     private Rectangle resetRect;
     private Rectangle audioOnRect;
@@ -86,10 +70,6 @@ public class PauseMenuDrawer {
     private Rectangle mainMenuRect;
     private Rectangle quitRect;
     private Rectangle resumeRect;
-
-    // ==========================================================
-    // font cache
-    // ==========================================================
 
     private final Font fontTitle;
     private final Font fontSection;
@@ -106,10 +86,6 @@ public class PauseMenuDrawer {
         fontBtn     = new Font("Monospaced", Font.BOLD, 15);
         fontSmall   = new Font("Monospaced", Font.BOLD, 10);
     }
-
-    // ==========================================================
-    // public API
-    // ==========================================================
 
     /** Draws the entire pause menu overlay. Called on every repaint while paused. */
     public void draw(Graphics2D g2d, PauseController ctrl) {
@@ -177,10 +153,6 @@ public class PauseMenuDrawer {
         ctrl.commitRebind(keyName);
     }
 
-    // ==========================================================
-    // DRAWING — panel frame
-    // ==========================================================
-
     private void drawPanel(Graphics2D g2d, int px, int py) {
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
@@ -207,10 +179,6 @@ public class PauseMenuDrawer {
         g2d.setStroke(new BasicStroke(1f));
     }
 
-    // ==========================================================
-    // DRAWING — title
-    // ==========================================================
-
     private int drawTitle(Graphics2D g2d, int panelX, int cy) {
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         String title = "|| PAUSE";
@@ -231,10 +199,6 @@ public class PauseMenuDrawer {
         g2d.setStroke(new BasicStroke(1f));
         return cy + 4;
     }
-
-    // ==========================================================
-    // DRAWING — controls section
-    // ==========================================================
 
     private int drawControlsSection(Graphics2D g2d, int cx, int cy, PauseController ctrl) {
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -308,10 +272,6 @@ public class PauseMenuDrawer {
         return cy;
     }
 
-    // ==========================================================
-    // DRAWING — audio section
-    // ==========================================================
-
     private int drawAudioSection(Graphics2D g2d, int cx, int cy, PauseController ctrl) {
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
@@ -354,10 +314,6 @@ public class PauseMenuDrawer {
         return cy;
     }
 
-    // ==========================================================
-    // DRAWING — bottom buttons
-    // ==========================================================
-
     private void drawBottomButtons(Graphics2D g2d, int px, int py) {
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
@@ -399,10 +355,6 @@ public class PauseMenuDrawer {
         g2d.drawString(label, tx, ty);
     }
 
-    // ==========================================================
-    // DRAWING — reusable keybind box
-    // ==========================================================
-
     private void drawKeybindBox(Graphics2D g2d, int bx, int by, int bw, int bh,
                                 String text, boolean active) {
         g2d.setColor(active ? KEYBIND_ACTIVE : KEYBIND_BG);
@@ -422,10 +374,6 @@ public class PauseMenuDrawer {
                 bx + (bw - kfm.stringWidth(display)) / 2,
                 by + (bh - kfm.getHeight()) / 2 + kfm.getAscent());
     }
-
-    // ==========================================================
-    // DRAWING — action icons
-    // ==========================================================
 
     private void drawActionIcon(Graphics2D g2d, int row, int x, int y, int size) {
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -508,10 +456,6 @@ public class PauseMenuDrawer {
         g2d.fillOval(orbX + orbR / 5, orbY + orbR / 6, orbR / 3, orbR / 3);
     }
 
-    // ==========================================================
-    // DRAWING — speaker icon
-    // ==========================================================
-
     private void drawSpeakerIcon(Graphics2D g2d, int x, int y, int size, boolean muted) {
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2d.setColor(muted ? new Color(120, 110, 90) : new Color(220, 200, 100));
@@ -536,10 +480,6 @@ public class PauseMenuDrawer {
             g2d.setStroke(new BasicStroke(1f));
         }
     }
-
-    // ==========================================================
-    // click result enum
-    // ==========================================================
 
     /**
      * Identifies which element was clicked in the pause menu.

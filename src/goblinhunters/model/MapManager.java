@@ -26,10 +26,6 @@ class MapManager {
 
     int[][] getGameAreaArray() { return gameAreaArray; }
 
-    // ==========================================================
-    // procedural map generation
-    // ==========================================================
-
     int[][] generateProceduralMap(int currentZone, LevelManager levelManager) {
         int[][] nextMap = new int[Config.GRID_HEIGHT][Config.GRID_WIDTH];
         List<int[]> emptyCells    = new ArrayList<>();
@@ -143,10 +139,6 @@ class MapManager {
         }
     }
 
-    // ==========================================================
-    // block destruction
-    // ==========================================================
-
     void destroyBlock(int row, int col, int currentZone, List<Collectible> activeItems,
                       List<BlockDestruction> effects, LevelManager levelManager, ScoreManager scoreManager) {
         if (gameAreaArray[row][col] != Config.CELL_DESTRUCTIBLE_BLOCK) return;
@@ -182,10 +174,6 @@ class MapManager {
             System.arraycopy(source[r], 0, gameAreaArray[r], 0, Config.GRID_WIDTH);
         }
     }
-
-    // ==========================================================
-    // boss crack wave (step-by-step propagation)
-    // ==========================================================
 
     void spawnCrackWave(int originRow, int originCol, Direction dir, int[][] map) {
         activeWaves.add(new CrackWave(originRow, originCol, dir));
@@ -264,10 +252,6 @@ class MapManager {
         }
     }
 
-    // ==========================================================
-    // floor crack accessors
-    // ==========================================================
-
     boolean hasCrackAt(int row, int col) {
         for (FloorCrack c : activeCracks) {
             if (c.row == row && c.col == col) return true;
@@ -290,10 +274,6 @@ class MapManager {
     int getCrackCount()                { return activeCracks.size(); }
     int getCrackRow(int i)             { return activeCracks.get(i).row; }
     int getCrackCol(int i)             { return activeCracks.get(i).col; }
-
-    // ==========================================================
-    // geometry helpers
-    // ==========================================================
 
     /**
      * Returns the 3 lateral offsets for a crack wave based on attack direction.

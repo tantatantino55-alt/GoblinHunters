@@ -10,10 +10,6 @@ import java.util.List;
 /** Draws the Game Over overlay on the game's Graphics2D context. */
 public class GameOverDrawer {
 
-    // ==========================================================
-    // singleton
-    // ==========================================================
-
     private static GameOverDrawer instance;
 
     public static GameOverDrawer getInstance() {
@@ -21,17 +17,9 @@ public class GameOverDrawer {
         return instance;
     }
 
-    // ==========================================================
-    // layout constants
-    // ==========================================================
-
     private static final int PANEL_W  = 440;
     private static final int PANEL_H  = 560;
     private static final int CORNER_R = 16;
-
-    // ==========================================================
-    // colour palette
-    // ==========================================================
 
     private static final Color BG_DARK         = new Color(28, 18, 10, 240);
     private static final Color BORDER_GOLD     = new Color(200, 165, 70);
@@ -44,16 +32,8 @@ public class GameOverDrawer {
     private static final Color BTN_ORANGE      = new Color(185, 95, 10);
     private static final Color BTN_ORANGE_DARK = new Color(130, 60, 5);
 
-    // ==========================================================
-    // state
-    // ==========================================================
-
     private Rectangle mainMenuRect;
     private Rectangle quitRect;
-
-    // ==========================================================
-    // font cache
-    // ==========================================================
 
     private final Font fontTitle;
     private final Font fontScore;
@@ -68,10 +48,6 @@ public class GameOverDrawer {
         fontLeaderHeader = new Font("Monospaced", Font.BOLD, 13);
         fontLeaderRow    = new Font("Monospaced", Font.PLAIN, 13);
     }
-
-    // ==========================================================
-    // public API
-    // ==========================================================
 
     public void draw(Graphics2D g2d) {
         int screenW = Config.WINDOW_PREFERRED_WIDTH;
@@ -107,10 +83,6 @@ public class GameOverDrawer {
         if (mainMenuRect != null && mainMenuRect.contains(mx, my)) return PauseMenuDrawer.ClickResult.RETURN_TO_MAIN_MENU;
         return PauseMenuDrawer.ClickResult.NONE;
     }
-
-    // ==========================================================
-    // private drawing helpers
-    // ==========================================================
 
     private void drawPanel(Graphics2D g2d, int px, int py) {
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);

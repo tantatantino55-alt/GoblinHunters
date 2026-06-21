@@ -1,6 +1,7 @@
 package goblinhunters.model;
 
 import goblinhunters.utils.Config;
+import goblinhunters.utils.EnemyType;
 
 import java.util.ArrayDeque;
 import java.util.List;
@@ -70,7 +71,7 @@ class SpawnManager {
         if (!bossPortalActive) return;
 
         long livingGoblins = enemies.stream()
-                .filter(e -> !e.isDead() && e.getType() != goblinhunters.utils.EnemyType.BOSS)
+                .filter(e -> !e.isDead() && e.getType() != EnemyType.BOSS)
                 .count();
 
         if (livingGoblins >= Config.BOSS_PORTAL_MAX_GOBLINS) return;

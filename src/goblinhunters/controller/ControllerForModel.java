@@ -6,15 +6,7 @@ import goblinhunters.utils.GameState;
 
 public class ControllerForModel implements IControllerForModel, Runnable {
 
-    // ==========================================================
-    // static fields
-    // ==========================================================
-
     private static ControllerForModel instance = null;
-
-    // ==========================================================
-    // instance state
-    // ==========================================================
 
     private Thread gameThread;
     private boolean running = false;
@@ -34,7 +26,7 @@ public class ControllerForModel implements IControllerForModel, Runnable {
     public void resetGame() {
         this.paused = false;
         this.gameState = GameState.MENU;
-        goblinhunters.model.Model.resetInstance();
+        Model.resetInstance();
     }
 
     private ControllerForModel() {}
@@ -70,7 +62,7 @@ public class ControllerForModel implements IControllerForModel, Runnable {
         }
     }
 
-    public void onLevelCompleted() {
+    private void onLevelCompleted() {
         if (!Model.getInstance().isTransitioning()) {
             Model.getInstance().setTransitioning(true);
             this.transitionTimer = MAX_TRANSITION_TICKS;
@@ -123,10 +115,6 @@ public class ControllerForModel implements IControllerForModel, Runnable {
             }
         }
     }
-
-    // ==========================================================
-    // static methods
-    // ==========================================================
 
     public static IControllerForModel getInstance() {
         if (instance == null)

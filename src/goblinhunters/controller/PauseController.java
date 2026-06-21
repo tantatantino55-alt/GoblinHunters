@@ -25,15 +25,7 @@ public class PauseController {
 
     private PauseController() {}
 
-    // ==========================================================
-    // rebind state — action index 0-6, -1 = none
-    // ==========================================================
-
     private int rebindingRow = -1;
-
-    // ==========================================================
-    // navigation button actions
-    // ==========================================================
 
     /**
      * Cleans up internal state when the game is resumed.
@@ -57,10 +49,6 @@ public class PauseController {
         ControllerForView.getInstance().resetGame();
     }
 
-    // ==========================================================
-    // reset defaults
-    // ==========================================================
-
     /** Restores all keybindings to factory defaults. */
     public void onResetDefaultsClicked() {
         cancelRebind();
@@ -69,10 +57,6 @@ public class PauseController {
             ControllerForView.getInstance().applyKeyBinding(i, PauseModel.ACTION_DEFAULTS[i]);
         }
     }
-
-    // ==========================================================
-    // unified rebind (action index 0-6)
-    // ==========================================================
 
     /**
      * Starts (or toggles off) rebind mode for action {@code row}.
@@ -123,19 +107,11 @@ public class PauseController {
         cancelRebind();
     }
 
-    // ==========================================================
-    // audio toggle
-    // ==========================================================
-
     /** Enables or disables audio. Called by the View when the user clicks the icon. */
     public void setAudioEnabled(boolean enabled) {
         PauseModel.getInstance().setAudioEnabled(enabled);
         AudioManager.getInstance().setMuted(!enabled);
     }
-
-    // ==========================================================
-    // getters for the View (delegate to Model)
-    // ==========================================================
 
     /** Current keybind for action {@code i} (uppercase format for UI display). */
     public String getActionLabel(int i) {

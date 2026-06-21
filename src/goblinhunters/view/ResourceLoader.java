@@ -295,10 +295,6 @@ public class ResourceLoader {
         sm.buildGrayscale("POWER_UPS", 2, "POWER_UPS_2_gray");
     }
 
-    // ==========================================================
-    // character selection menu
-    // ==========================================================
-
     private void loadMenuResources(SpriteManager sm) {
         sm.loadSingleImage("MENU_BG", ViewConfig.START_GAME_BG);
     }

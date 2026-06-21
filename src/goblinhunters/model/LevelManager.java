@@ -39,10 +39,6 @@ class LevelManager {
         this.model = model;
     }
 
-    // ==========================================================
-    // getters
-    // ==========================================================
-
     int getCurrentZone()             { return currentZone; }
     int getDifficultyCycle()         { return difficultyCycle; }
     String getCurrentTheme()         { return currentTheme; }
@@ -62,10 +58,6 @@ class LevelManager {
     boolean isBossPortalActive()          { return bossPortalActive; }
     int getBossPortalRow()                { return Config.BOSS_PORTAL_ROW; }
     int getBossPortalCol()                { return Config.BOSS_PORTAL_COL; }
-    // ==========================================================
-    // level configuration (count, cap, distribution)
-    // ==========================================================
-
     /**
      * Number of enemies to spawn at the start of the level.
      * Zone 0: cycle 1=4, cycle 2=5, cycle 3+=6
@@ -120,10 +112,6 @@ class LevelManager {
         };
     }
 
-    // ==========================================================
-    // portal
-    // ==========================================================
-
     void setPortal(int row, int col) {
         this.portalRow = row;
         this.portalCol = col;
@@ -137,10 +125,6 @@ class LevelManager {
             model.getSpawnManager().resetPortalTimer();
         }
     }
-
-    // ==========================================================
-    // exit gate
-    // ==========================================================
 
     void checkExitGateCollision(List<Enemy> enemies, Player player, int[][] map) {
         // boss preparation phase locks the gate
@@ -173,10 +157,6 @@ class LevelManager {
         }
     }
 
-    // ==========================================================
-    // boss timer
-    // ==========================================================
-
     /** Decrements the boss preparation timer. Returns true when the timer expires. */
     boolean tickBossPreparation() {
         if (!isPreparationPhase) return false;
@@ -188,10 +168,6 @@ class LevelManager {
         }
         return false;
     }
-
-    // ==========================================================
-    // level advancement
-    // ==========================================================
 
     void prepareNextLevel() {
         levelCompletedFlag = false;
@@ -221,10 +197,6 @@ class LevelManager {
             bossPortalActive = false;
         }
     }
-
-    // ==========================================================
-    // boss portal — activation / deactivation
-    // ==========================================================
 
     /** Activates the goblin portal on the boss map (called by triggerGlobalExplosion). */
     void activateBossPortal() {

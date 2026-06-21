@@ -22,12 +22,6 @@ public class ControllerForView implements IControllerForView {
         View.getInstance().openGameGUI();
         AudioManager.getInstance().loadAndPlay("/goblin_theme.wav");
     }
-    @Override public void closeGameGUI() { View.getInstance().closeGameGUI(); }
-
-    // ==========================================================
-    // game state & character selection menu
-    // ==========================================================
-
     @Override
     public GameState getGameState() {
         return ControllerForModel.getInstance().getGameState();
@@ -84,8 +78,6 @@ public class ControllerForView implements IControllerForView {
                 .map(r -> new ScoreEntry(r.name, r.score))
                 .collect(Collectors.toList());
     }
-    @Override public int getNumColumns() { return Model.getInstance().getNumColumns(); }
-    @Override public int getNumRows() { return Model.getInstance().getNumRows(); }
     @Override public double getXCoordinatePlayer() { return Model.getInstance().xCoordinatePlayer(); }
     @Override public double getYCoordinatePlayer() { return Model.getInstance().yCoordinatePlayer(); }
     @Override public double getDeltaX() { return Model.getInstance().getPlayerDeltaX(); }
@@ -159,17 +151,17 @@ public class ControllerForView implements IControllerForView {
 
     @Override
     public int getPortalRow() {
-        return goblinhunters.model.Model.getInstance().getPortalRow();
+        return Model.getInstance().getPortalRow();
     }
 
     @Override
     public int getPortalCol() {
-        return goblinhunters.model.Model.getInstance().getPortalCol();
+        return Model.getInstance().getPortalCol();
     }
 
     @Override
     public boolean isPortalRevealed() {
-        return goblinhunters.model.Model.getInstance().isPortalRevealed();
+        return Model.getInstance().isPortalRevealed();
     }
 
     @Override
@@ -236,10 +228,6 @@ public class ControllerForView implements IControllerForView {
     public PauseController getPauseController() {
         return PauseController.getInstance();
     }
-
-    // ==========================================================
-    // key binding applier
-    // ==========================================================
 
     /**
      * Callback registered by GamePanel once at construction time.

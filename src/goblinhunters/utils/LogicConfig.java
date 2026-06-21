@@ -60,7 +60,9 @@ public class LogicConfig {
 
     // aura
     /** Maximum storable aura shots; tune here to adjust difficulty. */
-    public static final int MAX_AURA_AMMO = 7;
+    public static final int    MAX_AURA_AMMO             = 7;
+    /** Maximum travel range of an aura projectile, in grid cells. */
+    public static final double AURA_PROJECTILE_MAX_RANGE = 3.0;
 
     // fire
     public static final int FIRE_DURATION_TICKS = 30;

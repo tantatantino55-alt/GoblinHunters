@@ -49,12 +49,6 @@ public class ScoreRepository {
         return all.subList(0, Math.min(5, all.size()));
     }
 
-    public boolean isTopFive(int score) {
-        List<ScoreRecord> top = getTopScores();
-        if (top.size() < 5) return true;
-        return score > top.get(top.size() - 1).score;
-    }
-
     // private I/O
 
     private void ensureFile() {

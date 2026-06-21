@@ -20,10 +20,6 @@ class ScoreManager {
         this.model = model;
     }
 
-    // ==========================================================
-    // score
-    // ==========================================================
-
     void addScore(int points, boolean isEnemyKill, int currentZone) {
         if (isEnemyKill && currentZone != 2 && currentZoneScore >= Config.SCORE_ZONE_CAP) return;
         if (isEnemyKill && currentZone != 2) {
@@ -39,10 +35,6 @@ class ScoreManager {
     void resetZoneScore() {
         currentZoneScore = 0;
     }
-
-    // ==========================================================
-    // enemy death
-    // ==========================================================
 
     void handleEnemyDeath(Enemy e, int currentZone, List<Collectible> activeItems) {
         if (e instanceof BossGoblin) {
@@ -77,10 +69,6 @@ class ScoreManager {
     }
 
     int getBossFightNumber() { return bossFightNumber; }
-
-    // ==========================================================
-    // drops
-    // ==========================================================
 
     void generateGoblinDrop(double x, double y, List<Collectible> activeItems, Player player) {
         Random rand = new Random();

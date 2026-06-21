@@ -7,15 +7,12 @@ import java.util.function.BiConsumer;
 
 public interface IControllerForView {
     void openGameGUI();
-    void closeGameGUI();
 
     GameState getGameState();
     void resetGame();
 
     void menuHandleClick(int characterIndex);
     void menuConfirmSelection();
-    int getNumColumns();
-    int getNumRows();
     double getXCoordinatePlayer();
     double getYCoordinatePlayer();
     void requestRepaint();

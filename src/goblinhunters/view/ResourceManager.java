@@ -28,14 +28,6 @@ public class ResourceManager {
         }
     }
 
-    public static boolean resourceExists(String relativePath) {
-        try (InputStream inputStream = ResourceManager.class.getResourceAsStream(relativePath)) {
-            return inputStream != null;
-        } catch (IOException e) {
-            return false;
-        }
-    }
-
     public static InputStream getResourceStream(String relativePath) {
         InputStream inputStream = ResourceManager.class.getResourceAsStream(relativePath);
         if (inputStream == null) {

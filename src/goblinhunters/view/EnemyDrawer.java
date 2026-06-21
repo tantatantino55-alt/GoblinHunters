@@ -20,10 +20,6 @@ public class EnemyDrawer {
         return instance;
     }
 
-    // ==========================================================
-    // public API
-    // ==========================================================
-
     public void gather(List<DrawableEntity> entities, Graphics2D g2d) {
         int count = ControllerForView.getInstance().getEnemyCount();
 
@@ -98,10 +94,6 @@ public class EnemyDrawer {
             }
         }
     }
-
-    // ==========================================================
-    // private helpers
-    // ==========================================================
 
     private String resolveTypePrefix(EnemyType type) {
         return switch (type) {

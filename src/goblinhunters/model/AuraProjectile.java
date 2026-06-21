@@ -7,13 +7,13 @@ public class AuraProjectile extends Projectile {
 
     private final double startX;
     private final double startY;
-    private double maxRange;
+    private final double maxRange;
 
     public AuraProjectile(double startX, double startY, Direction dir) {
         super(startX, startY, dir, Config.AURA_PROJECTILE_SPEED, false);
         this.startX   = startX;
         this.startY   = startY;
-        this.maxRange = 3.0;
+        this.maxRange = Config.AURA_PROJECTILE_MAX_RANGE;
     }
 
     @Override

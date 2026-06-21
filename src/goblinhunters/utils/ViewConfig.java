@@ -191,10 +191,7 @@ public class ViewConfig {
     public static final int BOSS_IDLE_RIGHT_START   = 134;
     public static final int BOSS_RUN_RIGHT_START    = 150;
 
-    // =====================================================================
     // character selection menu
-    // =====================================================================
-
     public static final String START_GAME_BG = "/StartGame.png";
 
     /** Drawing area of the menu inside the arcade cabinet, aligned to the screen edge. */
@@ -229,10 +226,7 @@ public class ViewConfig {
     public static final int NEW_GAME_BTN_W = 260;
     public static final int NEW_GAME_BTN_H = 78;
 
-    // =====================================================================
     // HUD layout
-    // =====================================================================
-
     /** X position of the right-side HUD panel on screen. */
     public static final int HUD_PANEL_X = 1072;
     /** Width of the right-side HUD panel. */

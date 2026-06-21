@@ -44,10 +44,6 @@ public class MenuDrawer {
         return instance;
     }
 
-    // ==========================================================
-    // main rendering
-    // ==========================================================
-
     /** Draws the full character-selection screen. Reads state from Model (read-only). */
     public void draw(Graphics2D g2d) {
         IControllerForView ctrl = ControllerForView.getInstance();
@@ -72,10 +68,6 @@ public class MenuDrawer {
 
         drawNameInput(g2d);
     }
-
-    // ==========================================================
-    // selection arrow
-    // ==========================================================
 
     /**
      * Draws a pixel-art arcade-style down-arrow above the selected character.
@@ -140,10 +132,6 @@ public class MenuDrawer {
         g2d.setComposite(originalComposite);
     }
 
-    // ==========================================================
-    // character name label
-    // ==========================================================
-
     private void drawSelectedName(Graphics2D g2d, int index) {
         CharacterType type = CharacterType.fromIndex(index);
         String name = type.getDisplayName();
@@ -157,10 +145,6 @@ public class MenuDrawer {
         int textX = sx + (ViewConfig.CHAR_FRAME_W - fm.stringWidth(name)) / 2;
         g2d.drawString(name, textX, nameY);
     }
-
-    // ==========================================================
-    // player name input field
-    // ==========================================================
 
     private void drawNameInput(Graphics2D g2d) {
         IControllerForView ctrl = ControllerForView.getInstance();
@@ -213,10 +197,6 @@ public class MenuDrawer {
             g2d.drawString("⚠  Required field", fieldX, fieldY + NAME_FIELD_H + 14);
         }
     }
-
-    // ==========================================================
-    // hit-testing
-    // ==========================================================
 
     /**
      * Returns the index (0-3) of the character frame that contains the given

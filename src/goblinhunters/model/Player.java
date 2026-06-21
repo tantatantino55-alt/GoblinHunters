@@ -116,8 +116,6 @@ public class Player extends Entity {
         this.lives = Config.INITIAL_LIVES;
     }
 
-    public void addLife() { this.lives++; }
-
     public double getXCoordinate()              { return x; }
     public double getYCoordinate()              { return y; }
     public void setXCoordinate(double newX)     { this.x = newX; }

@@ -4,10 +4,12 @@ import goblinhunters.controller.ControllerForView;
 import goblinhunters.controller.PauseController;
 import goblinhunters.utils.Config;
 import goblinhunters.utils.GameState;
+import goblinhunters.utils.ViewConfig;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.image.BufferedImage;
 
 public class GamePanel extends JPanel {
     private AbstractDrawer drawer = null;
@@ -15,10 +17,6 @@ public class GamePanel extends JPanel {
     private boolean canPlaceBomb   = true;
     private boolean canShootAura   = true;
     private boolean canStaffAttack = true;
-
-    // ==========================================================
-    // key binding state
-    // ==========================================================
 
     /**
      * Action names in the ActionMap for key-press events.
@@ -50,12 +48,11 @@ public class GamePanel extends JPanel {
     public GamePanel(AbstractDrawer drawer) {
         this.drawer = drawer;
         this.setPreferredSize(new Dimension(
-                goblinhunters.utils.ViewConfig.WINDOW_PREFERRED_WIDTH,
-                goblinhunters.utils.ViewConfig.WINDOW_PREFERRED_HEIGHT));
+                ViewConfig.WINDOW_PREFERRED_WIDTH,
+                ViewConfig.WINDOW_PREFERRED_HEIGHT));
         this.setBackground(Color.black);
         this.setDoubleBuffered(true);
         this.setFocusable(true);
-        setupMenuControls();
         setupKeyBindings();
         setupPauseControls();
         // passes the rebind callback so PauseController can update the InputMap
@@ -63,35 +60,22 @@ public class GamePanel extends JPanel {
         ControllerForView.getInstance().setKeyBindingApplier(this::applyKeyRebind);
     }
 
-    // ==========================================================
-    // character selection menu — click only
-    // ==========================================================
-
-    private void setupMenuControls() {
-        // no extra listener needed: mouse clicks are intercepted by setupPauseControls()
-        // and routed to handleMenuClick() when in MENU state
-    }
-
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
 
-        java.awt.image.BufferedImage cabinetImg =
-                goblinhunters.view.SpriteManager.getInstance().getSprite("ARCADE_CABINET", 0);
+        BufferedImage cabinetImg =
+                SpriteManager.getInstance().getSprite("ARCADE_CABINET", 0);
         if (cabinetImg != null) {
             g.drawImage(cabinetImg, 0, 0,
-                    goblinhunters.utils.ViewConfig.WINDOW_PREFERRED_WIDTH,
-                    goblinhunters.utils.ViewConfig.WINDOW_PREFERRED_HEIGHT, this);
+                    ViewConfig.WINDOW_PREFERRED_WIDTH,
+                    ViewConfig.WINDOW_PREFERRED_HEIGHT, this);
         }
 
         Graphics2D g2d = (Graphics2D) g.create();
         drawer.draw(g2d);
         g2d.dispose();
     }
-
-    // ==========================================================
-    // pause — ESC key + mouse routing
-    // ==========================================================
 
     private void setupPauseControls() {
 
@@ -204,10 +188,6 @@ public class GamePanel extends JPanel {
             ControllerForView.getInstance().menuConfirmSelection();
         }
     }
-
-    // ==========================================================
-    // gameplay key bindings
-    // ==========================================================
 
     private void setupKeyBindings() {
         InputMap im = this.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
@@ -346,10 +326,6 @@ public class GamePanel extends JPanel {
             }
         });
     }
-
-    // ==========================================================
-    // runtime key rebind
-    // ==========================================================
 
     /**
      * Updates the Swing InputMap to reflect a rebind made in the pause menu.

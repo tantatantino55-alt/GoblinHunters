@@ -122,7 +122,15 @@ public class HudDrawer {
                 String label = "[Z] Staff";
                 g2d.drawString(label, panelX + (panelW - fmStaff.stringWidth(label)) / 2, currentY + STAFF_SIZE + 12);
             }
+            currentY += STAFF_SIZE + (staffUsable ? 18 : 6);
         }
+
+        // ESC menu hint — always visible during gameplay
+        g2d.setFont(new Font("Monospaced", Font.BOLD, 20));
+        g2d.setColor(Color.WHITE);
+        FontMetrics fmEsc = g2d.getFontMetrics();
+        String escLabel = "[ESC] MENU";
+        g2d.drawString(escLabel, panelX + (panelW - fmEsc.stringWidth(escLabel)) / 2, currentY);
     }
 
     private void drawHudIcon(Graphics2D g2d,
